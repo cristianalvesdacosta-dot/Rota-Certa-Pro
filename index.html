@@ -23,7 +23,8 @@
         .row-fields { display: flex; gap: 8px; }
         .row-fields .main-field { flex: 3; position: relative; }
         .row-fields .number-field { flex: 1; }
-        label { display: block; font-size: 0.8rem; font-weight: 500; color: #64748b; margin-bottom: 6px; }
+        label { display: block; font-size: 0.8rem; font-weight: 500; color: #64748b; margin-bottom: 4px; }
+        .help-text { font-size: 0.72rem; color: #94a3b8; margin-bottom: 6px; line-height: 1.2; }
         input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
         input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
         .inline-gps { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; font-size: 0.75rem; padding: 6px 10px; margin-top: 6px; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
@@ -59,7 +60,7 @@
 
     <header>
         <h1 id="headerName">Rota Certa</h1>
-        <p id="headerSub">Painel do Entregador</p>
+        <p id="headerSub">Painel de Entregas</p>
     </header>
 
     <div class="container">
@@ -87,68 +88,84 @@
             <button type="button" class="btn" style="background: #e2e8f0; color: #2d3748; margin-top: 15px;" onclick="fazerLogout()">Sair / Trocar Conta</button>
         </div>
 
-        <!-- 3. APLICAÇÃO COMPLETA (PAINEL DO MOTOBOY + CLIENTE) -->
+        <!-- 3. APLICAÇÃO COMPLETA -->
         <div id="app-container" style="display: none;">
             
-            <!-- PAINEL DE CONTROLE DO MOTOBOY (CONFIGURAÇÕES E EXPEDIENTE) -->
-            <div class="card" style="border: 2px solid #2563eb;">
-                <h2>⚙️ Painel de Controle do Entregador</h2>
+            <!-- PAINEL DE CONTROLE DO MOTOBOY (COM CADEADO DE SEGURANÇA) -->
+            <div class="card" id="painelMotoboyCard" style="border: 2px solid #2563eb; display: none;">
+                <h2>🔒 Painel Restrito do Entregador</h2>
+                <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 12px;">Área protegida por senha para configurar suas taxas, Pix, WhatsApp e status de expediente.</p>
                 
-                <div class="form-group">
-                    <label>Status do Expediente</label>
-                    <button type="button" id="btnToggleStatus" class="btn" style="background: #16a34a; color: white; margin-top: 0;" onclick="alternarStatusOnline()">🟢 Online (Recebendo Pedidos)</button>
+                <div id="painelTrancado">
+                    <button type="button" class="btn btn-primary" onclick="tentarDesbloquearPainel()">🔓 Desbloquear Painel de Configurações</button>
                 </div>
 
-                <div class="form-group">
-                    <label for="cfgNome">Seu Nome / Título da Página</label>
-                    <input type="text" id="cfgNome" placeholder="Ex: Carlos Entregas" onchange="salvarConfiguracoesMotoboy()">
-                </div>
-
-                <div class="form-group">
-                    <label for="cfgWhatsapp">Seu WhatsApp (Para receber os pedidos)</label>
-                    <input type="tel" id="cfgWhatsapp" placeholder="Ex: 5591988888888" onchange="salvarConfiguracoesMotoboy()">
-                </div>
-
-                <div class="form-group">
-                    <label for="cfgPix">Sua Chave Pix</label>
-                    <input type="text" id="cfgPix" placeholder="CPF, E-mail, Celular ou Chave Aleatória" onchange="salvarConfiguracoesMotoboy()">
-                </div>
-
-                <div class="config-grid">
+                <div id="painelDestrancado" style="display: none; border-top: 1px solid #e2e8f0; padding-top: 14px; margin-top: 14px;">
                     <div class="form-group">
-                        <label for="cfgTarifaBase">Tarifa Base (R$)</label>
-                        <input type="number" step="0.50" id="cfgTarifaBase" value="3.00" onchange="salvarConfiguracoesMotoboy()">
+                        <label>Status do Expediente</label>
+                        <div class="help-text">Defina se você está aceitando corridas ou de folga.</div>
+                        <button type="button" id="btnToggleStatus" class="btn" style="background: #16a34a; color: white; margin-top: 0;" onclick="alternarStatusOnline()">🟢 Online (Recebendo Pedidos)</button>
                     </div>
-                    <div class="form-group">
-                        <label for="cfgTarifaMinima">Tarifa Mínima (R$)</label>
-                        <input type="number" step="0.50" id="cfgTarifaMinima" value="10.00" onchange="salvarConfiguracoesMotoboy()">
-                    </div>
-                    <div class="form-group">
-                        <label for="cfgPrecoKm">Preço por Km (R$)</label>
-                        <input type="number" step="0.10" id="cfgPrecoKm" value="1.50" onchange="salvarConfiguracoesMotoboy()">
-                    </div>
-                    <div class="form-group">
-                        <label for="cfgTaxaDeslocamento">Taxa Desloc. (>4km)</label>
-                        <input type="number" step="0.01" id="cfgTaxaDeslocamento" value="0.49" onchange="salvarConfiguracoesMotoboy()">
-                    </div>
-                </div>
 
-                <div style="text-align: right; margin-top: 5px;">
-                    <span id="saveStatus" style="font-size: 0.75rem; color: #16a34a; font-weight: 600;">Configurações salvas automaticamente ✅</span>
+                    <div class="form-group">
+                        <label for="cfgNome">Seu Nome / Título da Página</label>
+                        <div class="help-text">Como seu nome vai aparecer no topo para os clientes.</div>
+                        <input type="text" id="cfgNome" placeholder="Ex: Carlos Entregas" onchange="salvarConfiguracoesMotoboy()">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cfgWhatsapp">Seu WhatsApp (Para receber os pedidos)</label>
+                        <div class="help-text">Número com DDD onde o cliente vai mandar o comprovante e os endereços. Ex: 5591988888888</div>
+                        <input type="tel" id="cfgWhatsapp" placeholder="Ex: 5591988888888" onchange="salvarConfiguracoesMotoboy()">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cfgPix">Sua Chave Pix</label>
+                        <div class="help-text">Chave onde o cliente fará o pagamento da corrida antes de enviar.</div>
+                        <input type="text" id="cfgPix" placeholder="CPF, E-mail, Celular ou Chave Aleatória" onchange="salvarConfiguracoesMotoboy()">
+                    </div>
+
+                    <div class="config-grid">
+                        <div class="form-group">
+                            <label for="cfgTarifaBase">Tarifa Base (R$)</label>
+                            <div class="help-text">Valor fixo cobrado logo no início da corrida.</div>
+                            <input type="number" step="0.50" id="cfgTarifaBase" value="3.00" onchange="salvarConfiguracoesMotoboy()">
+                        </div>
+                        <div class="form-group">
+                            <label for="cfgTarifaMinima">Tarifa Mínima (R$)</label>
+                            <div class="help-text">Valor abaixo do qual nenhuma corrida é aceita.</div>
+                            <input type="number" step="0.50" id="cfgTarifaMinima" value="10.00" onchange="salvarConfiguracoesMotoboy()">
+                        </div>
+                        <div class="form-group">
+                            <label for="cfgPrecoKm">Preço por Km (R$)</label>
+                            <div class="help-text">Quanto é cobrado por cada quilômetro rodado na entrega.</div>
+                            <input type="number" step="0.10" id="cfgPrecoKm" value="1.50" onchange="salvarConfiguracoesMotoboy()">
+                        </div>
+                        <div class="form-group">
+                            <label for="cfgTaxaDeslocamento">Taxa Desloc. (>4km)</label>
+                            <div class="help-text">Cobrado por km excedente caso você esteja a mais de 4km da coleta.</div>
+                            <input type="number" step="0.01" id="cfgTaxaDeslocamento" value="0.49" onchange="salvarConfiguracoesMotoboy()">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                        <span id="saveStatus" style="font-size: 0.75rem; color: #16a34a; font-weight: 600; display: none;">Salvo com sucesso ✅</span>
+                        <button type="button" class="btn" style="background: #e2e8f0; color: #1e293b; padding: 8px; font-size: 0.8rem; width: auto;" onclick="trancarPainelNovamente()">🔒 Bloquear Painel</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- ÁREA DE MAPA E GPS DO MOTOBOY -->
+            <!-- ÁREA DE MAPA E SOLICITAÇÃO DO CLIENTE -->
             <div class="card">
-                <h2>📍 Transmissão de GPS ao Vivo</h2>
-                <button type="button" class="btn btn-primary" onclick="atualizarPosicaoGPSMotoboy()" style="margin-top: 0;">📍 Atualizar minha posição atual na nuvem</button>
+                <h2>📍 Solicitar Entrega</h2>
+                <button type="button" class="btn btn-primary" onclick="atualizarPosicaoGPSMotoboy()" style="margin-top: 0; margin-bottom: 15px; display: none;" id="btnAtualizarGpsMoto">📍 Atualizar minha posição atual (Apenas Entregador)</button>
                 
-                <div style="margin-top: 14px;">
-                    <label for="clientName">Nome do Cliente</label>
+                <div>
+                    <label for="clientName">Seu Nome</label>
                     <input type="text" id="clientName" placeholder="Ex: João Silva" oninput="saveInputs()">
                 </div>
                 <div style="margin-top: 10px;">
-                    <label for="clientPhone">WhatsApp do Cliente</label>
+                    <label for="clientPhone">Seu WhatsApp</label>
                     <input type="tel" id="clientPhone" placeholder="Ex: (91) 98888-8888" oninput="saveInputs()">
                 </div>
 
@@ -184,7 +201,7 @@
                 <div id="map"></div>
             </div>
 
-            <!-- RESUMO E PAGAMENTO PIX DO MOTOBOY -->
+            <!-- RESUMO E PAGAMENTO PIX -->
             <div class="card" id="summaryCard" style="display: none;">
                 <h2>💰 Resumo do Valor</h2>
                 <div class="summary-box">
@@ -349,6 +366,10 @@
                 document.getElementById('bloqueio-container').style.display = 'none';
                 document.getElementById('app-container').style.display = 'block';
 
+                // Mostra o painel do motoboy (trancado por padrão) e o botão de atualizar GPS dele
+                document.getElementById('painelMotoboyCard').style.display = 'block';
+                document.getElementById('btnAtualizarGpsMoto').style.display = 'block';
+
                 configMotoboyAtual = dados;
 
                 // Preencher campos do painel de controle
@@ -377,6 +398,27 @@
                     updateMotoMarkerOnMap(myCurrentCoords);
                 }
             });
+        }
+
+        function tentarDesbloquearPainel() {
+            let senhaDigitada = prompt("Digite sua senha de entregador para desbloquear as configurações:");
+            if (!senhaDigitada) return;
+
+            const usuario = localStorage.getItem('rotaCertaUsuario');
+            db.ref('entregadores/' + usuario).once('value').then((snapshot) => {
+                if (snapshot.exists() && snapshot.val().senha === senhaDigitada) {
+                    document.getElementById('painelTrancado').style.display = 'none';
+                    document.getElementById('painelDestrancado').style.display = 'block';
+                    alert('Painel desbloqueado com sucesso!');
+                } else {
+                    alert('Senha incorreta!');
+                }
+            });
+        }
+
+        function trancarPainelNovamente() {
+            document.getElementById('painelDestrancado').style.display = 'none';
+            document.getElementById('painelTrancado').style.display = 'block';
         }
 
         function salvarConfiguracoesMotoboy() {
