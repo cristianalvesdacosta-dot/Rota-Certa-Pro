@@ -10,6 +10,13 @@
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 0; }
         
+        /* TELA DE ERRO / AVISO */
+        #error-screen {
+            display: none; max-width: 400px; margin: 60px auto; background: #fff; padding: 25px; 
+            border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; border: 2px solid #e74c3c;
+        }
+        #error-screen h2 { color: #e74c3c; margin-top: 0; }
+
         /* TELA DE BLOQUEIO */
         #lock-screen {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -38,6 +45,13 @@
     </style>
 </head>
 <body>
+
+    <!-- TELA DE ERRO CASO ESQUEÇA O ?moto= -->
+    <div id="error-screen">
+        <h2>⚠️ Atenção</h2>
+        <p id="error-msg" style="color: #c0392b; font-weight: bold;"></p>
+        <p style="color: #555; font-size: 13px;">Para acessar o painel, adicione o nome na frente do link usando o formato:<br><b>?moto=seu_nome</b></p>
+    </div>
 
     <!-- TELA DE BLOQUEIO / RENOVAÇÃO -->
     <div id="lock-screen">
@@ -105,27 +119,42 @@
     <script>
         // CONFIGURAÇÃO DO SEU FIREBASE
         const firebaseConfig = {
-            databaseURL: "SEU_BANCO_DE_DADOS_AQUI.firebasedatabase.app"
+            databaseURL: "https://rotacerta-default-rtdb.firebaseio.com" // Coloque o link exato do seu Realtime Database aqui se for diferente
         };
-        firebase.initializeApp(firebaseConfig);
+        
+        // Verifica se o Firebase já foi inicializado para evitar erros
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.database();
 
-        // Pega o nome da moto/cliente pela URL (Ex: ?moto=carlos)
+        // Pega o parâmetro ?moto= da URL
         const urlParams = new URLSearchParams(window.location.search);
         const motoUser = urlParams.get('moto');
 
         if (!motoUser) {
-            document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px; color:#fff;'>Erro: Nenhum usuário informado na URL (?moto=nome).</h2>";
+            document.getElementById('error-screen').style.display = 'block';
+            document.getElementById('error-msg').innerText = "Nenhum usuário foi informado na barra de endereços.";
         } else {
             // Configura o link do WhatsApp para renovação (5519997648211)
             const msg = encodeURIComponent(`Olá Cristian! Fiz o pagamento da minha mensalidade do painel Rota Certa (${motoUser}). Segue o comprovante.`);
             document.getElementById('whatsapp-link').href = `https://wa.me/5519997648211?text=${msg}`;
 
+            // Verifica se o usuário existe no Firebase. Se não existir, cria automaticamente como online.
+            db.ref('entregadores/' + motoUser).once('value', (snapshot) => {
+                if (!snapshot.exists()) {
+                    // Primeiro acesso: Cria a gaveta com status online automaticamente
+                    db.ref('entregadores/' + motoUser).set({
+                        status: 'online'
+                    });
+                }
+            });
+
             // Monitora o status no Firebase em tempo real (Online ou Offline)
             db.ref('entregadores/' + motoUser + '/status').on('value', (snapshot) => {
                 const status = snapshot.val();
 
-                if (status === "online") {
+                if (status === "online" || status === null) {
                     document.getElementById('lock-screen').style.display = 'none';
                     document.getElementById('app-content').style.display = 'block';
                     carregarDadosIniciais();
