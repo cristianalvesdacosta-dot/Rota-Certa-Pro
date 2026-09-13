@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rota Certa – Painel do Entregador</title>
+    <title>Rota Certa – Solicite sua Entrega</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <!-- Google Fonts -->
@@ -13,9 +13,11 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background-color: #f4f7f6; color: #333; padding-bottom: 40px; }
-        header { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 20px 16px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        header { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 20px 16px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; }
         header h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; }
         header p { font-size: 0.875rem; color: #94a3b8; }
+        .btn-modo-topo { position: absolute; right: 12px; top: 16px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 10px; font-size: 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .btn-modo-topo:hover { background: rgba(255,255,255,0.25); }
         .container { max-width: 600px; margin: 16px auto; padding: 0 12px; }
         .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 16px; }
         .card h2 { font-size: 1rem; font-weight: 600; color: #1e293b; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
@@ -49,8 +51,7 @@
         .copy-btn { background: #22c55e; color: white; border: none; padding: 8px 16px; font-size: 0.85rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
         .copy-btn:hover { background: #16a34a; }
         .loading { font-size: 0.85rem; color: #64748b; text-align: center; margin-top: 8px; display: none; }
-        
-        .auth-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; margin-top: 40px; }
+        .auth-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 16px; }
         .auth-card input { margin-bottom: 15px; }
         .error-msg { color: #e74c3c; font-size: 0.85rem; margin-bottom: 10px; display: none; }
         .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -60,106 +61,94 @@
 
     <header>
         <h1 id="headerName">Rota Certa</h1>
-        <p id="headerSub">Painel de Entregas</p>
+        <p id="headerSub">Solicite sua Entrega Rápida</p>
+        <button type="button" class="btn-modo-topo" id="btnAlternarModo" onclick="alternarModoPainel()">🔒 Área do Motoboy</button>
     </header>
 
     <div class="container">
 
-        <!-- 1. TELA DE LOGIN / CADASTRO -->
-        <div id="auth-container" class="auth-card">
-            <h2>🚀 Acessar Painel Rota Certa</h2>
-            <p style="font-size: 0.85rem; color: #666; margin-bottom: 20px;">Entre com seu usuário e senha de entregador:</p>
-            <div id="authError" class="error-msg"></div>
-            <input type="text" id="loginUser" placeholder="Seu Nome / Identificação (Sem espaços)" autocomplete="off">
-            <input type="password" id="loginPass" placeholder="Sua Senha de Acesso">
-            <button type="button" class="btn btn-primary" onclick="fazerLoginOuCadastro()">Entrar / Criar Conta</button>
-        </div>
-
-        <!-- 2. TELA DE BLOQUEIO (VENCIDO / BLOQUEADO PELO MASTER) -->
-        <div id="bloqueio-container" class="auth-card" style="display: none; background: #fff5f5; border: 1px solid #feb2b2;">
-            <h2 style="color: #c53030; justify-content: center;">⚠️ Acesso Suspenso / Expirado</h2>
-            <p style="font-size: 0.9rem; color: #742a2a; margin: 15px 0;">Seu período de uso deste painel foi encerrado ou bloqueado pela administração.</p>
-            <p style="font-size: 0.85rem; color: #4a5568; margin-bottom: 10px;">Para regularizar e liberar seu acesso, fale diretamente com o suporte:</p>
+        <!-- 1. PAINEL DE LOGIN / GESTÃO DO MOTOBOY (Oculto para o cliente por padrão) -->
+        <div id="motoboy-portal-container" style="display: none;">
             
-            <a href="https://wa.me/5519997648211?text=Olá%20Cristian,%20gostaria%20de%20regularizar%20minha%20assinatura%20do%20Rota%20Certa!" target="_blank" class="whatsapp-btn">
-                💬 Falar com Suporte (19 99764-8211)
-            </a>
-
-            <button type="button" class="btn" style="background: #e2e8f0; color: #2d3748; margin-top: 15px;" onclick="fazerLogout()">Sair / Trocar Conta</button>
-        </div>
-
-        <!-- 3. APLICAÇÃO COMPLETA -->
-        <div id="app-container" style="display: none;">
-            
-            <!-- PAINEL RESTRITO DO MOTOBOY (COM CADEADO) -->
-            <div class="card" id="painelMotoboyCard" style="border: 2px solid #2563eb; display: none;">
-                <h2>🔒 Painel Restrito do Entregador</h2>
-                <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 12px;">Área protegida por senha para configurar suas taxas, Pix, WhatsApp e status de expediente.</p>
-                
-                <div id="painelTrancado">
-                    <button type="button" class="btn btn-primary" onclick="tentarDesbloquearPainel()">🔓 Desbloquear Painel de Configurações</button>
-                </div>
-
-                <div id="painelDestrancado" style="display: none; border-top: 1px solid #e2e8f0; padding-top: 14px; margin-top: 14px;">
-                    <div class="form-group">
-                        <label>Status do Expediente</label>
-                        <div class="help-text">Ao ficar Online, sua posição GPS é enviada automaticamente para a nuvem.</div>
-                        <button type="button" id="btnToggleStatus" class="btn" style="background: #16a34a; color: white; margin-top: 0;" onclick="alternarStatusOnline()">🟢 Online (Recebendo Pedidos)</button>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="cfgNome">Seu Nome / Título da Página</label>
-                        <div class="help-text">Como seu nome vai aparecer no topo para os clientes.</div>
-                        <input type="text" id="cfgNome" placeholder="Ex: Carlos Entregas" onchange="salvarConfiguracoesMotoboy()">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="cfgWhatsapp">Seu WhatsApp (Para receber os pedidos)</label>
-                        <div class="help-text">Número com DDD onde o cliente vai mandar o comprovante e os endereços. Ex: 5591988888888</div>
-                        <input type="tel" id="cfgWhatsapp" placeholder="Ex: 5591988888888" onchange="salvarConfiguracoesMotoboy()">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="cfgPix">Sua Chave Pix</label>
-                        <div class="help-text">Chave onde o cliente fará o pagamento da corrida antes de enviar.</div>
-                        <input type="text" id="cfgPix" placeholder="CPF, E-mail, Celular ou Chave Aleatória" onchange="salvarConfiguracoesMotoboy()">
-                    </div>
-
-                    <div class="config-grid">
-                        <div class="form-group">
-                            <label for="cfgTarifaBase">Tarifa Base (R$)</label>
-                            <div class="help-text">Valor fixo cobrado logo no início da corrida.</div>
-                            <input type="number" step="0.50" id="cfgTarifaBase" value="3.00" onchange="salvarConfiguracoesMotoboy()">
-                        </div>
-                        <div class="form-group">
-                            <label for="cfgTarifaMinima">Tarifa Mínima (R$)</label>
-                            <div class="help-text">Valor abaixo do qual nenhuma corrida é aceita.</div>
-                            <input type="number" step="0.50" id="cfgTarifaMinima" value="10.00" onchange="salvarConfiguracoesMotoboy()">
-                        </div>
-                        <div class="form-group">
-                            <label for="cfgPrecoKm">Preço por Km (R$)</label>
-                            <div class="help-text">Quanto é cobrado por cada quilômetro rodado na entrega.</div>
-                            <input type="number" step="0.10" id="cfgPrecoKm" value="1.50" onchange="salvarConfiguracoesMotoboy()">
-                        </div>
-                        <div class="form-group">
-                            <label for="cfgTaxaDeslocamento">Taxa Desloc. (>4km)</label>
-                            <div class="help-text">Cobrado por km excedente caso você esteja a mais de 4km da coleta.</div>
-                            <input type="number" step="0.01" id="cfgTaxaDeslocamento" value="0.49" onchange="salvarConfiguracoesMotoboy()">
-                        </div>
-                    </div>
-
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                        <span id="saveStatus" style="font-size: 0.75rem; color: #16a34a; font-weight: 600; display: none;">Salvo com sucesso ✅</span>
-                        <button type="button" class="btn" style="background: #e2e8f0; color: #1e293b; padding: 8px; font-size: 0.8rem; width: auto;" onclick="trancarPainelNovamente()">🔒 Bloquear Painel</button>
-                    </div>
-                </div>
+            <!-- TELA DE LOGIN DO MOTOBOY -->
+            <div id="auth-container" class="auth-card">
+                <h2>🚀 Acessar Painel do Entregador</h2>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Entre com sua identificação e senha para gerenciar suas taxas e GPS:</p>
+                <div id="authError" class="error-msg"></div>
+                <input type="text" id="loginUser" placeholder="Seu Identificador (Ex: cristian)" autocomplete="off">
+                <input type="password" id="loginPass" placeholder="Sua Senha de Acesso">
+                <button type="button" class="btn btn-primary" onclick="fazerLoginOuCadastro()">Entrar / Criar Conta</button>
+                <button type="button" class="btn" style="background: #e2e8f0; color: #334155; margin-top: 8px;" onclick="voltarParaModoCliente()">⬅️ Voltar para Tela do Cliente</button>
             </div>
 
-            <!-- ÁREA DE MAPA E SOLICITAÇÃO DO CLIENTE -->
+            <!-- TELA DE BLOQUEIO DE LICENÇA -->
+            <div id="bloqueio-container" class="auth-card" style="display: none; background: #fff5f5; border: 1px solid #feb2b2; text-align: center;">
+                <h2 style="color: #c53030; justify-content: center;">⚠️ Acesso Suspenso</h2>
+                <p style="font-size: 0.9rem; color: #742a2a; margin: 15px 0;">Sua assinatura venceu ou foi bloqueada pela administração.</p>
+                <a href="https://wa.me/5519997648211?text=Olá%20Cristian,%20gostaria%20de%20regularizar%20minha%20assinatura!" target="_blank" class="whatsapp-btn">
+                    💬 Falar com Suporte
+                </a>
+                <button type="button" class="btn" style="background: #e2e8f0; color: #2d3748; margin-top: 15px;" onclick="fazerLogout()">Sair da Conta</button>
+            </div>
+
+            <!-- CONFIGURAÇÕES INTERNAS DO MOTOBOY -->
+            <div class="card" id="painelMotoboyCard" style="border: 2px solid #2563eb; display: none;">
+                <h2>⚙️ Configurações do Entregador</h2>
+                
+                <div class="form-group">
+                    <label>Status do Expediente</label>
+                    <div class="help-text">Ao ficar Online, sua posição GPS é transmitida para os clientes.</div>
+                    <button type="button" id="btnToggleStatus" class="btn" style="background: #16a34a; color: white; margin-top: 0;" onclick="alternarStatusOnline()">🟢 Online (Recebendo Pedidos)</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="cfgNome">Seu Nome / Título da Página</label>
+                    <input type="text" id="cfgNome" placeholder="Ex: Cristian Entregas" onchange="salvarConfiguracoesMotoboy()">
+                </div>
+
+                <div class="form-group">
+                    <label for="cfgWhatsapp">Seu WhatsApp (Para receber pedidos)</label>
+                    <input type="tel" id="cfgWhatsapp" placeholder="Ex: 5591988888888" onchange="salvarConfiguracoesMotoboy()">
+                </div>
+
+                <div class="form-group">
+                    <label for="cfgPix">Sua Chave Pix</label>
+                    <input type="text" id="cfgPix" placeholder="Chave Pix para recebimento" onchange="salvarConfiguracoesMotoboy()">
+                </div>
+
+                <div class="config-grid">
+                    <div class="form-group">
+                        <label for="cfgTarifaBase">Tarifa Base (R$)</label>
+                        <input type="number" step="0.50" id="cfgTarifaBase" value="3.00" onchange="salvarConfiguracoesMotoboy()">
+                    </div>
+                    <div class="form-group">
+                        <label for="cfgTarifaMinima">Tarifa Mínima (R$)</label>
+                        <input type="number" step="0.50" id="cfgTarifaMinima" value="10.00" onchange="salvarConfiguracoesMotoboy()">
+                    </div>
+                    <div class="form-group">
+                        <label for="cfgPrecoKm">Preço por Km (R$)</label>
+                        <input type="number" step="0.10" id="cfgPrecoKm" value="1.50" onchange="salvarConfiguracoesMotoboy()">
+                    </div>
+                    <div class="form-group">
+                        <label for="cfgTaxaDeslocamento">Taxa Desloc. (>4km)</label>
+                        <input type="number" step="0.01" id="cfgTaxaDeslocamento" value="0.49" onchange="salvarConfiguracoesMotoboy()">
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                    <span id="saveStatus" style="font-size: 0.75rem; color: #16a34a; font-weight: 600; display: none;">Salvo ✅</span>
+                    <button type="button" class="btn" style="background: #fee2e2; color: #b91c1c; font-size: 0.85rem; width: auto;" onclick="fazerLogout()">Sair da Conta</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. APLICAÇÃO DO CLIENTE (Visível livremente por padrão) -->
+        <div id="client-app-container">
+            
             <div class="card">
                 <h2>📍 Solicitar Entrega</h2>
                 
-                <button type="button" class="btn" style="background: #0f172a; color: white; margin-bottom: 15px;" onclick="localizarMotoboyPeloCliente()">🏍️ Localizar Motoboy no Mapa</button>
+                <button type="button" class="btn" style="background: #0f172a; color: white; margin-bottom: 15px;" onclick="localizarMotoboyPeloCliente()">🏍️ Localizar Entregador no Mapa</button>
                 <div id="statusMotoboyDistancia" style="font-size: 0.8rem; color: #2563eb; font-weight: 600; margin-bottom: 12px; text-align: center;"></div>
 
                 <div>
@@ -233,17 +222,14 @@
 
                 <div class="pix-area" id="pixArea">
                     <p style="font-size: 0.9rem; font-weight: 600; color: #166534;">Chave Pix do Entregador:</p>
-                    <div class="pix-key" id="pixKeyDisplay">Sua chave Pix aqui</div>
+                    <div class="pix-key" id="pixKeyDisplay">Chave Pix não configurada</div>
                     <button type="button" class="copy-btn" onclick="copyPixKey()">Copiar Chave Pix</button>
-                    <p style="font-size: 0.75rem; color: #64748b; margin-top: 10px;">Após realizar o pagamento, clique abaixo para enviar o pedido direto no WhatsApp do entregador.</p>
+                    <p style="font-size: 0.75rem; color: #64748b; margin-top: 10px;">Após o pagamento, envie o pedido no WhatsApp do entregador:</p>
                 </div>
 
                 <button type="button" class="btn btn-success" id="btnWhatsapp" style="display: none;" onclick="sendToWhatsappMotoboy()">Enviar Pedido no WhatsApp</button>
             </div>
 
-            <div style="text-align: center; margin-top: 20px;">
-                <button type="button" class="btn" style="background: #e2e8f0; color: #475569; font-size: 0.85rem; padding: 10px;" onclick="fazerLogout()">Sair da Conta</button>
-            </div>
         </div>
 
     </div>
@@ -294,6 +280,35 @@
             }
         });
 
+        function alternarModoPainel() {
+            const portal = document.getElementById('motoboy-portal-container');
+            const clienteApp = document.getElementById('client-app-container');
+            const btnModo = document.getElementById('btnAlternarModo');
+            const usuarioLogado = localStorage.getItem('rotaCertaUsuario');
+
+            if (portal.style.display === 'none') {
+                portal.style.display = 'block';
+                clienteApp.style.display = 'none';
+                btnModo.innerText = '👤 Ver Modo Cliente';
+
+                if (usuarioLogado) {
+                    document.getElementById('auth-container').style.display = 'none';
+                    carregarDadosPainel(usuarioLogado);
+                } else {
+                    document.getElementById('auth-container').style.display = 'block';
+                    document.getElementById('painelMotoboyCard').style.display = 'none';
+                }
+            } else {
+                voltarParaModoCliente();
+            }
+        }
+
+        function voltarParaModoCliente() {
+            document.getElementById('motoboy-portal-container').style.display = 'none';
+            document.getElementById('client-app-container').style.display = 'block';
+            document.getElementById('btnAlternarModo').innerText = '🔒 Área do Motoboy';
+        }
+
         function fazerLoginOuCadastro() {
             let uInput = document.getElementById('loginUser').value.trim().replace(/\s+/g, '');
             let sInput = document.getElementById('loginPass').value.trim();
@@ -341,7 +356,7 @@
                         carregarDadosPainel(uInput);
                     }).catch((err) => {
                         errDiv.style.display = 'block';
-                        errDiv.innerText = 'Erro ao criar: ' + err.message;
+                        errDiv.innerText = 'Erro: ' + err.message;
                     });
                 }
             });
@@ -356,20 +371,17 @@
                 let dados = snapshot.val();
                 let expiraEm = dados.expiraEm || 0;
                 let agora = Date.now();
-                let licencaBloqueada = dados.licenca === 'bloqueado'; // <--- Verificação do Painel Master
+                let licencaBloqueada = dados.licenca === 'bloqueado';
 
-                // Se venceu o prazo OU se foi bloqueado pelo Painel Master:
                 if (agora > expiraEm || licencaBloqueada) {
                     document.getElementById('auth-container').style.display = 'none';
-                    document.getElementById('app-container').style.display = 'none';
+                    document.getElementById('painelMotoboyCard').style.display = 'none';
                     document.getElementById('bloqueio-container').style.display = 'block';
                     return;
                 }
 
                 document.getElementById('auth-container').style.display = 'none';
                 document.getElementById('bloqueio-container').style.display = 'none';
-                document.getElementById('app-container').style.display = 'block';
-
                 document.getElementById('painelMotoboyCard').style.display = 'block';
 
                 configMotoboyAtual = dados;
@@ -388,7 +400,7 @@
                 const btnStatus = document.getElementById('btnToggleStatus');
                 if (dados.status === 'offline') {
                     btnStatus.style.background = '#dc2626';
-                    btnStatus.innerText = '🔴 Offline (De Folga - Escondido)';
+                    btnStatus.innerText = '🔴 Offline (De Folga)';
                 } else {
                     btnStatus.style.background = '#16a34a';
                     btnStatus.innerText = '🟢 Online (Recebendo Pedidos)';
@@ -398,27 +410,6 @@
                     myCurrentCoords = L.latLng(dados.lat, dados.lon);
                 }
             });
-        }
-
-        function tentarDesbloquearPainel() {
-            let senhaDigitada = prompt("Digite sua senha de entregador para desbloquear as configurações:");
-            if (!senhaDigitada) return;
-
-            const usuario = localStorage.getItem('rotaCertaUsuario');
-            db.ref('entregadores/' + usuario).once('value').then((snapshot) => {
-                if (snapshot.exists() && snapshot.val().senha === senhaDigitada) {
-                    document.getElementById('painelTrancado').style.display = 'none';
-                    document.getElementById('painelDestrancado').style.display = 'block';
-                    alert('Painel desbloqueado com sucesso!');
-                } else {
-                    alert('Senha incorreta!');
-                }
-            });
-        }
-
-        function trancarPainelNovamente() {
-            document.getElementById('painelDestrancado').style.display = 'none';
-            document.getElementById('painelTrancado').style.display = 'block';
         }
 
         function salvarConfiguracoesMotoboy() {
@@ -450,31 +441,20 @@
             const novoStatus = configMotoboyAtual.status === 'offline' ? 'online' : 'offline';
 
             if (novoStatus === 'online') {
-                if (!navigator.geolocation) {
-                    alert('GPS não suportado pelo navegador.');
-                    return;
-                }
+                if (!navigator.geolocation) { alert('GPS não suportado.'); return; }
                 navigator.geolocation.getCurrentPosition((position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
 
-                    db.ref('entregadores/' + usuario).update({
-                        status: 'online',
-                        lat: lat,
-                        lon: lon
-                    }).then(() => {
+                    db.ref('entregadores/' + usuario).update({ status: 'online', lat: lat, lon: lon }).then(() => {
                         myCurrentCoords = L.latLng(lat, lon);
-                        alert('Você está ONLINE e sua posição foi ativada no mapa!');
+                        alert('Você está ONLINE!');
                         calculateAll();
                     });
-                }, () => {
-                    alert('Não foi possível capturar sua localização. Verifique o GPS.');
-                }, { enableHighAccuracy: true });
+                }, () => { alert('Erro ao obter GPS.'); }, { enableHighAccuracy: true });
             } else {
-                db.ref('entregadores/' + usuario).update({
-                    status: 'offline'
-                }).then(() => {
-                    alert('Você está OFFLINE. Sua posição está oculta para novos clientes.');
+                db.ref('entregadores/' + usuario).update({ status: 'offline' }).then(() => {
+                    alert('Você está OFFLINE.');
                 });
             }
         }
@@ -484,6 +464,7 @@
             window.location.reload();
         }
 
+        // MAPA DO CLIENTE
         const map = L.map('map').setView([-1.4558, -48.4902], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
@@ -508,33 +489,28 @@
         }
 
         function localizarMotoboyPeloCliente() {
-            const usuario = localStorage.getItem('rotaCertaUsuario');
-            if (!usuario) return;
+            const usuario = localStorage.getItem('rotaCertaUsuario') || 'cristian'; // Padrão ou logado
 
             db.ref('entregadores/' + usuario).once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     const dados = snapshot.val();
-                    
                     if (dados.status === 'offline') {
-                        alert('O entregador está OFFLINE no momento e não está aceitando corridas.');
+                        alert('O entregador está OFFLINE no momento.');
                         document.getElementById('statusMotoboyDistancia').innerText = `🔴 Entregador Offline`;
                         return;
                     }
-
                     if (dados.lat && dados.lon) {
                         myCurrentCoords = L.latLng(dados.lat, dados.lon);
-
                         if (!motoMarker) {
-                            motoMarker = L.marker(myCurrentCoords, { icon: blackMotoIcon }).addTo(map).bindPopup('Moto do Entregador 🏍️').openPopup();
+                            motoMarker = L.marker(myCurrentCoords, { icon: blackMotoIcon }).addTo(map).bindPopup('Entregador 🏍️').openPopup();
                         } else {
                             motoMarker.setLatLng(myCurrentCoords);
                         }
-
                         map.setView(myCurrentCoords, 15);
-                        document.getElementById('statusMotoboyDistancia').innerText = `🏍️ Motoboy Online e localizado no mapa!`;
+                        document.getElementById('statusMotoboyDistancia').innerText = `🏍️ Entregador Online e localizado!`;
                         calculateAll();
                     } else {
-                        alert('O entregador ainda não sincronizou a posição GPS.');
+                        alert('Entregador ainda não sincronizou a posição.');
                     }
                 }
             });
@@ -643,11 +619,11 @@
                     if (myToPickupDistanceKm > 4.0) {
                         let kmExcedente = myToPickupDistanceKm - 4.0;
                         deslocamentoFee = kmExcedente * taxaDeslocamentoConfig;
-                        document.getElementById('deslocamentoText').innerText = `+ R$ ${deslocamentoFee.toFixed(2).replace('.', ',')} (${myToPickupDistanceKm.toFixed(1)} km de distância - taxa extra)`;
+                        document.getElementById('deslocamentoText').innerText = `+ R$ ${deslocamentoFee.toFixed(2).replace('.', ',')} (${myToPickupDistanceKm.toFixed(1)} km extra)`;
                         document.getElementById('deslocamentoRow').style.color = '#d97706';
                     } else {
                         deslocamentoFee = 0;
-                        document.getElementById('deslocamentoText').innerText = `Grátis (Até 4 km de você)`;
+                        document.getElementById('deslocamentoText').innerText = `Grátis (Até 4 km)`;
                         document.getElementById('deslocamentoRow').style.color = '#16a34a';
                     }
 
@@ -686,7 +662,7 @@
         function showPixArea() {
             const name = document.getElementById('clientName').value;
             const phone = document.getElementById('clientPhone').value;
-            if (!name || !phone) { alert('Preencha seu Nome e WhatsApp do cliente.'); return; }
+            if (!name || !phone) { alert('Preencha seu Nome e WhatsApp.'); return; }
 
             document.getElementById('pixArea').style.display = 'block';
             document.getElementById('btnPay').style.display = 'none';
@@ -695,7 +671,7 @@
 
         function copyPixKey() {
             navigator.clipboard.writeText(document.getElementById('pixKeyDisplay').innerText).then(() => {
-                alert('Chave Pix copiada com sucesso!');
+                alert('Chave Pix copiada!');
             });
         }
 
@@ -710,13 +686,12 @@
                 `📱 *Telefone:* ${phone}\n` +
                 `📍 *Coleta:* ${pickup}\n` +
                 `🏁 *Destino:* ${delivery}\n` +
-                `📏 *Distância Entrega:* ${deliveryDistanceKm.toFixed(2)} km\n` +
+                `📏 *Distância:* ${deliveryDistanceKm.toFixed(2)} km\n` +
                 `💰 *Valor Total:* R$ ${calculatedFinalPrice.toFixed(2).replace('.', ',')}\n` +
                 `💳 *Pagamento:* Pix realizado`;
 
             let whatsappDestino = configMotoboyAtual.whatsapp || '5591988888888';
-            const whatsappUrl = `https://wa.me/${whatsappDestino}?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
+            window.open(`https://wa.me/${whatsappDestino}?text=${encodeURIComponent(message)}`, '_blank');
         }
     </script>
 </body>
