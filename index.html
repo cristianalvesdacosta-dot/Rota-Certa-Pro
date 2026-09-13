@@ -260,7 +260,7 @@
 
         let myCurrentCoords = L.latLng(-1.4558, -48.4902); 
         let motoMarker = null;
-        let usuarioAtivoPainel = null; // Guarda o usuário logado apenas na sessão atual
+        let usuarioAtivoPainel = null; 
         let configMotoboyAtual = {
             nome: "Rota Certa",
             whatsapp: "5519997648211",
@@ -289,7 +289,6 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Monitora o usuário padrão ou master (ex: cristian) para exibir a moto no mapa para os clientes
             escutarStatusEmTempoReal('cristian');
         });
 
@@ -332,7 +331,6 @@
             clienteApp.style.display = 'none';
             btnModo.innerText = '👤 Ver Modo Cliente';
 
-            // Sempre limpa e obriga a digitar a senha ao entrar na área do motoboy
             usuarioAtivoPainel = null;
             document.getElementById('auth-container').style.display = 'block';
             document.getElementById('painelMotoboyCard').style.display = 'none';
@@ -704,7 +702,7 @@
         }
 
         function copyPixKey() {
-            navigator.clipboard.writeText(document.getElementById('pixKeyDecoder'] || document.getElementById('pixKeyDisplay').innerText).then(() => {
+            navigator.clipboard.writeText(document.getElementById('pixKeyDisplay').innerText).then(() => {
                 mostrarToast('📋 Chave Pix copiada com sucesso!');
             });
         }
