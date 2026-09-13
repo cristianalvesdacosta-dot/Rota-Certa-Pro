@@ -26,7 +26,7 @@
         .row-fields .main-field { flex: 3; position: relative; }
         .row-fields .number-field { flex: 1; }
         label { display: block; font-size: 0.8rem; font-weight: 500; color: #64748b; margin-bottom: 4px; }
-        .help-text { font-size: 0.72rem; color: #94a3b8; margin-bottom: 6px; line-height: 1.2; }
+        .help-text { font-size: 0.72rem; color: #64748b; margin-top: 4px; margin-bottom: 6px; line-height: 1.3; background: #f8fafc; padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0; }
         input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
         input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
         .inline-gps { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; font-size: 0.75rem; padding: 6px 10px; margin-top: 6px; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
@@ -55,6 +55,8 @@
         .auth-card input { margin-bottom: 15px; }
         .error-msg { color: #e74c3c; font-size: 0.85rem; margin-bottom: 10px; display: none; }
         .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        /* Toast de aviso flutuante */
+        #toastAviso { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 10px 20px; border-radius: 30px; z-index: 9999; font-weight: 600; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: none; text-align: center; }
     </style>
 </head>
 <body>
@@ -65,12 +67,13 @@
         <button type="button" class="btn-modo-topo" id="btnAlternarModo" onclick="alternarModoPainel()">🔒 Área do Motoboy</button>
     </header>
 
+    <div id="toastAviso"></div>
+
     <div class="container">
 
-        <!-- 1. PAINEL DE LOGIN / GESTÃO DO MOTOBOY (Oculto para o cliente por padrão) -->
+        <!-- 1. PAINEL DE LOGIN / GESTÃO DO MOTOBOY -->
         <div id="motoboy-portal-container" style="display: none;">
             
-            <!-- TELA DE LOGIN DO MOTOBOY -->
             <div id="auth-container" class="auth-card">
                 <h2>🚀 Acessar Painel do Entregador</h2>
                 <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Entre com sua identificação e senha para gerenciar suas taxas e GPS:</p>
@@ -81,23 +84,21 @@
                 <button type="button" class="btn" style="background: #e2e8f0; color: #334155; margin-top: 8px;" onclick="voltarParaModoCliente()">⬅️ Voltar para Tela do Cliente</button>
             </div>
 
-            <!-- TELA DE BLOQUEIO DE LICENÇA -->
             <div id="bloqueio-container" class="auth-card" style="display: none; background: #fff5f5; border: 1px solid #feb2b2; text-align: center;">
                 <h2 style="color: #c53030; justify-content: center;">⚠️ Acesso Suspenso</h2>
-                <p style="font-size: 0.9rem; color: #742a2a; margin: 15px 0;">Sua assinatura venceu ou foi bloqueada pela administração.</p>
+                <p style="font-size: 0.9rem; color: #742a2a; margin: 15px 0;">Sua assinatura de teste venceu ou foi bloqueada pela administração.</p>
                 <a href="https://wa.me/5519997648211?text=Olá%20Cristian,%20gostaria%20de%20regularizar%20minha%20assinatura!" target="_blank" class="whatsapp-btn">
                     💬 Falar com Suporte
                 </a>
                 <button type="button" class="btn" style="background: #e2e8f0; color: #2d3748; margin-top: 15px;" onclick="fazerLogout()">Sair da Conta</button>
             </div>
 
-            <!-- CONFIGURAÇÕES INTERNAS DO MOTOBOY -->
             <div class="card" id="painelMotoboyCard" style="border: 2px solid #2563eb; display: none;">
                 <h2>⚙️ Configurações do Entregador</h2>
                 
                 <div class="form-group">
                     <label>Status do Expediente</label>
-                    <div class="help-text">Ao ficar Online, sua posição GPS é transmitida para os clientes.</div>
+                    <div class="help-text">ℹ️ Ao ficar Online, sua moto aparece no mapa para os clientes solicitarem entregas. Se estiver offline, você some do mapa.</div>
                     <button type="button" id="btnToggleStatus" class="btn" style="background: #16a34a; color: white; margin-top: 0;" onclick="alternarStatusOnline()">🟢 Online (Recebendo Pedidos)</button>
                 </div>
 
@@ -119,18 +120,22 @@
                 <div class="config-grid">
                     <div class="form-group">
                         <label for="cfgTarifaBase">Tarifa Base (R$)</label>
+                        <div class="help-text">Valor fixo cobrado logo no início de qualquer corrida.</div>
                         <input type="number" step="0.50" id="cfgTarifaBase" value="3.00" onchange="salvarConfiguracoesMotoboy()">
                     </div>
                     <div class="form-group">
                         <label for="cfgTarifaMinima">Tarifa Mínima (R$)</label>
+                        <div class="help-text">Valor mínimo abaixo do qual a corrida não baixa.</div>
                         <input type="number" step="0.50" id="cfgTarifaMinima" value="10.00" onchange="salvarConfiguracoesMotoboy()">
                     </div>
                     <div class="form-group">
                         <label for="cfgPrecoKm">Preço por Km (R$)</label>
+                        <div class="help-text">Quanto é cobrado a cada quilômetro rodado na entrega.</div>
                         <input type="number" step="0.10" id="cfgPrecoKm" value="1.50" onchange="salvarConfiguracoesMotoboy()">
                     </div>
                     <div class="form-group">
                         <label for="cfgTaxaDeslocamento">Taxa Desloc. (>4km)</label>
+                        <div class="help-text">Taxa por km extra caso você precise ir longe buscar o pedido.</div>
                         <input type="number" step="0.01" id="cfgTaxaDeslocamento" value="0.49" onchange="salvarConfiguracoesMotoboy()">
                     </div>
                 </div>
@@ -142,7 +147,7 @@
             </div>
         </div>
 
-        <!-- 2. APLICAÇÃO DO CLIENTE (Visível livremente por padrão) -->
+        <!-- 2. APLICAÇÃO DO CLIENTE -->
         <div id="client-app-container">
             
             <div class="card">
@@ -263,7 +268,7 @@
             tarifaMinima: 10.00,
             precoKm: 1.50,
             taxaDeslocamento: 0.49,
-            status: "online"
+            status: "offline"
         };
 
         const blackMotoIcon = L.divIcon({
@@ -273,12 +278,56 @@
             iconAnchor: [18, 18]
         });
 
+        function mostrarToast(mensagem) {
+            const toast = document.getElementById('toastAviso');
+            toast.innerText = mensagem;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3500);
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
-            const usuarioLogado = localStorage.getItem('rotaCertaUsuario');
-            if (usuarioLogado) {
-                carregarDadosPainel(usuarioLogado);
+            const usuarioLogado = localStorage.getItem('rotaCertaUsuario') || 'cristian';
+            escutarStatusEmTempoReal(usuarioLogado);
+
+            const usuarioSalvoMaster = localStorage.getItem('rotaCertaUsuario');
+            if (usuarioSalvoMaster) {
+                carregarDadosPainel(usuarioSalvoMaster);
             }
         });
+
+        function escutarStatusEmTempoReal(usuario) {
+            db.ref('entregadores/' + usuario).on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    let dados = snapshot.val();
+                    configMotoboyAtual = dados;
+
+                    if (dados.lat && dados.lon) {
+                        myCurrentCoords = L.latLng(dados.lat, dados.lon);
+                    }
+
+                    // Se estiver online, mostra a moto no mapa. Se estiver offline, remove!
+                    if (dados.status === 'online') {
+                        if (dados.lat && dados.lon) {
+                            if (!motoMarker) {
+                                motoMarker = L.marker(myCurrentCoords, { icon: blackMotoIcon }).addTo(map).bindPopup('Entregador 🏍️');
+                            } else {
+                                motoMarker.setLatLng(myCurrentCoords);
+                                if (!map.hasLayer(motoMarker)) {
+                                    motoMarker.addTo(map);
+                                }
+                            }
+                        }
+                    } else {
+                        // Offline: remove a moto do mapa
+                        if (motoMarker && map.hasLayer(motoMarker)) {
+                            map.removeLayer(motoMarker);
+                        }
+                    }
+                }
+            });
+        }
 
         function alternarModoPainel() {
             const portal = document.getElementById('motoboy-portal-container');
@@ -325,13 +374,14 @@
             
             refCliente.once('value').then((snapshot) => {
                 const agora = Date.now();
-                const trintaDiasMs = 30 * 24 * 60 * 60 * 1000;
+                const trintaDiasMs = 30 * 24 * 60 * 60 * 1000; // 30 dias de teste
 
                 if (snapshot.exists()) {
                     let dados = snapshot.val();
                     if (dados.senha === sInput) {
                         localStorage.setItem('rotaCertaUsuario', uInput);
                         carregarDadosPainel(uInput);
+                        escutarStatusEmTempoReal(uInput);
                     } else {
                         errDiv.style.display = 'block';
                         errDiv.innerText = 'Senha incorreta!';
@@ -354,6 +404,7 @@
                     refCliente.set(novoPerfil).then(() => {
                         localStorage.setItem('rotaCertaUsuario', uInput);
                         carregarDadosPainel(uInput);
+                        escutarStatusEmTempoReal(uInput);
                     }).catch((err) => {
                         errDiv.style.display = 'block';
                         errDiv.innerText = 'Erro: ' + err.message;
@@ -364,10 +415,7 @@
 
         function carregarDadosPainel(usuario) {
             db.ref('entregadores/' + usuario).on('value', (snapshot) => {
-                if (!snapshot.exists()) {
-                    fazerLogout();
-                    return;
-                }
+                if (!snapshot.exists()) return;
                 let dados = snapshot.val();
                 let expiraEm = dados.expiraEm || 0;
                 let agora = Date.now();
@@ -404,10 +452,6 @@
                 } else {
                     btnStatus.style.background = '#16a34a';
                     btnStatus.innerText = '🟢 Online (Recebendo Pedidos)';
-                }
-
-                if (dados.lat && dados.lon) {
-                    myCurrentCoords = L.latLng(dados.lat, dados.lon);
                 }
             });
         }
@@ -448,13 +492,13 @@
 
                     db.ref('entregadores/' + usuario).update({ status: 'online', lat: lat, lon: lon }).then(() => {
                         myCurrentCoords = L.latLng(lat, lon);
-                        alert('Você está ONLINE!');
+                        mostrarToast('🟢 Você está ONLINE e visível no mapa!');
                         calculateAll();
                     });
                 }, () => { alert('Erro ao obter GPS.'); }, { enableHighAccuracy: true });
             } else {
                 db.ref('entregadores/' + usuario).update({ status: 'offline' }).then(() => {
-                    alert('Você está OFFLINE.');
+                    mostrarToast('🔴 Você está OFFLINE.');
                 });
             }
         }
@@ -489,29 +533,33 @@
         }
 
         function localizarMotoboyPeloCliente() {
-            const usuario = localStorage.getItem('rotaCertaUsuario') || 'cristian'; // Padrão ou logado
+            const usuario = localStorage.getItem('rotaCertaUsuario') || 'cristian';
 
             db.ref('entregadores/' + usuario).once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     const dados = snapshot.val();
                     if (dados.status === 'offline') {
-                        alert('O entregador está OFFLINE no momento.');
+                        mostrarToast('⚠️ O entregador está OFFLINE no momento.');
                         document.getElementById('statusMotoboyDistancia').innerText = `🔴 Entregador Offline`;
                         return;
                     }
                     if (dados.lat && dados.lon) {
                         myCurrentCoords = L.latLng(dados.lat, dados.lon);
                         if (!motoMarker) {
-                            motoMarker = L.marker(myCurrentCoords, { icon: blackMotoIcon }).addTo(map).bindPopup('Entregador 🏍️').openPopup();
+                            motoMarker = L.marker(myCurrentCoords, { icon: blackMotoIcon }).addTo(map).bindPopup('Entregador 🏍️');
                         } else {
                             motoMarker.setLatLng(myCurrentCoords);
+                            if (!map.hasLayer(motoMarker)) motoMarker.addTo(map);
                         }
                         map.setView(myCurrentCoords, 15);
                         document.getElementById('statusMotoboyDistancia').innerText = `🏍️ Entregador Online e localizado!`;
+                        mostrarToast('📍 Entregador localizado com sucesso!');
                         calculateAll();
                     } else {
-                        alert('Entregador ainda não sincronizou a posição.');
+                        mostrarToast('⚠️ Entregador ainda não sincronizou a posição.');
                     }
+                } else {
+                    mostrarToast('⚠️ Entregador não encontrado.');
                 }
             });
         }
@@ -671,7 +719,7 @@
 
         function copyPixKey() {
             navigator.clipboard.writeText(document.getElementById('pixKeyDisplay').innerText).then(() => {
-                alert('Chave Pix copiada!');
+                mostrarToast('📋 Chave Pix copiada com sucesso!');
             });
         }
 
