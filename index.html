@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Entregas e Transporte Particular</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Leaflet Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f4f7f6;
+            color: #333;
+            padding-bottom: 40px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: white;
+            padding: 20px 16px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        header p {
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 16px auto;
+            padding: 0 12px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+        }
+
+        .card h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .row-fields {
+            display: flex;
+            gap: 8px;
+        }
+
+        .row-fields .main-field {
+            flex: 3;
+            position: relative;
+        }
+
+        .row-fields .number-field {
+            flex: 1;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+
+        .gps-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #0f172a;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .gps-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .inline-gps {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+            font-size: 0.75rem;
+            padding: 6px 10px;
+            margin-top: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .inline-gps:hover {
+            background: #dbeafe;
+        }
+
+        .live-btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+        }
+
+        .live-btn.active {
+            background: #16a34a;
+        }
+
+        .live-btn:hover {
+            opacity: 0.9;
+        }
+
+        .suggestions {
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 150px;
+            overflow-y: auto;
+            position: absolute;
+            width: 100%;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .suggestion-item {
+            padding: 10px 12px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f8fafc;
+        }
+
+        #map {
+            width: 100%;
+            height: 220px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .moto-marker-icon {
+            background: #0f172a;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            color: #ffffff;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+
+        .summary-box {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 14px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: #475569;
+        }
+
+        .summary-row.total {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #0f172a;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 10px;
+            margin-top: 8px;
+            margin-bottom: 0;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn-success {
+            background-color: #16a34a;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-success:hover {
+            background-color: #15803d;
+        }
+
+        .pix-area {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            display: none;
+            margin-top: 14px;
+        }
+
+        .pix-key {
+            background: white;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            word-break: break-all;
+            margin: 10px 0;
+            user-select: all;
+        }
+
+        .copy-btn {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .copy-btn:hover {
+            background: #16a34a;
+        }
+
+        .loading {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-align: center;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .driver-footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 10px;
+        }
+
+        .driver-login-link {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .driver-login-link:hover {
+            color: #475569;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 id="headerName">Carregando...</h1>
+        <p id="headerSub">Serviço de Entrega e Transporte</p>
+    </header>
+
+    <div class="container">
+        <!-- Painel do Entregador Protegido por Senha / Cadastro Automático -->
+        <div class="card" id="driverPanelCard" style="background: #f8fafc; border: 1px dashed #cbd5e1; display: none;">
+            <h2>🏍️ Painel do Entregador & Cadastro</h2>
+            
+            <div id="loginSection">
+                <p id="loginPromptText" style="font-size: 0.85rem; color: #64748b; margin-bottom: 10px;">Digite sua senha para acessar ou configurar seu perfil.</p>
+                <div class="form-group">
+                    <label for="driverPassInput">Senha de Acesso</label>
+                    <input type="password" id="driverPassInput" placeholder="Sua senha (ex: 123 para novos cadastros)">
+                </div>
+                <button type="button" class="btn btn-primary" onclick="loginDriver()" style="margin-top:0;">Acessar Painel</button>
+            </div>
+            
+            <div id="driverControls" style="display: none; margin-top: 14px;">
+                <hr style="border: 0; border-top: 1px solid #cbd5e1; margin: 14px 0;">
+                <h3 style="font-size: 0.9rem; color: #1e293b; margin-bottom: 10px;">⚙️ Seu Cadastro e Taxas</h3>
+                
+                <div class="form-group">
+                    <label>Seu Nome / Apelido</label>
+                    <input type="text" id="editNome">
+                </div>
+                <div class="form-group">
+                    <label>Sua Cidade / Região</label>
+                    <input type="text" id="editCidade" placeholder="Ex: Belém/PA">
+                </div>
+                <div class="form-group">
+                    <label>Seu WhatsApp (com DDD)</label>
+                    <input type="text" id="editWhatsapp" placeholder="Ex: 5591988888888">
+                </div>
+                <div class="form-group">
+                    <label>Sua Chave Pix</label>
+                    <input type="text" id="editPix">
+                </div>
+                <div class="form-group">
+                    <label>Sua Senha de Acesso</label>
+                    <input type="password" id="editSenha">
+                </div>
+
+                <div class="row-fields" style="margin-bottom: 14px;">
+                    <div style="flex: 1;">
+                        <label>Tarifa Base (R$)</label>
+                        <input type="number" step="0.50" id="editTaxaBase">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Mínima (R$)</label>
+                        <input type="number" step="1.00" id="editTarifaMinima">
+                    </div>
+                </div>
+
+                <div class="row-fields" style="margin-bottom: 14px;">
+                    <div style="flex: 1;">
+                        <label>Preço por KM (R$)</label>
+                        <input type="number" step="0.10" id="editPrecoKm">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Taxa Desloc. / KM (R$)</label>
+                        <input type="number" step="0.01" id="editTaxaDeslocamento">
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-success" onclick="saveDriverConfig()" style="margin-top:0; margin-bottom: 14px;">Salvar / Criar no Firebase</button>
+
+                <hr style="border: 0; border-top: 1px solid #cbd5e1; margin: 14px 0;">
+
+                <button type="button" class="gps-btn" onclick="updateMyGPS()">📍 Atualizar minha posição atual</button>
+                <button type="button" id="btnToggleLive" class="gps-btn live-btn" onclick="toggleLiveTracking()">🔴 Ligar Transmissão ao Vivo</button>
+                <button type="button" class="gps-btn" style="background: #fee2e2; color: #991b1b; border-color: #fca5a5;" onclick="goOffline()">❌ Ficar Offline</button>
+                <p id="myGpsStatus" style="font-size: 0.75rem; color: #64748b; margin-top: 6px; text-align: center;"></p>
+            </div>
+
+            <button type="button" class="gps-btn" style="background: #e2e8f0; margin-top: 14px;" onclick="lockDriverPanel()">🔒 Fechar Painel</button>
+        </div>
+
+        <!-- Dados do Pedido -->
+        <div class="card">
+            <h2>📍 Dados do Pedido</h2>
+            
+            <div class="form-group">
+                <label for="clientName">Seu Nome</label>
+                <input type="text" id="clientName" placeholder="Ex: João Silva" oninput="saveInputs()">
+            </div>
+
+            <div class="form-group">
+                <label for="clientPhone">Seu WhatsApp</label>
+                <input type="tel" id="clientPhone" placeholder="Ex: (91) 98888-8888" oninput="saveInputs()">
+            </div>
+
+            <!-- Coleta -->
+            <div class="form-group">
+                <label for="pickupAddress">Endereço de Coleta (Retirada)</label>
+                <div class="row-fields">
+                    <div class="main-field" style="position: relative;">
+                        <input type="text" id="pickupAddress" placeholder="Ex: Travessa 14 de Março, Belém" oninput="saveInputs()">
+                        <div id="pickupSuggestions" class="suggestions"></div>
+                    </div>
+                    <div class="number-field">
+                        <input type="text" id="pickupNumber" placeholder="Nº / Comp" oninput="saveInputs()">
+                    </div>
+                </div>
+                <button type="button" class="inline-gps" onclick="useGpsForField('pickup')">📍 Usar minha localização atual aqui (Coleta)</button>
+            </div>
+
+            <!-- Destino -->
+            <div class="form-group">
+                <label for="deliveryAddress">Endereço de Destino (Entrega)</label>
+                <div class="row-fields">
+                    <div class="main-field" style="position: relative;">
+                        <input type="text" id="deliveryAddress" placeholder="Ex: Rodovia Augusto Montenegro, Belém" oninput="saveInputs()">
+                        <div id="deliverySuggestions" class="suggestions"></div>
+                    </div>
+                    <div class="number-field">
+                        <input type="text" id="deliveryNumber" placeholder="Nº / Comp" oninput="saveInputs()">
+                    </div>
+                </div>
+                <button type="button" class="inline-gps" onclick="useGpsForField('delivery')">📍 Usar minha localização atual aqui (Destino)</button>
+            </div>
+
+            <div class="loading" id="loadingStatus">Calculando rotas e distâncias...</div>
+            <div id="map"></div>
+        </div>
+
+        <!-- Resumo do Cálculo -->
+        <div class="card" id="summaryCard" style="display: none;">
+            <h2>💰 Resumo do Valor</h2>
+            <div class="summary-box">
+                <div class="summary-row">
+                    <span>Distância até a Coleta:</span>
+                    <strong id="myDistText">0 km</strong>
+                </div>
+                <div class="summary-row" id="deslocamentoRow" style="color: #16a34a; font-weight: 500;">
+                    <span>Custo de Deslocamento (>4km):</span>
+                    <strong id="deslocamentoText">Grátis (Até 4 km)</strong>
+                </div>
+                <div class="summary-row">
+                    <span>Distância da Entrega (Coleta ➔ Destino):</span>
+                    <strong id="distText">0 km</strong>
+                </div>
+                <div class="summary-row">
+                    <span>Base + Km da Entrega:</span>
+                    <span id="kmValueText">R$ 0,00</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total da Corrida:</span>
+                    <strong id="totalText">R$ 0,00</strong>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="btnPay" onclick="showPixArea()">Aceitar e Pagar via Pix</button>
+
+            <!-- Área Pix -->
+            <div class="pix-area" id="pixArea">
+                <p style="font-size: 0.9rem; font-weight: 600; color: #166534;">Chave Pix do Entregador:</p>
+                <div class="pix-key" id="pixKeyText">Carregando chave...</div>
+                <button class="copy-btn" onclick="copyPixKey()">Copiar Chave Pix</button>
+                <p style="font-size: 0.75rem; color: #64748b; margin-top: 10px;">Após realizar o pagamento, clique no botão abaixo para enviar o pedido com os detalhes.</p>
+            </div>
+
+            <button class="btn btn-success" id="btnWhatsapp" style="display: none;" onclick="sendToWhatsapp()">Enviar Pedido no WhatsApp</button>
+        </div>
+
+        <!-- Rodapé com link para o Entregador logar / cadastrar -->
+        <div class="driver-footer">
+            <button type="button" class="driver-login-link" onclick="openDriverPanel()">🔐 Área do Entregador / Novo Cadastro</button>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Leaflet Routing Machine JS -->
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB08qBEIUkTCEv6ZMLdQuenJ4wI1w83V9I",
+            authDomain: "rotacertagps-9ff13.firebaseapp.com",
+            databaseURL: "https://rotacertagps-9ff13-default-rtdb.firebaseio.com",
+            projectId: "rotacertagps-9ff13",
+            storageBucket: "rotacertagps-9ff13.appspot.com",
+            messagingSenderId: "696765090417",
+            appId: "1:696765090417:web:d663b9c1b38f8f416aef7f",
+            measurementId: "G-8ND75MXQ90"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Pega o ID do entregador na URL (Ex: ?moto=carlos)
+        const urlParams = new URLSearchParams(window.location.search);
+        const driverId = urlParams.get('moto') || 'novo_entregador'; 
+
+        // Valores padrão iniciais caso seja um cadastro novo
+        let driverData = {
+            nome: "Novo Entregador",
+            cidade: "Belém/PA",
+            whatsapp: "5591999999999",
+            pix: "sua-chave-pix-aqui",
+            senha: "123",
+            taxa_base: 3.00,
+            tarifa_minima: 10.00,
+            preco_km: 1.50,
+            taxa_deslocamento: 0.49
+        };
+
+        let myCurrentCoords = L.latLng(-1.4558, -48.4902); 
+        let watchId = null;
+        let isLiveActive = false;
+        let motoMarker = null;
+
+        const blackMotoIcon = L.divIcon({
+            className: 'moto-marker-icon',
+            html: '🏍️',
+            iconSize: [36, 36],
+            iconAnchor: [18, 18]
+        });
+
+        // Carregar dados do entregador do Firebase ao abrir a página
+        window.addEventListener('DOMContentLoaded', () => {
+            db.ref(`entregadores/${driverId}`).once('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    driverData = { ...driverData, ...data };
+                } else {
+                    // Se não existe no Firebase ainda, avisa que é um novo cadastro pendente de salvamento
+                    document.getElementById('loginPromptText').innerText = "Primeiro acesso detectado! Defina sua senha e clique em Salvar para criar seu cadastro.";
+                }
+                updateHeaderAndInterface();
+            });
+
+            // Restaura campos do cliente salvos no navegador
+            if(localStorage.getItem('clientName')) document.getElementById('clientName').value = localStorage.getItem('clientName');
+            if(localStorage.getItem('clientPhone')) document.getElementById('clientPhone').value = localStorage.getItem('clientPhone');
+            if(localStorage.getItem('pickupAddress')) document.getElementById('pickupAddress').value = localStorage.getItem('pickupAddress');
+            if(localStorage.getItem('pickupNumber')) document.getElementById('pickupNumber').value = localStorage.getItem('pickupNumber');
+            if(localStorage.getItem('deliveryAddress')) document.getElementById('deliveryAddress').value = localStorage.getItem('deliveryAddress');
+            if(localStorage.getItem('deliveryNumber')) document.getElementById('deliveryNumber').value = localStorage.getItem('deliveryNumber');
+
+            if(localStorage.getItem('pixShown') === 'true') {
+                document.getElementById('pixArea').style.display = 'block';
+                document.getElementById('btnPay').style.display = 'none';
+                document.getElementById('btnWhatsapp').style.display = 'block';
+            }
+
+            // Escuta a posição em tempo real
+            db.ref(`posicoes/${driverId}`).on('value', (snapshot) => {
+                const pos = snapshot.val();
+                if (pos && pos.status === 'online' && pos.lat && pos.lon) {
+                    const liveLatLng = L.latLng(pos.lat, pos.lon);
+                    myCurrentCoords = liveLatLng;
+                    updateMotoMarkerOnMap(liveLatLng);
+                } else {
+                    if (motoMarker) {
+                        map.removeLayer(motoMarker);
+                        motoMarker = null;
+                    }
+                }
+            });
+
+            if(document.getElementById('pickupAddress').value && document.getElementById('deliveryAddress').value) {
+                calculateAll();
+            }
+        });
+
+        function updateHeaderAndInterface() {
+            document.getElementById('headerName').innerText = driverData.nome;
+            document.getElementById('headerSub').innerText = `Entrega e Transporte Particular • ${driverData.cidade}`;
+            document.getElementById('pixKeyText').innerText = driverData.pix;
+
+            // Preenche os campos do painel de edição
+            document.getElementById('editNome').value = driverData.nome || '';
+            document.getElementById('editCidade').value = driverData.cidade || '';
+            document.getElementById('editWhatsapp').value = driverData.whatsapp || '';
+            document.getElementById('editPix').value = driverData.pix || '';
+            document.getElementById('editSenha').value = driverData.senha || '123';
+            document.getElementById('editTaxaBase').value = driverData.taxa_base ?? 3.00;
+            document.getElementById('editTarifaMinima').value = driverData.tarifa_minima ?? 10.00;
+            document.getElementById('editPrecoKm').value = driverData.preco_km ?? 1.50;
+            document.getElementById('editTaxaDeslocamento').value = driverData.taxa_deslocamento ?? 0.49;
+        }
+
+        function openDriverPanel() {
+            document.getElementById('driverPanelCard').style.display = 'block';
+        }
+
+        function lockDriverPanel() {
+            document.getElementById('driverPanelCard').style.display = 'none';
+        }
+
+        function loginDriver() {
+            const pass = document.getElementById('driverPassInput').value;
+            // Se for novo cadastro ou senha correta, libera o painel
+            if (pass === driverData.senha || !driverData.senha) {
+                document.getElementById('driverControls').style.display = 'block';
+                document.getElementById('loginSection').style.display = 'none';
+                alert('Painel liberado!');
+            } else {
+                alert('Senha incorreta!');
+            }
+        }
+
+        function saveDriverConfig() {
+            // Coleta os novos dados digitados pelo entregador
+            driverData.nome = document.getElementById('editNome').value;
+            driverData.cidade = document.getElementById('editCidade').value;
+            driverData.whatsapp = document.getElementById('editWhatsapp').value;
+            driverData.pix = document.getElementById('editPix').value;
+            driverData.senha = document.getElementById('editSenha').value || '123';
+            driverData.taxa_base = parseFloat(document.getElementById('editTaxaBase').value) || 3.00;
+            driverData.tarifa_minima = parseFloat(document.getElementById('editTarifaMinima').value) || 10.00;
+            driverData.preco_km = parseFloat(document.getElementById('editPrecoKm').value) || 1.50;
+            driverData.taxa_deslocamento = parseFloat(document.getElementById('editTaxaDeslocamento').value) || 0.49;
+
+            // Salva ou cria automaticamente no Firebase usando a chave da URL (ex: ?moto=carlos)
+            db.ref(`entregadores/${driverId}`).set(driverData, (error) => {
+                if (error) {
+                    alert('Erro ao salvar no Firebase.');
+                } else {
+                    alert('Cadastro e taxas salvos com sucesso no Firebase!');
+                    updateHeaderAndInterface();
+                    if(document.getElementById('pickupAddress').value && document.getElementById('deliveryAddress').value) {
+                        calculateAll();
+                    }
+                }
+            });
+        }
+
+        function updateMotoMarkerOnMap(latLng) {
+            if (!motoMarker) {
+                motoMarker = L.marker(latLng, {
+                    icon: blackMotoIcon,
+                    title: 'Moto do Entregador'
+                }).addTo(map).bindPopup(`Moto de ${driverData.nome} 🏍️`);
+            } else {
+                motoMarker.setLatLng(latLng);
+            }
+        }
+
+        function updateMyGPS() {
+            if (!navigator.geolocation) {
+                alert('Seu navegador não suporta GPS.');
+                return;
+            }
+            document.getElementById('myGpsStatus').innerText = 'Obtendo sua localização atual...';
+            navigator.geolocation.getCurrentPosition(function(position) {
+                myCurrentCoords = L.latLng(position.coords.latitude, position.coords.longitude);
+                
+                db.ref(`posicoes/${driverId}`).set({
+                    status: 'online',
+                    lat: position.coords.latitude,
+                    lon: position.coords.longitude,
+                    timestamp: Date.now()
+                });
+
+                updateMotoMarkerOnMap(myCurrentCoords);
+                map.setView(myCurrentCoords, 15);
+
+                document.getElementById('myGpsStatus').innerText = 'Posição atualizada e online!';
+                if(document.getElementById('pickupAddress').value) {
+                    calculateAll();
+                }
+            }, function() {
+                alert('Erro ao obter GPS.');
+                document.getElementById('myGpsStatus').innerText = 'Erro ao obter GPS.';
+            }, { timeout: 10000, enableHighAccuracy: true });
+        }
+
+        function goOffline() {
+            if (confirm('Deseja ficar offline? Sua moto vai sumir do mapa.')) {
+                if (isLiveActive) toggleLiveTracking();
+                db.ref(`posicoes/${driverId}`).set({ status: 'offline' });
+                if (motoMarker) {
+                    map.removeLayer(motoMarker);
+                    motoMarker = null;
+                }
+                document.getElementById('myGpsStatus').innerText = 'Você está offline.';
+            }
+        }
+
+        function toggleLiveTracking() {
+            const btn = document.getElementById('btnToggleLive');
+            if (!isLiveActive) {
+                if (!navigator.geolocation) {
+                    alert('Seu navegador não suporta GPS.');
+                    return;
+                }
+                isLiveActive = true;
+                btn.classList.add('active');
+                btn.innerText = '🟢 Transmissão ao Vivo Ativa (Parar)';
+                document.getElementById('myGpsStatus').innerText = 'Transmitindo em tempo real...';
+
+                watchId = navigator.geolocation.watchPosition(function(position) {
+                    myCurrentCoords = L.latLng(position.coords.latitude, position.coords.longitude);
+                    db.ref(`posicoes/${driverId}`).set({
+                        status: 'online',
+                        lat: position.coords.latitude,
+                        lon: position.coords.longitude,
+                        timestamp: Date.now()
+                    });
+                    updateMotoMarkerOnMap(myCurrentCoords);
+                }, function(error) {
+                    console.error('Erro no rastreamento: ', error);
+                }, { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 });
+
+            } else {
+                isLiveActive = false;
+                btn.classList.remove('active');
+                btn.innerText = '🔴 Ligar Transmissão ao Vivo';
+                document.getElementById('myGpsStatus').innerText = 'Transmissão pausada.';
+                if (watchId !== null) {
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+                }
+            }
+        }
+
+        function saveInputs() {
+            localStorage.setItem('clientName', document.getElementById('clientName').value);
+            localStorage.setItem('clientPhone', document.getElementById('clientPhone').value);
+            localStorage.setItem('pickupAddress', document.getElementById('pickupAddress').value);
+            localStorage.setItem('pickupNumber', document.getElementById('pickupNumber').value);
+            localStorage.setItem('deliveryAddress', document.getElementById('deliveryAddress').value);
+            localStorage.setItem('deliveryNumber', document.getElementById('deliveryNumber').value);
+        }
+
+        const map = L.map('map').setView([-1.4558, -48.4902], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        let routingControl = null;
+        let deliveryDistanceKm = 0;
+        let myToPickupDistanceKm = 0;
+        let calculatedFinalPrice = 0;
+        let deslocamentoFee = 0;
+        let pickupCoords = null;
+        let deliveryCoords = null;
+
+        function setupAutocomplete(inputId, suggestionsId, isPickup) {
+            const input = document.getElementById(inputId);
+            const suggestions = document.getElementById(suggestionsId);
+            let timeout = null;
+
+            input.addEventListener('input', function() {
+                saveInputs();
+                clearTimeout(timeout);
+                const query = this.value;
+                if (query.length < 3) {
+                    suggestions.style.display = 'none';
+                    return;
+                }
+
+                timeout = setTimeout(() => {
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', ' + driverData.cidade)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            suggestions.innerHTML = '';
+                            if (data.length > 0) {
+                                suggestions.style.display = 'block';
+                                data.forEach(item => {
+                                    const div = document.createElement('div');
+                                    div.className = 'suggestion-item';
+                                    div.innerText = item.display_name;
+                                    div.onclick = function() {
+                                        input.value = item.display_name;
+                                        suggestions.style.display = 'none';
+                                        saveInputs();
+                                        const coords = L.latLng(parseFloat(item.lat), parseFloat(item.lon));
+                                        if (isPickup) pickupCoords = coords;
+                                        else deliveryCoords = coords;
+                                        calculateAll();
+                                    };
+                                    suggestions.appendChild(div);
+                                });
+                            } else {
+                                suggestions.style.display = 'none';
+                            }
+                        })
+                        .catch(err => console.error(err));
+                }, 400);
+            });
+
+            document.addEventListener('click', function(e) {
+                if (e.target !== input) suggestions.style.display = 'none';
+            });
+        }
+
+        setupAutocomplete('pickupAddress', 'pickupSuggestions', true);
+        setupAutocomplete('deliveryAddress', 'deliverySuggestions', false);
+
+        function useGpsForField(fieldType) {
+            if (!navigator.geolocation) {
+                alert('Seu navegador não suporta GPS.');
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                const latLng = L.latLng(lat, lon);
+
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const formattedAddress = data.display_name || 'Localização Atual por GPS';
+                        if (fieldType === 'pickup') {
+                            document.getElementById('pickupAddress').value = formattedAddress;
+                            pickupCoords = latLng;
+                        } else {
+                            document.getElementById('deliveryAddress').value = formattedAddress;
+                            deliveryCoords = latLng;
+                        }
+                        saveInputs();
+                        map.setView(latLng, 15);
+                        calculateAll();
+                    })
+                    .catch(() => alert('Erro ao buscar endereço.'));
+            }, function() {
+                alert('Não foi possível capturar o GPS.');
+            }, { timeout: 10000, enableHighAccuracy: true });
+        }
+
+        function geocode(address, isPickup, callback) {
+            if (isPickup && pickupCoords) { callback(pickupCoords); return; }
+            if (!isPickup && deliveryCoords) { callback(deliveryCoords); return; }
+
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const latLng = L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
+                        if (isPickup) pickupCoords = latLng;
+                        else deliveryCoords = latLng;
+                        callback(latLng);
+                    } else {
+                        callback(null);
+                    }
+                })
+                .catch(() => callback(null));
+        }
+
+        function calculateAll() {
+            const pickup = document.getElementById('pickupAddress').value;
+            const delivery = document.getElementById('deliveryAddress').value;
+
+            if (!pickup || !delivery) return;
+
+            document.getElementById('loadingStatus').style.display = 'block';
+            document.getElementById('loadingStatus').innerText = 'Calculando rotas...';
+
+            geocode(pickup, true, function(latLngPickup) {
+                if (!latLngPickup) {
+                    alert('Endereço de coleta não encontrado.');
+                    document.getElementById('loadingStatus').style.display = 'none';
+                    return;
+                }
+
+                geocode(delivery, false, function(latLngDelivery) {
+                    if (!latLngDelivery) {
+                        alert('Endereço de destino não encontrado.');
+                        document.getElementById('loadingStatus').style.display = 'none';
+                        return;
+                    }
+
+                    document.getElementById('loadingStatus').style.display = 'none';
+
+                    if (routingControl) map.removeControl(routingControl);
+
+                    myToPickupDistanceKm = myCurrentCoords.distanceTo(latLngPickup) / 1000;
+
+                    if (myToPickupDistanceKm > 4.0) {
+                        let kmExcedente = myToPickupDistanceKm - 4.0;
+                        deslocamentoFee = kmExcedente * (driverData.taxa_deslocamento ?? 0.49);
+                        document.getElementById('deslocamentoText').innerText = `+ R$ ${deslocamentoFee.toFixed(2).replace('.', ',')} (${myToPickupDistanceKm.toFixed(1)} km de você)`;
+                        document.getElementById('deslocamentoRow').style.color = '#d97706';
+                    } else {
+                        deslocamentoFee = 0;
+                        document.getElementById('deslocamentoText').innerText = `Grátis (${myToPickupDistanceKm.toFixed(1)} km de você)`;
+                        document.getElementById('deslocamentoRow').style.color = '#16a34a';
+                    }
+
+                    routingControl = L.Routing.control({
+                        waypoints: [latLngPickup, latLngDelivery],
+                        routeWhileDragging: false,
+                        addWaypoints: false,
+                        createMarker: function() { return null; },
+                        lineOptions: { styles: [{ color: '#2563eb', weight: 5, opacity: 0.8 }] },
+                        show: false
+                    }).addTo(map);
+
+                    routingControl.on('routesfound', function(e) {
+                        const summary = e.routes[0].summary;
+                        deliveryDistanceKm = summary.totalDistance / 1000;
+
+                        const baseRate = driverData.taxa_base ?? 3.00;
+                        const kmRate = driverData.preco_km ?? 1.50;
+                        const minRate = driverData.tarifa_minima ?? 10.00;
+
+                        let rawDeliveryValue = baseRate + (deliveryDistanceKm * kmRate);
+                        let finalDeliveryValue = rawDeliveryValue < minRate ? minRate : rawDeliveryValue;
+
+                        calculatedFinalPrice = finalDeliveryValue + deslocamentoFee;
+
+                        document.getElementById('myDistText').innerText = myToPickupDistanceKm.toFixed(2) + ' km';
+                        document.getElementById('distText').innerText = deliveryDistanceKm.toFixed(2) + ' km';
+                        document.getElementById('kmValueText').innerText = 'R$ ' + finalDeliveryValue.toFixed(2).replace('.', ',');
+                        document.getElementById('totalText').innerText = 'R$ ' + calculatedFinalPrice.toFixed(2).replace('.', ',');
+                        
+                        document.getElementById('summaryCard').style.display = 'block';
+                    });
+                });
+            });
+        }
+
+        function showPixArea() {
+            const name = document.getElementById('clientName').value;
+            const phone = document.getElementById('clientPhone').value;
+
+            if (!name || !phone) {
+                alert('Preencha seu Nome e WhatsApp.');
+                document.getElementById('clientName').focus();
+                return;
+            }
+
+            localStorage.setItem('pixShown', 'true');
+            document.getElementById('pixArea').style.display = 'block';
+            document.getElementById('btnPay').style.display = 'none';
+            document.getElementById('btnWhatsapp').style.display = 'block';
+        }
+
+        function copyPixKey() {
+            navigator.clipboard.writeText(driverData.pix).then(() => {
+                alert('Chave Pix copiada!');
+            });
+        }
+
+        function sendToWhatsapp() {
+            const name = document.getElementById('clientName').value;
+            const phone = document.getElementById('clientPhone').value;
+            const pickup = document.getElementById('pickupAddress').value + (document.getElementById('pickupNumber').value ? `, Nº ${document.getElementById('pickupNumber').value}` : '');
+            const delivery = document.getElementById('deliveryAddress').value + (document.getElementById('deliveryNumber').value ? `, Nº ${document.getElementById('deliveryNumber').value}` : '');
+            
+            let pickupMapLink = pickupCoords ? `https://www.google.com/maps/search/?api=1&query=${pickupCoords.lat},${pickupCoords.lng}` : pickup;
+            let deliveryMapLink = deliveryCoords ? `https://www.google.com/maps/search/?api=1&query=${deliveryCoords.lat},${deliveryCoords.lng}` : delivery;
+
+            const message = `*Nova Solicitação de Entrega*\n\n` +
+                `👤 *Nome:* ${name}\n` +
+                `📱 *Telefone:* ${phone}\n` +
+                `📍 *Coleta:* ${pickup}\n` +
+                `🗺️ *Maps Coleta:* ${pickupMapLink}\n\n` +
+                `🏁 *Destino:* ${delivery}\n` +
+                `🗺️ *Maps Destino:* ${deliveryMapLink}\n\n` +
+                `🏍️ *Distância até Coleta:* ${myToPickupDistanceKm.toFixed(2)} km\n` +
+                `📏 *Distância Entrega:* ${deliveryDistanceKm.toFixed(2)} km\n` +
+                `💰 *Valor Total:* R$ ${calculatedFinalPrice.toFixed(2).replace('.', ',')}\n` +
+                `💳 *Pagamento:* Pix realizado`;
+
+            const whatsappUrl = `https://wa.me/${driverData.whatsapp}?text=${encodeURIComponent(message)}`;
+            localStorage.clear();
+            window.open(whatsappUrl, '_blank');
+        }
+    </script>
+</body>
+</html>
