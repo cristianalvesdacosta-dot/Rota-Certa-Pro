@@ -3,136 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Entregas - Rota Certa</title>
+    <title>Rota Certa - Painel do Entregador</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        .card { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h2 { color: #333; margin-top: 0; }
+        p { color: #666; font-size: 14px; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
+        button { width: 100%; padding: 12px; background: #2980b9; color: #fff; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        button:hover { background: #2471a3; }
+        .error { color: #e74c3c; font-size: 13px; margin-bottom: 15px; display: none; }
         
-        /* TELA DE CADASTRO INICIAL (Se não tiver ?moto= na URL) */
-        #register-screen, #login-screen {
-            display: none; max-width: 400px; margin: 50px auto; background: #fff; padding: 25px; 
-            border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center;
-        }
-        #register-screen h2, #login-screen h2 { color: #2c3e50; margin-top: 0; }
-
-        /* TELA DE BLOQUEIO POR MENSALIDADE */
-        #lock-screen {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #111; color: #fff; z-index: 9999; text-align: center; padding: 20px; box-sizing: border-box; overflow-y: auto;
-        }
-        .lock-card {
-            background: #222; max-width: 400px; margin: 40px auto; padding: 25px; border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 2px solid #e74c3c; text-align: left;
-        }
-        .lock-card h2 { color: #e74c3c; margin-top: 0; text-align: center; }
-        .pix-box { background: #333; padding: 12px; border-radius: 8px; margin: 15px 0; font-family: monospace; font-size: 16px; color: #f1c40f; text-align: center; word-break: break-all; }
-        .btn-whatsapp {
-            display: block; background: #25d366; color: #fff; padding: 12px 20px; text-align: center;
-            border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 15px; box-sizing: border-box;
-        }
-
-        /* PAINEL DO CLIENTE / CONFIGURAÇÕES */
-        #app-content { display: none; max-width: 500px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { font-size: 22px; color: #333; text-align: center; }
-        .form-group { margin-bottom: 15px; text-align: left; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
-        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        small { color: #778; font-size: 12px; display: block; margin-top: 3px; }
-        .btn-acao { background: #3498db; color: #fff; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; }
-        .btn-acao:hover { background: #2980b9; }
+        /* Estilo da tela de Bloqueio (Paywall) */
+        #tela-bloqueio { display: none; background: #e74c3c; color: #fff; padding: 30px; border-radius: 12px; text-align: center; width: 100%; max-width: 400px; }
+        #tela-bloqueio h2 { color: #fff; }
+        
+        /* Estilo do Painel Interno do Entregador */
+        #painel-interno { display: none; width: 100%; max-width: 500px; text-align: left; }
+        .painel-box { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .btn-sair { background: #c0392b; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <!-- 1. TELA DE CADASTRO INICIAL (Se abrir sem ?moto=) -->
-    <div id="register-screen">
-        <h2>🚀 Bem-vindo ao Rota Certa</h2>
-        <p style="color: #666; font-size: 14px;">Preencha seus dados para criar o seu painel de entregas:</p>
-        <div class="form-group">
-            <label>Seu Nome / Identificação (Sem espaços)</label>
-            <input type="text" id="novoMotoNome" placeholder="Ex: carlos_moto">
-        </div>
-        <div class="form-group">
-            <label>Crie uma Senha de Acesso</label>
-            <input type="password" id="novaSenha" placeholder="Sua senha secreta">
-        </div>
-        <button class="btn-acao" onclick="criarNovoPainel()">Criar Meu Painel</button>
+    <!-- 1. TELA DE LOGIN / CADASTRO -->
+    <div id="tela-login" class="card">
+        <h2>🚀 Rota Certa</h2>
+        <p>Informe seu usuário e senha para acessar:</p>
+        <div id="erro-msg" class="error"></div>
+        <input type="text" id="usuario" placeholder="Seu Nome / Moto (Sem espaços)" autocomplete="off">
+        <input type="password" id="senha" placeholder="Sua Senha de Acesso">
+        <button onclick="autenticarCliente()">Entrar / Cadastrar</button>
     </div>
 
-    <!-- 2. TELA DE LOGIN COM SENHA (Caso já tenha cadastro mas precise autenticar) -->
-    <div id="login-screen">
-        <h2>🔐 Área Restrita</h2>
-        <p style="color: #666; font-size: 14px;">Digite sua senha para acessar o painel de <b id="lblUser"></b>:</p>
-        <div class="form-group">
-            <label>Sua Senha</label>
-            <input type="password" id="senhaLogin" placeholder="Digite sua senha">
-        </div>
-        <button class="btn-acao" onclick="fazerLogin()">Entrar no Painel</button>
+    <!-- 2. TELA DE BLOQUEIO (PAYWALL) -->
+    <div id="tela-bloqueio">
+        <h2>⚠️ Acesso Suspenso</h2>
+        <p>Sua assinatura expirou ou o acesso foi bloqueado temporariamente.</p>
+        <p>Entre em contato com o suporte via WhatsApp para realizar a renovação via Pix e liberar seu painel novamente.</p>
+        <button onclick="fazerLogout()" style="background: #333; margin-top: 15px;">Sair / Trocar Conta</button>
     </div>
 
-    <!-- 3. TELA DE BLOQUEIO POR MENSALIDADE (Controlada pelo Admin) -->
-    <div id="lock-screen">
-        <div class="lock-card">
-            <h2>🚫 Acesso Suspenso</h2>
-            <p>O seu período de acesso ao painel <b>Rota Certa</b> está inativo ou pendente de renovação.</p>
-            <p><b>Como renovar:</b></p>
-            <p style="font-size: 13px; color: #ccc; margin: 5px 0;">1. Faça o Pix da mensalidade para a chave abaixo:<br>2. Envie o comprovante no WhatsApp para liberação instantânea.</p>
-            
-            <div class="pix-box">19997648211<br><small style="font-size:11px; color:#aaa;">Chave Celular - Cristian Alves da Costa</small></div>
-            
-            <a id="whatsapp-link" href="#" target="_blank" class="btn-whatsapp">💬 Enviar Comprovante no WhatsApp</a>
+    <!-- 3. PAINEL INTERNO DO ENTREGADOR -->
+    <div id="painel-interno">
+        <div class="painel-box">
+            <h2>📦 Olá, <span id:="nome-exibicao" style="color: #2980b9;">Entregador</span></h2>
+            <p>Seu painel está ativo e pronto para operar as rotas do dia!</p>
+            <hr style="border:0; border-top:1px solid #eee; margin: 15px 0;">
+            <p><b>Status da Licença:</b> <span style="color: #2ecc71;">🟢 Ativo e Liberado</span></p>
+            <button class="btn-sair" onclick="fazerLogout()">Sair da Conta</button>
         </div>
-    </div>
-
-    <!-- 4. PAINEL COMPLETO DO ENTREGADOR -->
-    <div id="app-content">
-        <h1>⚙️ Configurações do Painel</h1>
-        <p style="text-align: center; color: #666; font-size: 13px;">Defina abaixo suas informações e taxas de entrega.</p>
-        
-        <div class="form-group">
-            <label>Seu Nome Completo / Apelido</label>
-            <input type="text" id="nomeEntregador" placeholder="Ex: Carlos Moto">
-        </div>
-
-        <div class="form-group">
-            <label>Seu WhatsApp (para receber pedidos)</label>
-            <input type="text" id="whatsappEntregador" placeholder="Ex: 19999998888">
-        </div>
-
-        <div class="form-group">
-            <label>Sua Chave Pix</label>
-            <input type="text" id="pixEntregador" placeholder="Ex: Seu CPF, Celular ou E-mail">
-        </div>
-
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-
-        <div class="form-group">
-            <label>Tarifa Base (R$)</label>
-            <input type="number" step="0.01" id="tarifaBase" placeholder="Ex: 3.00 (Valor fixo inicial)">
-            <small>Valor fixo cobrado logo no início da corrida.</small>
-        </div>
-
-        <div class="form-group">
-            <label>Tarifa Mínima (R$)</label>
-            <input type="number" step="0.01" id="tarifaMinima" placeholder="Ex: 10.00 (Valor mínimo por corrida)">
-            <small>Se a corrida der menos que isso, cobra este valor mínimo.</small>
-        </div>
-
-        <div class="form-group">
-            <label>Preço por KM (R$)</label>
-            <input type="number" step="0.01" id="precoKm" placeholder="Ex: 1.50 (Cobrado por km rodado)">
-            <small>Valor somado por cada quilômetro da rota.</small>
-        </div>
-
-        <div class="form-group">
-            <label>Taxa de Deslocamento / KM Adicional (R$)</label>
-            <input type="number" step="0.01" id="taxaDeslocamento" placeholder="Ex: 0.49 (Excedente de distância)">
-            <small>Taxa extra cobrada por KM em deslocamentos longos.</small>
-        </div>
-
-        <button class="btn-acao" onclick="salvarDados()">Salvar / Atualizar no Firebase</button>
     </div>
 
     <script>
@@ -144,123 +67,75 @@
         }
         const db = firebase.database();
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const motoUser = urlParams.get('moto');
-
-        if (!motoUser) {
-            // Sem ?moto= na URL: Mostra tela de cadastro inicial
-            document.getElementById('register-screen').style.display = 'block';
-        } else {
-            // Configura o link do WhatsApp para renovação
-            const msg = encodeURIComponent(`Olá Cristian! Fiz o pagamento da minha mensalidade do painel Rota Certa (${motoUser}). Segue o comprovante.`);
-            document.getElementById('whatsapp-link').href = `https://wa.me/5519997648211?text=${msg}`;
-
-            // Verifica se o usuário já fez login nesta sessão do navegador
-            const logadoNaSessao = sessionStorage.getItem('auth_' + motoUser);
-
-            // Verifica o status no Firebase (Online / Offline)
-            db.ref('entregadores/' + motoUser + '/status').on('value', (snapshot) => {
-                const status = snapshot.val();
-
-                if (status === "offline") {
-                    // Se estiver bloqueado por falta de pagamento, mostra a tela de bloqueio do Pix
-                    document.getElementById('lock-screen').style.display = 'block';
-                    document.getElementById('login-screen').style.display = 'none';
-                    document.getElementById('app-content').style.display = 'none';
-                } else {
-                    // Se estiver online, esconde o bloqueio e checa a senha
-                    document.getElementById('lock-screen').style.display = 'none';
-
-                    if (logadoNaSessao === 'true') {
-                        // Já digitou a senha certa antes, libera o painel direto
-                        document.getElementById('app-content').style.display = 'block';
-                        carregarDadosIniciais();
-                    } else {
-                        // Precisa pedir a senha
-                        document.getElementById('lblUser').innerText = motoUser;
-                        document.getElementById('login-screen').style.display = 'block';
-                    }
-                }
-            });
+        // Verifica se já tem uma sessão salva no celular do entregador
+        const motoLogada = localStorage.getItem('motoLogada');
+        if (motoLogada) {
+            verificarStatusEIniciar(motoLogada);
         }
 
-        // Função para criar o painel e a senha no primeiro acesso
-        function criarNovoPainel() {
-            let nomeDigitado = document.getElementById('novoMotoNome').value.trim().toLowerCase();
-            nomeDigitado = nomeDigitado.replace(/\s+/g, '_');
-            const senhaDigitada = document.getElementById('novaSenha').value.trim();
+        function autenticarCliente() {
+            let usuario = document.getElementById('usuario').value.trim().replace(/\s+/g, '');
+            let senha = document.getElementById('senha').value.trim();
+            let msgErro = document.getElementById('erro-msg');
 
-            if (!nomeDigitado || !senhaDigitada) {
-                alert('Preencha o nome e a senha!');
+            if (!usuario || !senha) {
+                msgErro.style.display = 'block';
+                msgErro.innerText = 'Preencha todos os campos!';
                 return;
             }
 
-            db.ref('entregadores/' + nomeDigitado).once('value', (snapshot) => {
+            let refCliente = db.ref('entregadores/' + usuario);
+
+            refCliente.once('value', (snapshot) => {
                 if (snapshot.exists()) {
-                    alert('Este nome de usuário já existe! Escolha outro ou acesse pelo link direto.');
+                    let dados = snapshot.val();
+                    if (dados.senha === senha) {
+                        localStorage.setItem('motoLogada', usuario);
+                        verificarStatusEIniciar(usuario);
+                    } else {
+                        msgErro.style.display = 'block';
+                        msgErro.innerText = 'Senha incorreta para este usuário!';
+                    }
                 } else {
-                    db.ref('entregadores/' + nomeDigitado).set({
+                    // Cadastra automaticamente se não existir
+                    refCliente.set({
+                        senha: senha,
                         status: 'online',
-                        senha: senhaDigitada
+                        criadoEm: new Date().toISOString()
                     }).then(() => {
-                        window.location.href = window.location.pathname + '?moto=' + nomeDigitado;
+                        localStorage.setItem('motoLogada', usuario);
+                        verificarStatusEIniciar(usuario);
                     });
                 }
             });
         }
 
-        // Função para validar a senha digitada no login
-        function fazerLogin() {
-            const senhaInformada = document.getElementById('senhaLogin').value.trim();
+        // Monitora em tempo real se o Master mudou o status para offline/bloqueado
+        function verificarStatusEIniciar(usuario) {
+            document.getElementById('tela-login').style.display = 'none';
+            
+            db.ref('entregadores/' + usuario).on('value', (snapshot) => {
+                if (!snapshot.exists()) {
+                    fazerLogout();
+                    return;
+                }
 
-            db.ref('entregadores/' + motoUser + '/senha').once('value', (snapshot) => {
-                const senhaCadastrada = snapshot.val();
+                let dados = snapshot.val();
+                let status = dados.status || 'online';
 
-                // Se por acaso a conta antiga não tiver senha salva ainda, libera por segurança
-                if (!senhaCadastrada || senhaInformada === senhaCadastrada) {
-                    sessionStorage.setItem('auth_' + motoUser, 'true');
-                    document.getElementById('login-screen').style.display = 'none';
-                    document.getElementById('app-content').style.display = 'block';
-                    carregarDadosIniciais();
+                if (status === 'online') {
+                    document.getElementById('tela-bloqueio').style.display = 'none';
+                    document.getElementById('painel-interno').style.display = 'block';
                 } else {
-                    alert('❌ Senha incorreta! Tente novamente.');
+                    document.getElementById('painel-interno').style.display = 'none';
+                    document.getElementById('tela-bloqueio').style.display = 'block';
                 }
             });
         }
 
-        function carregarDadosIniciais() {
-            db.ref('entregadores/' + motoUser + '/config').once('value', (snapshot) => {
-                const dados = snapshot.val();
-                if (dados) {
-                    document.getElementById('nomeEntregador').value = dados.nome || '';
-                    document.getElementById('whatsappEntregador').value = dados.whatsapp || '';
-                    document.getElementById('pixEntregador').value = dados.pix || '';
-                    document.getElementById('tarifaBase').value = dados.tarifaBase || '';
-                    document.getElementById('tarifaMinima').value = dados.tarifaMinima || '';
-                    document.getElementById('precoKm').value = dados.precoKm || '';
-                    document.getElementById('taxaDeslocamento').value = dados.taxaDeslocamento || '';
-                }
-            });
-        }
-
-        function salvarDados() {
-            const dadosConfig = {
-                nome: document.getElementById('nomeEntregador').value,
-                whatsapp: document.getElementById('whatsappEntregador').value,
-                pix: document.getElementById('pixEntregador').value,
-                tarifaBase: document.getElementById('tarifaBase').value,
-                tarifaMinima: document.getElementById('tarifaMinima').value,
-                precoKm: document.getElementById('precoKm').value,
-                taxaDeslocamento: document.getElementById('taxaDeslocamento').value
-            };
-
-            db.ref('entregadores/' + motoUser + '/config').set(dadosConfig)
-                .then(() => {
-                    alert('✅ Configurações salvas com sucesso no Firebase!');
-                })
-                .catch((error) => {
-                    alert('❌ Erro ao salvar: ' + error.message);
-                });
+        function fazerLogout() {
+            localStorage.removeItem('motoLogada');
+            window.location.reload();
         }
     </script>
 </body>
