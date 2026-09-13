@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rota Certa - Painel do Entregador</title>
-    <!-- Firebase SDK -->
+    <title>Rota Certa - Acesso</title>
+    <!-- Firebase SDK v8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -16,49 +16,41 @@
         button { width: 100%; padding: 12px; background: #2980b9; color: #fff; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
         button:hover { background: #2471a3; }
         .error { color: #e74c3c; font-size: 13px; margin-bottom: 15px; display: none; }
-        
-        /* Estilo da tela de Bloqueio (Paywall) */
-        #tela-bloqueio { display: none; background: #e74c3c; color: #fff; padding: 30px; border-radius: 12px; text-align: center; width: 100%; max-width: 400px; }
-        #tela-bloqueio h2 { color: #fff; }
-        
-        /* Estilo do Painel Interno do Entregador */
-        #painel-interno { display: none; width: 100%; max-width: 500px; text-align: left; }
-        .painel-box { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        .btn-sair { background: #c0392b; margin-top: 10px; }
+        #tela-bloqueio, #painel-interno { display: none; }
+        .painel-box { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: left; width: 100%; max-width: 400px; }
+        .btn-sair { background: #c0392b; margin-top: 15px; }
     </style>
 </head>
 <body>
 
-    <!-- 1. TELA DE LOGIN / CADASTRO -->
+    <!-- 1. TELA DE LOGIN -->
     <div id="tela-login" class="card">
         <h2>🚀 Rota Certa</h2>
-        <p>Informe seu usuário e senha para acessar:</p>
+        <p>Digite seu usuário e senha:</p>
         <div id="erro-msg" class="error"></div>
-        <input type="text" id="usuario" placeholder="Seu Nome / Moto (Sem espaços)" autocomplete="off">
-        <input type="password" id="senha" placeholder="Sua Senha de Acesso">
-        <button onclick="autenticarCliente()">Entrar / Cadastrar</button>
+        <input type="text" id="usuario" placeholder="Nome (ex: Carlos)" autocomplete="off">
+        <input type="password" id="senha" placeholder="Senha">
+        <button type="button" onclick="entrarSistema()">Entrar / Cadastrar</button>
     </div>
 
-    <!-- 2. TELA DE BLOQUEIO (PAYWALL) -->
-    <div id="tela-bloqueio">
-        <h2>⚠️ Acesso Suspenso</h2>
-        <p>Sua assinatura expirou ou o acesso foi bloqueado temporariamente.</p>
-        <p>Entre em contato com o suporte via WhatsApp para realizar a renovação via Pix e liberar seu painel novamente.</p>
-        <button onclick="fazerLogout()" style="background: #333; margin-top: 15px;">Sair / Trocar Conta</button>
+    <!-- 2. TELA DE BLOQUEIO -->
+    <div id="tela-bloqueio" class="card" style="background: #e74c3c; color: #fff;">
+        <h2>⚠️ Acesso Bloqueado</h2>
+        <p>Sua assinatura precisa ser renovada para liberar o painel.</p>
+        <button class="btn-sair" onclick="fazerLogout()">Sair</button>
     </div>
 
-    <!-- 3. PAINEL INTERNO DO ENTREGADOR -->
-    <div id="painel-interno">
-        <div class="painel-box">
-            <h2>📦 Olá, <span id:="nome-exibicao" style="color: #2980b9;">Entregador</span></h2>
-            <p>Seu painel está ativo e pronto para operar as rotas do dia!</p>
-            <hr style="border:0; border-top:1px solid #eee; margin: 15px 0;">
-            <p><b>Status da Licença:</b> <span style="color: #2ecc71;">🟢 Ativo e Liberado</span></p>
-            <button class="btn-sair" onclick="fazerLogout()">Sair da Conta</button>
-        </div>
+    <!-- 3. PAINEL DO ENTREGADOR -->
+    <div id="painel-interno" class="painel-box">
+        <h2>📦 Painel do Entregador</h2>
+        <p>Bem-vindo, <b id="nome-user"></b>!</p>
+        <hr style="border:0; border-top:1px solid #eee; margin: 15px 0;">
+        <p>Status: <span style="color: #2ecc71; font-weight: bold;">🟢 Ativo</span></p>
+        <button class="btn-sair" onclick="fazerLogout()">Sair da Conta</button>
     </div>
 
     <script>
+        // Inicialização limpa do Firebase
         const firebaseConfig = {
             databaseURL: "https://rotacerta-default-rtdb.firebaseio.com"
         };
@@ -67,51 +59,58 @@
         }
         const db = firebase.database();
 
-        // Verifica se já tem uma sessão salva no celular do entregador
-        const motoLogada = localStorage.getItem('motoLogada');
-        if (motoLogada) {
-            verificarStatusEIniciar(motoLogada);
-        }
+        // Verifica se já está logado ao abrir
+        window.onload = function() {
+            const salvo = localStorage.getItem('motoLogada');
+            if (salvo) {
+                checarStatusBanco(salvo);
+            }
+        };
 
-        function autenticarCliente() {
-            let usuario = document.getElementById('usuario').value.trim().replace(/\s+/g, '');
-            let senha = document.getElementById('senha').value.trim();
-            let msgErro = document.getElementById('erro-msg');
+        function entrarSistema() {
+            let uInput = document.getElementById('usuario').value.trim();
+            let sInput = document.getElementById('senha').value.trim();
+            let msg = document.getElementById('erro-msg');
 
-            if (!usuario || !senha) {
-                msgErro.style.display = 'block';
-                msgErro.innerText = 'Preencha todos os campos!';
+            if (!uInput || !sInput) {
+                msg.style.display = 'block';
+                msg.innerText = 'Preencha todos os campos!';
                 return;
             }
+            msg.style.display = 'none';
 
-            let refCliente = db.ref('entregadores/' + usuario);
+            // Limpa o nome para virar uma chave segura no banco
+            let chaveUser = uInput.replace(/[^a-zA-Z0-9]/g, "");
 
-            refCliente.once('value', (snapshot) => {
+            let ref = db.ref('entregadores/' + chaveUser);
+
+            ref.once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     let dados = snapshot.val();
-                    if (dados.senha === senha) {
-                        localStorage.setItem('motoLogada', usuario);
-                        verificarStatusEIniciar(usuario);
+                    if (dados.senha === sInput) {
+                        localStorage.setItem('motoLogada', chaveUser);
+                        checarStatusBanco(chaveUser);
                     } else {
-                        msgErro.style.display = 'block';
-                        msgErro.innerText = 'Senha incorreta para este usuário!';
+                        msg.style.display = 'block';
+                        msg.innerText = 'Senha incorreta!';
                     }
                 } else {
-                    // Cadastra automaticamente se não existir
-                    refCliente.set({
-                        senha: senha,
-                        status: 'online',
-                        criadoEm: new Date().toISOString()
+                    // Cria automaticamente o cadastro se não existir
+                    ref.set({
+                        senha: sInput,
+                        status: 'online'
                     }).then(() => {
-                        localStorage.setItem('motoLogada', usuario);
-                        verificarStatusEIniciar(usuario);
+                        localStorage.setItem('motoLogada', chaveUser);
+                        checarStatusBanco(chaveUser);
                     });
                 }
+            }).catch((err) => {
+                msg.style.display = 'block';
+                msg.innerText = 'Erro de conexão: ' + err.message;
             });
         }
 
-        // Monitora em tempo real se o Master mudou o status para offline/bloqueado
-        function verificarStatusEIniciar(usuario) {
+        function checarStatusBanco(usuario) {
             document.getElementById('tela-login').style.display = 'none';
             
             db.ref('entregadores/' + usuario).on('value', (snapshot) => {
@@ -119,13 +118,13 @@
                     fazerLogout();
                     return;
                 }
-
                 let dados = snapshot.val();
                 let status = dados.status || 'online';
 
                 if (status === 'online') {
                     document.getElementById('tela-bloqueio').style.display = 'none';
                     document.getElementById('painel-interno').style.display = 'block';
+                    document.getElementById('nome-user').innerText = usuario;
                 } else {
                     document.getElementById('painel-interno').style.display = 'none';
                     document.getElementById('tela-bloqueio').style.display = 'block';
