@@ -75,7 +75,7 @@
             <button type="button" class="btn btn-primary" onclick="fazerLoginOuCadastro()">Entrar / Criar Conta</button>
         </div>
 
-        <!-- 2. TELA DE BLOQUEIO (VENCIDO / 30 DIAS - CHAMA O SUPORTE DO CRISTIAN) -->
+        <!-- 2. TELA DE BLOQUEIO (VENCIDO / 30 DIAS) -->
         <div id="bloqueio-container" class="auth-card" style="display: none; background: #fff5f5; border: 1px solid #feb2b2;">
             <h2 style="color: #c53030; justify-content: center;">⚠️ Período de Uso Expirado</h2>
             <p style="font-size: 0.9rem; color: #742a2a; margin: 15px 0;">Seu período de 30 dias de uso deste painel chegou ao fim.</p>
@@ -91,7 +91,7 @@
         <!-- 3. APLICAÇÃO COMPLETA -->
         <div id="app-container" style="display: none;">
             
-            <!-- PAINEL DE CONTROLE DO MOTOBOY (COM CADEADO DE SEGURANÇA) -->
+            <!-- PAINEL RESTRITO DO MOTOBOY (COM CADEADO) -->
             <div class="card" id="painelMotoboyCard" style="border: 2px solid #2563eb; display: none;">
                 <h2>🔒 Painel Restrito do Entregador</h2>
                 <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 12px;">Área protegida por senha para configurar suas taxas, Pix, WhatsApp e status de expediente.</p>
@@ -155,11 +155,21 @@
                 </div>
             </div>
 
+            <!-- BOTÃO PARA O MOTOBOY ATUALIZAR A PRÓPRIA POSIÇÃO NA NUVEM -->
+            <div class="card" id="cardAtualizarGPS" style="display: none; background: #f8fafc; border: 1px dashed #cbd5e1;">
+                <h2 style="font-size: 0.9rem;">📍 Sua Posição de Trabalho (Entregador)</h2>
+                <p style="font-size: 0.78rem; color: #64748b; margin-bottom: 10px;">Clique sempre que mudar de ponto para atualizar sua localização na nuvem para os clientes.</p>
+                <button type="button" class="btn btn-primary" onclick="atualizarPosicaoGPSMotoboy()" style="margin-top: 0;">📍 Atualizar minha posição atual na nuvem</button>
+            </div>
+
             <!-- ÁREA DE MAPA E SOLICITAÇÃO DO CLIENTE -->
             <div class="card">
                 <h2>📍 Solicitar Entrega</h2>
-                <button type="button" class="btn btn-primary" onclick="atualizarPosicaoGPSMotoboy()" style="margin-top: 0; margin-bottom: 15px; display: none;" id="btnAtualizarGpsMoto">📍 Atualizar minha posição atual (Apenas Entregador)</button>
                 
+                <!-- BOTÃO PARA O CLIENTE LOCALIZAR O MOTOBOY NO MAPA -->
+                <button type="button" class="btn" style="background: #0f172a; color: white; margin-bottom: 15px;" onclick="localizarMotoboyPeloCliente()">🏍️ Localizar Motoboy no Mapa</button>
+                <div id="statusMotoboyDistancia" style="font-size: 0.8rem; color: #2563eb; font-weight: 600; margin-bottom: 12px; text-align: center;"></div>
+
                 <div>
                     <label for="clientName">Seu Nome</label>
                     <input type="text" id="clientName" placeholder="Ex: João Silva" oninput="saveInputs()">
@@ -366,9 +376,9 @@
                 document.getElementById('bloqueio-container').style.display = 'none';
                 document.getElementById('app-container').style.display = 'block';
 
-                // Mostra o painel do motoboy (trancado por padrão) e o botão de atualizar GPS dele
+                // Mostra o painel do motoboy (trancado por padrão) e o card de GPS do entregador
                 document.getElementById('painelMotoboyCard').style.display = 'block';
-                document.getElementById('btnAtualizarGpsMoto').style.display = 'block';
+                document.getElementById('cardAtualizarGPS').style.display = 'block';
 
                 configMotoboyAtual = dados;
 
@@ -395,7 +405,6 @@
 
                 if (dados.lat && dados.lon) {
                     myCurrentCoords = L.latLng(dados.lat, dados.lon);
-                    updateMotoMarkerOnMap(myCurrentCoords);
                 }
             });
         }
@@ -460,10 +469,8 @@
                 const lon = position.coords.longitude;
                 
                 db.ref('entregadores/' + usuario).update({ lat: lat, lon: lon }).then(() => {
-                    alert('Posição atualizada com sucesso na nuvem!');
+                    alert('Sua posição de entregador foi salva na nuvem com sucesso!');
                     myCurrentCoords = L.latLng(lat, lon);
-                    updateMotoMarkerOnMap(myCurrentCoords);
-                    map.setView(myCurrentCoords, 15);
                     calculateAll();
                 });
             }, () => { alert('Erro ao obter sinal do GPS.'); }, { enableHighAccuracy: true });
@@ -498,12 +505,29 @@
             localStorage.setItem('deliveryNumber', document.getElementById('deliveryNumber').value);
         }
 
-        function updateMotoMarkerOnMap(latLng) {
-            if (!motoMarker) {
-                motoMarker = L.marker(latLng, { icon: blackMotoIcon }).addTo(map).bindPopup('Sua Moto 🏍️');
-            } else {
-                motoMarker.setLatLng(latLng);
-            }
+        // FUNÇÃO PARA O CLIENTE LOCALIZAR O MOTOBOY NO MAPA
+        function localizarMotoboyPeloCliente() {
+            const usuario = localStorage.getItem('rotaCertaUsuario');
+            if (!usuario) return;
+
+            db.ref('entregadores/' + usuario).once('value').then((snapshot) => {
+                if (snapshot.exists() && snapshot.val().lat && snapshot.val().lon) {
+                    const dados = snapshot.val();
+                    myCurrentCoords = L.latLng(dados.lat, dados.lon);
+
+                    if (!motoMarker) {
+                        motoMarker = L.marker(myCurrentCoords, { icon: blackMotoIcon }).addTo(map).bindPopup('Moto do Entregador 🏍️').openPopup();
+                    } else {
+                        motoMarker.setLatLng(myCurrentCoords);
+                    }
+
+                    map.setView(myCurrentCoords, 15);
+                    document.getElementById('statusMotoboyDistancia').innerText = `🏍️ Motoboy localizado no mapa!`;
+                    calculateAll();
+                } else {
+                    alert('O entregador ainda não ativou a posição GPS dele no sistema.');
+                }
+            });
         }
 
         function useGpsForField(fieldType) {
