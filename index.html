@@ -103,7 +103,7 @@
                 <div id="painelDestrancado" style="display: none; border-top: 1px solid #e2e8f0; padding-top: 14px; margin-top: 14px;">
                     <div class="form-group">
                         <label>Status do Expediente</label>
-                        <div class="help-text">Defina se você está aceitando corridas ou de folga.</div>
+                        <div class="help-text">Ao ficar Online, sua posição GPS é enviada automaticamente para a nuvem.</div>
                         <button type="button" id="btnToggleStatus" class="btn" style="background: #16a34a; color: white; margin-top: 0;" onclick="alternarStatusOnline()">🟢 Online (Recebendo Pedidos)</button>
                     </div>
 
@@ -153,13 +153,6 @@
                         <button type="button" class="btn" style="background: #e2e8f0; color: #1e293b; padding: 8px; font-size: 0.8rem; width: auto;" onclick="trancarPainelNovamente()">🔒 Bloquear Painel</button>
                     </div>
                 </div>
-            </div>
-
-            <!-- BOTÃO PARA O MOTOBOY ATUALIZAR A PRÓPRIA POSIÇÃO NA NUVEM -->
-            <div class="card" id="cardAtualizarGPS" style="display: none; background: #f8fafc; border: 1px dashed #cbd5e1;">
-                <h2 style="font-size: 0.9rem;">📍 Sua Posição de Trabalho (Entregador)</h2>
-                <p style="font-size: 0.78rem; color: #64748b; margin-bottom: 10px;">Clique sempre que mudar de ponto para atualizar sua localização na nuvem para os clientes.</p>
-                <button type="button" class="btn btn-primary" onclick="atualizarPosicaoGPSMotoboy()" style="margin-top: 0;">📍 Atualizar minha posição atual na nuvem</button>
             </div>
 
             <!-- ÁREA DE MAPA E SOLICITAÇÃO DO CLIENTE -->
@@ -364,7 +357,6 @@
                 let expiraEm = dados.expiraEm || 0;
                 let agora = Date.now();
 
-                // BLOQUEIO DE 30 DIAS EXPIROU -> CHAMA O SUPORTE DO CRISTIAN
                 if (agora > expiraEm) {
                     document.getElementById('auth-container').style.display = 'none';
                     document.getElementById('app-container').style.display = 'none';
@@ -376,13 +368,10 @@
                 document.getElementById('bloqueio-container').style.display = 'none';
                 document.getElementById('app-container').style.display = 'block';
 
-                // Mostra o painel do motoboy (trancado por padrão) e o card de GPS do entregador
                 document.getElementById('painelMotoboyCard').style.display = 'block';
-                document.getElementById('cardAtualizarGPS').style.display = 'block';
 
                 configMotoboyAtual = dados;
 
-                // Preencher campos do painel de controle
                 document.getElementById('cfgNome').value = dados.nome || usuario;
                 document.getElementById('cfgWhatsapp').value = dados.whatsapp || '';
                 document.getElementById('cfgPix').value = dados.pix || '';
@@ -397,7 +386,7 @@
                 const btnStatus = document.getElementById('btnToggleStatus');
                 if (dados.status === 'offline') {
                     btnStatus.style.background = '#dc2626';
-                    btnStatus.innerText = '🔴 Offline (De Folga - Escondido do Mapa)';
+                    btnStatus.innerText = '🔴 Offline (De Folga - Escondido)';
                 } else {
                     btnStatus.style.background = '#16a34a';
                     btnStatus.innerText = '🟢 Online (Recebendo Pedidos)';
@@ -452,28 +441,41 @@
             });
         }
 
+        // ALTERAR STATUS ONLINE / OFFLINE E CAPTURAR GPS AUTOMATICAMENTE
         function alternarStatusOnline() {
             const usuario = localStorage.getItem('rotaCertaUsuario');
             if (!usuario) return;
+
             const novoStatus = configMotoboyAtual.status === 'offline' ? 'online' : 'offline';
-            db.ref('entregadores/' + usuario).update({ status: novoStatus });
-        }
 
-        function atualizarPosicaoGPSMotoboy() {
-            const usuario = localStorage.getItem('rotaCertaUsuario');
-            if (!usuario) return;
+            if (novoStatus === 'online') {
+                if (!navigator.geolocation) {
+                    alert('GPS não suportado pelo navegador.');
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
 
-            if (!navigator.geolocation) { alert('GPS não suportado.'); return; }
-            navigator.geolocation.getCurrentPosition((position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                
-                db.ref('entregadores/' + usuario).update({ lat: lat, lon: lon }).then(() => {
-                    alert('Sua posição de entregador foi salva na nuvem com sucesso!');
-                    myCurrentCoords = L.latLng(lat, lon);
-                    calculateAll();
+                    db.ref('entregadores/' + usuario).update({
+                        status: 'online',
+                        lat: lat,
+                        lon: lon
+                    }).then(() => {
+                        myCurrentCoords = L.latLng(lat, lon);
+                        alert('Você está ONLINE e sua posição foi ativada no mapa!');
+                        calculateAll();
+                    });
+                }, () => {
+                    alert('Não foi possível capturar sua localização. Verifique o GPS.');
+                }, { enableHighAccuracy: true });
+            } else {
+                db.ref('entregadores/' + usuario).update({
+                    status: 'offline'
+                }).then(() => {
+                    alert('Você está OFFLINE. Sua posição está oculta para novos clientes.');
                 });
-            }, () => { alert('Erro ao obter sinal do GPS.'); }, { enableHighAccuracy: true });
+            }
         }
 
         function fazerLogout() {
@@ -505,27 +507,36 @@
             localStorage.setItem('deliveryNumber', document.getElementById('deliveryNumber').value);
         }
 
-        // FUNÇÃO PARA O CLIENTE LOCALIZAR O MOTOBOY NO MAPA
+        // CLIENTE TENTA LOCALIZAR O MOTOBOY
         function localizarMotoboyPeloCliente() {
             const usuario = localStorage.getItem('rotaCertaUsuario');
             if (!usuario) return;
 
             db.ref('entregadores/' + usuario).once('value').then((snapshot) => {
-                if (snapshot.exists() && snapshot.val().lat && snapshot.val().lon) {
+                if (snapshot.exists()) {
                     const dados = snapshot.val();
-                    myCurrentCoords = L.latLng(dados.lat, dados.lon);
-
-                    if (!motoMarker) {
-                        motoMarker = L.marker(myCurrentCoords, { icon: blackMotoIcon }).addTo(map).bindPopup('Moto do Entregador 🏍️').openPopup();
-                    } else {
-                        motoMarker.setLatLng(myCurrentCoords);
+                    
+                    if (dados.status === 'offline') {
+                        alert('O entregador está OFFLINE no momento e não está aceitando corridas.');
+                        document.getElementById('statusMotoboyDistancia').innerText = `🔴 Entregador Offline`;
+                        return;
                     }
 
-                    map.setView(myCurrentCoords, 15);
-                    document.getElementById('statusMotoboyDistancia').innerText = `🏍️ Motoboy localizado no mapa!`;
-                    calculateAll();
-                } else {
-                    alert('O entregador ainda não ativou a posição GPS dele no sistema.');
+                    if (dados.lat && dados.lon) {
+                        myCurrentCoords = L.latLng(dados.lat, dados.lon);
+
+                        if (!motoMarker) {
+                            motoMarker = L.marker(myCurrentCoords, { icon: blackMotoIcon }).addTo(map).bindPopup('Moto do Entregador 🏍️').openPopup();
+                        } else {
+                            motoMarker.setLatLng(myCurrentCoords);
+                        }
+
+                        map.setView(myCurrentCoords, 15);
+                        document.getElementById('statusMotoboyDistancia').innerText = `🏍️ Motoboy Online e localizado no mapa!`;
+                        calculateAll();
+                    } else {
+                        alert('O entregador ainda não sincronizou a posição GPS.');
+                    }
                 }
             });
         }
