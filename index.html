@@ -3,778 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rota Certa – Solicite sua Entrega</title>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Leaflet Routing Machine CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <title>Sistema de Solicitação de Entregas</title>
+    <!-- Leaflet CSS para Mapas -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background-color: #f4f7f6; color: #333; padding-bottom: 40px; }
-        header { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 20px 16px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; }
-        header h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; }
-        header p { font-size: 0.875rem; color: #94a3b8; }
-        .btn-modo-topo { position: absolute; right: 12px; top: 16px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 10px; font-size: 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
-        .btn-modo-topo:hover { background: rgba(255,255,255,0.25); }
-        .container { max-width: 600px; margin: 16px auto; padding: 0 12px; }
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 16px; }
-        .card h2 { font-size: 1rem; font-weight: 600; color: #1e293b; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-        .form-group { margin-bottom: 14px; }
-        .row-fields { display: flex; gap: 8px; }
-        .row-fields .main-field { flex: 3; position: relative; }
-        .row-fields .number-field { flex: 1; }
-        label { display: block; font-size: 0.8rem; font-weight: 500; color: #64748b; margin-bottom: 4px; }
-        .help-text { font-size: 0.75rem; color: #0284c7; margin-top: 4px; margin-bottom: 6px; line-height: 1.4; background: #f0f9ff; padding: 8px; border-radius: 6px; border: 1px solid #bae6fd; }
-        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
-        input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-        .inline-gps { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; font-size: 0.75rem; padding: 6px 10px; margin-top: 6px; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
-        .inline-gps:hover { background: #dbeafe; }
-        .suggestions { background: white; border: 1px solid #cbd5e1; border-top: none; border-radius: 0 0 8px 8px; max-height: 150px; overflow-y: auto; position: absolute; width: 100%; z-index: 1000; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .suggestion-item { padding: 10px 12px; font-size: 0.85rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
-        .suggestion-item:hover { background-color: #f8fafc; }
-        
-        /* Contêiner do Mapa com botão flutuante para recentralizar */
-        .map-wrapper { position: relative; margin-top: 10px; }
-        #map { width: 100%; height: 260px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .btn-recentrar { position: absolute; bottom: 12px; right: 12px; z-index: 1000; background: #0f172a; color: white; border: none; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; display: none; }
-        .btn-recentrar:hover { background: #1e293b; }
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #cbd5e1;
+        }
 
-        /* Estilos dos Pins personalizados no Mapa */
-        .pin-marker { display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; border-radius: 50%; box-shadow: 0 3px 6px rgba(0,0,0,0.3); color: white; border: 2px solid white; }
-        .pin-pickup { background-color: #16a34a; } /* Verde para Coleta (A) */
-        .pin-delivery { background-color: #dc2626; } /* Vermelho para Entrega (B) */
-        .moto-marker-icon { background: #0f172a; border: 2px solid #ffffff; border-radius: 50%; color: #ffffff; font-size: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 6px rgba(0,0,0,0.3); }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
 
-        .summary-box { background: #f8fafc; border-radius: 8px; padding: 14px; border: 1px solid #e2e8f0; }
-        .summary-row { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px; color: #475569; }
-        .summary-row.total { font-size: 1.15rem; font-weight: 700; color: #0f172a; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 8px; margin-bottom: 0; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; text-align: center; transition: background 0.2s; }
-        .btn-primary { background-color: #2563eb; color: white; margin-top: 10px; }
-        .btn-primary:hover { background-color: #1d4ed8; }
-        .btn-success { background-color: #16a34a; color: white; margin-top: 10px; }
-        .btn-success:hover { background-color: #15803d; }
-        .whatsapp-btn { background-color: #25d366; color: white; display: block; text-decoration: none; padding: 14px; border-radius: 8px; font-weight: bold; margin-top: 15px; text-align: center; }
-        .whatsapp-btn:hover { background-color: #20ba5a; }
-        .pix-area { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; text-align: center; display: none; margin-top: 14px; }
-        .pix-key { background: white; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace; font-size: 0.85rem; word-break: break-all; margin: 10px 0; user-select: all; }
-        .copy-btn { background: #22c55e; color: white; border: none; padding: 8px 16px; font-size: 0.85rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
-        .copy-btn:hover { background: #16a34a; }
-        .loading { font-size: 0.85rem; color: #64748b; text-align: center; margin-top: 8px; display: none; }
-        .auth-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 16px; }
-        .auth-card input { margin-bottom: 15px; }
-        .error-msg { color: #e74c3c; font-size: 0.85rem; margin-bottom: 10px; display: none; }
-        .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        #toastAviso { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 10px 20px; border-radius: 30px; z-index: 9999; font-weight: 600; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: none; text-align: center; }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+
+        input[type="text"],
+        input[type="tel"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .row .form-group {
+            flex: 1;
+        }
+
+        .row .form-group.small {
+            flex: 0 0 100px;
+        }
+
+        #map {
+            height: 250px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .summary-box {
+            background: #f1f5f9;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .summary-box p {
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+        }
+
+        .summary-box p strong {
+            color: var(--text-main);
+        }
+
+        button {
+            width: 100%;
+            background-color: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #15803d;
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1 id="headerName">Rota Certa</h1>
-        <p id="headerSub">Solicite sua Entrega Rápida</p>
-        <button type="button" class="btn-modo-topo" id="btnAlternarModo" onclick="abrirTelaLogin()">🔒 Área do Motoboy</button>
-    </header>
-
-    <div id="toastAviso"></div>
-
     <div class="container">
+        <h2>Solicitar Entrega</h2>
 
-        <!-- 1. PAINEL DE LOGIN / GESTÃO DO MOTOBOY -->
-        <div id="motoboy-portal-container" style="display: none;">
-            
-            <div id="auth-container" class="auth-card">
-                <h2>🚀 Acessar Painel do Entregador</h2>
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Digite seu usuário e senha para entrar nas configurações:</p>
-                <div id="authError" class="error-msg"></div>
-                <input type="text" id="loginUser" placeholder="Seu Usuário (Ex: cristian)" autocomplete="off">
-                <input type="password" id="loginPass" placeholder="Sua Senha">
-                <button type="button" class="btn btn-primary" onclick="fazerLoginOuCadastro()">Entrar no Painel</button>
-                <button type="button" class="btn" style="background: #e2e8f0; color: #334155; margin-top: 8px;" onclick="voltarParaModoCliente()">⬅️ Voltar para Tela do Cliente</button>
-            </div>
+        <div class="form-group">
+            <label for="clientName">Nome do Cliente</label>
+            <input type="text" id="clientName" placeholder="Ex: João da Silva">
+        </div>
 
-            <div id="bloqueio-container" class="auth-card" style="display: none; background: #fff5f5; border: 1px solid #feb2b2; text-align: center;">
-                <h2 style="color: #c53030; justify-content: center;">⚠️ Acesso Suspenso</h2>
-                <p style="font-size: 0.9rem; color: #742a2a; margin: 15px 0;">O prazo de teste deste usuário venceu.</p>
-                <a href="https://wa.me/5519997648211?text=Olá%20Cristian,%20gostaria%20de%20regularizar%20minha%20assinatura!" target="_blank" class="whatsapp-btn">
-                    💬 Falar com Suporte
-                </a>
-                <button type="button" class="btn" style="background: #e2e8f0; color: #2d3748; margin-top: 15px;" onclick="fazerLogout()">Sair</button>
-            </div>
+        <div class="form-group">
+            <label for="clientPhone">Telefone</label>
+            <input type="tel" id="clientPhone" placeholder="Ex: (91) 99999-9999">
+        </div>
 
-            <div class="card" id="painelMotoboyCard" style="border: 2px solid #2563eb; display: none;">
-                <h2>⚙️ Configurações do Entregador</h2>
-                
-                <div class="form-group">
-                    <label>Status do Expediente</label>
-                    <div class="help-text">Ligado (Online): Sua moto aparece no mapa para os clientes.<br>Desligado (Offline): Você some do mapa.</div>
-                    <button type="button" id="btnToggleStatus" class="btn" style="background: #16a34a; color: white; margin-top: 0;" onclick="alternarStatusOnline()">🟢 Online (Recebendo Pedidos)</button>
+        <div class="form-group">
+            <label for="pickupAddress">Endereço de Coleta (Origem)</label>
+            <div class="row">
+                <div class="form-group" style="margin-bottom:0;">
+                    <input type="text" id="pickupAddress" placeholder="Rua, Bairro...">
                 </div>
-
-                <div class="form-group">
-                    <label for="cfgNome">Seu Nome na Página</label>
-                    <input type="text" id="cfgNome" placeholder="Ex: Cristian Entregas" onchange="salvarConfiguracoesMotoboy()">
-                </div>
-
-                <div class="form-group">
-                    <label for="cfgWhatsapp">Seu WhatsApp</label>
-                    <div class="help-text">Número onde você vai receber os pedidos dos clientes (com DDD).</div>
-                    <input type="tel" id="cfgWhatsapp" placeholder="Ex: 5591988888888" onchange="salvarConfiguracoesMotoboy()">
-                </div>
-
-                <div class="form-group">
-                    <label for="cfgPix">Sua Chave Pix</label>
-                    <input type="text" id="cfgPix" placeholder="Sua chave Pix para receber o pagamento" onchange="salvarConfiguracoesMotoboy()">
-                </div>
-
-                <div class="config-grid">
-                    <div class="form-group">
-                        <label for="cfgTarifaBase">Valor Fixo Inicial (R$)</label>
-                        <div class="help-text">Preço fixo cobrado logo no início da corrida.</div>
-                        <input type="number" step="0.50" id="cfgTarifaBase" value="3.00" onchange="salvarConfiguracoesMotoboy()">
-                    </div>
-                    <div class="form-group">
-                        <label for="cfgTarifaMinima">Valor Mínimo (R$)</label>
-                        <div class="help-text">Nenhuma corrida fica abaixo deste valor.</div>
-                        <input type="number" step="0.50" id="cfgTarifaMinima" value="10.00" onchange="salvarConfiguracoesMotoboy()">
-                    </div>
-                    <div class="form-group">
-                        <label for="cfgPrecoKm">Preço por Quilômetro (R$)</label>
-                        <div class="help-text">Quanto é cobrado por cada km rodado na entrega.</div>
-                        <input type="number" step="0.10" id="cfgPrecoKm" value="1.50" onchange="salvarConfiguracoesMotoboy()">
-                    </div>
-                    <div class="form-group">
-                        <label for="cfgTaxaDeslocamento">Taxa Km Extra (>4km)</label>
-                        <div class="help-text">Cobrado caso você precise rodar mais de 4km até a coleta.</div>
-                        <input type="number" step="0.01" id="cfgTaxaDeslocamento" value="0.49" onchange="salvarConfiguracoesMotoboy()">
-                    </div>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                    <span id="saveStatus" style="font-size: 0.75rem; color: #16a34a; font-weight: 600; display: none;">Salvo ✅</span>
-                    <button type="button" class="btn" style="background: #fee2e2; color: #b91c1c; font-size: 0.85rem; width: auto;" onclick="fazerLogout()">Sair do Painel</button>
+                <div class="form-group small" style="margin-bottom:0;">
+                    <input type="text" id="pickupNumber" placeholder="Nº">
                 </div>
             </div>
         </div>
 
-        <!-- 2. APLICAÇÃO DO CLIENTE -->
-        <div id="client-app-container">
-            
-            <div class="card">
-                <h2>📍 Solicitar Entrega</h2>
-                
-                <button type="button" class="btn" style="background: #0f172a; color: white; margin-bottom: 15px;" onclick="localizarMotoboyPeloCliente()">🏍️ Localizar Entregador no Mapa</button>
-                <div id="statusMotoboyDistancia" style="font-size: 0.8rem; color: #2563eb; font-weight: 600; margin-bottom: 12px; text-align: center;"></div>
-
-                <div>
-                    <label for="clientName">Seu Nome</label>
-                    <input type="text" id="clientName" placeholder="Ex: João Silva" oninput="saveInputs()">
+        <div class="form-group">
+            <label for="deliveryAddress">Endereço de Destino (Entrega)</label>
+            <div class="row">
+                <div class="form-group" style="margin-bottom:0;">
+                    <input type="text" id="deliveryAddress" placeholder="Rua, Bairro...">
                 </div>
-                <div style="margin-top: 10px;">
-                    <label for="clientPhone">Seu WhatsApp</label>
-                    <input type="tel" id="clientPhone" placeholder="Ex: (91) 98888-8888" oninput="saveInputs()">
-                </div>
-
-                <div class="form-group" style="margin-top: 10px;">
-                    <label for="pickupAddress">Endereço de Coleta (Onde buscar)</label>
-                    <div class="row-fields">
-                        <div class="main-field" style="position: relative;">
-                            <input type="text" id="pickupAddress" placeholder="Ex: Rua Exemplo, Bairro" oninput="saveInputs()">
-                            <div id="pickupSuggestions" class="suggestions"></div>
-                        </div>
-                        <div class="number-field">
-                            <input type="text" id="pickupNumber" placeholder="Nº / Comp" oninput="saveInputs()">
-                        </div>
-                    </div>
-                    <button type="button" class="inline-gps" onclick="useGpsForField('pickup')">📍 Usar minha localização atual</button>
-                </div>
-
-                <div class="form-group">
-                    <label for="deliveryAddress">Endereço de Destino (Onde entregar)</label>
-                    <div class="row-fields">
-                        <div class="main-field" style="position: relative;">
-                            <input type="text" id="deliveryAddress" placeholder="Ex: Av. Principal, Nº" oninput="saveInputs()">
-                            <div id="deliverySuggestions" class="suggestions"></div>
-                        </div>
-                        <div class="number-field">
-                            <input type="text" id="deliveryNumber" placeholder="Nº / Comp" oninput="saveInputs()">
-                        </div>
-                    </div>
-                    <button type="button" class="inline-gps" onclick="useGpsForField('delivery')">📍 Usar minha localização atual</button>
-                </div>
-
-                <div class="loading" id="loadingStatus">Calculando rotas e distâncias...</div>
-                
-                <div class="map-wrapper">
-                    <div id="map"></div>
-                    <button type="button" id="btnRecentrar" class="btn-recentrar" onclick="centralizarNaRota()">🎯 Ver Rota Gerada</button>
+                <div class="form-group small" style="margin-bottom:0;">
+                    <input type="text" id="deliveryNumber" placeholder="Nº">
                 </div>
             </div>
-
-            <!-- RESUMO E PAGAMENTO PIX -->
-            <div class="card" id="summaryCard" style="display: none;">
-                <h2>💰 Resumo da Corrida</h2>
-                <div class="summary-box">
-                    <div class="summary-row">
-                        <span>Distância até a Coleta:</span>
-                        <strong id="myDistText">0 km</strong>
-                    </div>
-                    <div class="summary-row" id="deslocamentoRow" style="color: #16a34a; font-weight: 500;">
-                        <span>Taxa de Deslocamento (>4km):</span>
-                        <strong id="deslocamentoText">Grátis (Até 4 km)</strong>
-                    </div>
-                    <div class="summary-row">
-                        <span>Distância da Entrega:</span>
-                        <strong id="distText">0 km</strong>
-                    </div>
-                    <div class="summary-row">
-                        <span>Base + Quilometragem:</span>
-                        <span id="kmValueText">R$ 0,00</span>
-                    </div>
-                    <div class="summary-row total">
-                        <span>Total da Corrida:</span>
-                        <strong id="totalText">R$ 0,00</strong>
-                    </div>
-                </div>
-
-                <button type="button" class="btn btn-primary" id="btnPay" onclick="showPixArea()">Ver Chave Pix para Pagamento</button>
-
-                <div class="pix-area" id="pixArea">
-                    <p style="font-size: 0.9rem; font-weight: 600; color: #166534;">Chave Pix do Entregador:</p>
-                    <div class="pix-key" id="pixKeyDisplay">Chave Pix não configurada</div>
-                    <button type="button" class="copy-btn" onclick="copyPixKey()">Copiar Chave Pix</button>
-                    <p style="font-size: 0.75rem; color: #64748b; margin-top: 10px;">Após pagar, envie o pedido no WhatsApp:</p>
-                </div>
-
-                <button type="button" class="btn btn-success" id="btnWhatsapp" style="display: none;" onclick="sendToWhatsappMotoboy()">Enviar Pedido no WhatsApp</button>
-            </div>
-
         </div>
 
+        <div id="map"></div>
+
+        <div class="summary-box">
+            <p><span>Distância Estimada:</span> <strong id="distanceText">0.00 km</strong></p>
+            <p><span>Valor Total:</span> <strong id="priceText">R$ 0,00</strong></p>
+        </div>
+
+        <button onclick="sendToWhatsappMotoboy()">Enviar Pedido via WhatsApp</button>
     </div>
 
     <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <!-- Leaflet Routing Machine JS -->
-    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
-
-    <!-- Firebase SDK v8 -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const firebaseConfig = {
-            databaseURL: "https://rotacertagps-9ff13-default-rtdb.firebaseio.com"
-        };
-        
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.database();
+        // Configurações Globais / Estado
+        let deliveryDistanceKm = 3.5; // Exemplo padrão simulado
+        let calculatedFinalPrice = 15.00; // Exemplo padrão simulado
+        let pickupCoords = { lat: -1.4558, lng: -48.4902 }; // Exemplo inicial (Belém)
+        let deliveryCoords = { lat: -1.4600, lng: -48.4800 };
+        let configMotoboyAtual = { whatsapp: '5591988888888' };
 
-        let myCurrentCoords = L.latLng(-1.4558, -48.4902); 
-        let motoMarker = null;
-        let pickupMarker = null;
-        let deliveryMarker = null;
-        let usuarioAtivoPainel = null; 
-        let configMotoboyAtual = {
-            nome: "Rota Certa",
-            whatsapp: "5519997648211",
-            pix: "Chave Pix não configurada",
-            tarifaBase: 3.00,
-            tarifaMinima: 10.00,
-            precoKm: 1.50,
-            taxaDeslocamento: 0.49,
-            status: "offline"
-        };
-
-        const blackMotoIcon = L.divIcon({
-            className: 'moto-marker-icon',
-            html: '🏍️',
-            iconSize: [36, 36],
-            iconAnchor: [18, 18]
-        });
-
-        // Ícones customizados para o Ponto A (Coleta - Verde) e Ponto B (Entrega - Vermelho)
-        const pickupIcon = L.divIcon({
-            className: 'pin-marker pin-pickup',
-            html: 'A',
-            iconSize: [30, 30],
-            iconAnchor: [15, 15]
-        });
-
-        const deliveryIcon = L.divIcon({
-            className: 'pin-marker pin-delivery',
-            html: 'B',
-            iconSize: [30, 30],
-            iconAnchor: [15, 15]
-        });
-
-        function mostrarToast(mensagem) {
-            const toast = document.getElementById('toastAviso');
-            toast.innerText = mensagem;
-            toast.style.display = 'block';
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, 3500);
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            escutarStatusEmTempoReal('cristian');
-        });
-
-        function escutarStatusEmTempoReal(usuario) {
-            db.ref('entregadores/' + usuario).on('value', (snapshot) => {
-                if (snapshot.exists()) {
-                    let dados = snapshot.val();
-                    configMotoboyAtual = dados;
-
-                    if (dados.lat && dados.lon) {
-                        myCurrentCoords = L.latLng(dados.lat, dados.lon);
-                    }
-
-                    if (dados.status === 'online') {
-                        if (dados.lat && dados.lon) {
-                            if (!motoMarker) {
-                                motoMarker = L.marker(myCurrentCoords, { icon: blackMotoIcon }).addTo(map).bindPopup('Entregador 🏍️');
-                            } else {
-                                motoMarker.setLatLng(myCurrentCoords);
-                                if (!map.hasLayer(motoMarker)) {
-                                    motoMarker.addTo(map);
-                                }
-                            }
-                        }
-                    } else {
-                        if (motoMarker && map.hasLayer(motoMarker)) {
-                            map.removeLayer(motoMarker);
-                        }
-                    }
-                }
-            });
-        }
-
-        function abrirTelaLogin() {
-            const portal = document.getElementById('motoboy-portal-container');
-            const clienteApp = document.getElementById('client-app-container');
-            const btnModo = document.getElementById('btnAlternarModo');
-
-            portal.style.display = 'block';
-            clienteApp.style.display = 'none';
-            btnModo.innerText = '👤 Ver Modo Cliente';
-
-            usuarioAtivoPainel = null;
-            document.getElementById('auth-container').style.display = 'block';
-            document.getElementById('painelMotoboyCard').style.display = 'none';
-            document.getElementById('bloqueio-container').style.display = 'none';
-            document.getElementById('loginUser').value = '';
-            document.getElementById('loginPass').value = '';
-        }
-
-        function voltarParaModoCliente() {
-            document.getElementById('motoboy-portal-container').style.display = 'none';
-            document.getElementById('client-app-container').style.display = 'block';
-            document.getElementById('btnAlternarModo').innerText = '🔒 Área do Motoboy';
-        }
-
-        function fazerLoginOuCadastro() {
-            let uInput = document.getElementById('loginUser').value.trim().replace(/\s+/g, '');
-            let sInput = document.getElementById('loginPass').value.trim();
-            let errDiv = document.getElementById('authError');
-
-            if (!uInput || !sInput) {
-                errDiv.style.display = 'block';
-                errDiv.innerText = 'Digite o usuário e a senha!';
-                return;
-            }
-            errDiv.style.display = 'none';
-
-            let refCliente = db.ref('entregadores/' + uInput);
-            
-            refCliente.once('value').then((snapshot) => {
-                const agora = Date.now();
-                const trintaDiasMs = 30 * 24 * 60 * 60 * 1000;
-
-                if (snapshot.exists()) {
-                    let dados = snapshot.val();
-                    if (dados.senha === sInput) {
-                        usuarioAtivoPainel = uInput;
-                        carregarDadosPainel(uInput);
-                        escutarStatusEmTempoReal(uInput);
-                    } else {
-                        errDiv.style.display = 'block';
-                        errDiv.innerText = 'Senha incorreta!';
-                    }
-                } else {
-                    let novoPerfil = {
-                        senha: sInput,
-                        status: 'online',
-                        licenca: 'ativo',
-                        nome: uInput,
-                        whatsapp: '5591988888888',
-                        pix: 'exemplo-chave-pix',
-                        tarifaBase: 3.00,
-                        tarifaMinima: 10.00,
-                        precoKm: 1.50,
-                        taxaDeslocamento: 0.49,
-                        criadoEm: agora,
-                        expiraEm: agora + trintaDiasMs
-                    };
-                    refCliente.set(novoPerfil).then(() => {
-                        usuarioAtivoPainel = uInput;
-                        carregarDadosPainel(uInput);
-                        escutarStatusEmTempoReal(uInput);
-                    }).catch((err) => {
-                        errDiv.style.display = 'block';
-                        errDiv.innerText = 'Erro: ' + err.message;
-                    });
-                }
-            });
-        }
-
-        function carregarDadosPainel(usuario) {
-            db.ref('entregadores/' + usuario).on('value', (snapshot) => {
-                if (!snapshot.exists()) return;
-                let dados = snapshot.val();
-                let expiraEm = dados.expiraEm || 0;
-                let agora = Date.now();
-                let licencaBloqueada = dados.licenca === 'bloqueado';
-
-                if (agora > expiraEm || licencaBloqueada) {
-                    document.getElementById('auth-container').style.display = 'none';
-                    document.getElementById('painelMotoboyCard').style.display = 'none';
-                    document.getElementById('bloqueio-container').style.display = 'block';
-                    return;
-                }
-
-                document.getElementById('auth-container').style.display = 'none';
-                document.getElementById('bloqueio-container').style.display = 'none';
-                document.getElementById('painelMotoboyCard').style.display = 'block';
-
-                configMotoboyAtual = dados;
-
-                document.getElementById('cfgNome').value = dados.nome || usuario;
-                document.getElementById('cfgWhatsapp').value = dados.whatsapp || '';
-                document.getElementById('cfgPix').value = dados.pix || '';
-                document.getElementById('cfgTarifaBase').value = dados.tarifaBase ?? 3.00;
-                document.getElementById('cfgTarifaMinima').value = dados.tarifaMinima ?? 10.00;
-                document.getElementById('cfgPrecoKm').value = dados.precoKm ?? 1.50;
-                document.getElementById('cfgTaxaDeslocamento').value = dados.taxaDeslocamento ?? 0.49;
-
-                document.getElementById('headerName').innerText = dados.nome || usuario;
-                document.getElementById('pixKeyDisplay').innerText = dados.pix || 'Chave Pix não definida';
-
-                const btnStatus = document.getElementById('btnToggleStatus');
-                if (dados.status === 'offline') {
-                    btnStatus.style.background = '#dc2626';
-                    btnStatus.innerText = '🔴 Offline (Desligado)';
-                } else {
-                    btnStatus.style.background = '#16a34a';
-                    btnStatus.innerText = '🟢 Online (Ligado)';
-                }
-            });
-        }
-
-        function salvarConfiguracoesMotoboy() {
-            if (!usuarioAtivoPainel) return;
-
-            const novosDados = {
-                nome: document.getElementById('cfgNome').value,
-                whatsapp: document.getElementById('cfgWhatsapp').value,
-                pix: document.getElementById('cfgPix').value,
-                tarifaBase: parseFloat(document.getElementById('cfgTarifaBase').value) || 3.00,
-                tarifaMinima: parseFloat(document.getElementById('cfgTarifaMinima').value) || 10.00,
-                precoKm: parseFloat(document.getElementById('cfgPrecoKm').value) || 1.50,
-                taxaDeslocamento: parseFloat(document.getElementById('cfgTaxaDeslocamento').value) || 0.49
-            };
-
-            db.ref('entregadores/' + usuarioAtivoPainel).update(novosDados).then(() => {
-                const statusSpan = document.getElementById('saveStatus');
-                statusSpan.style.display = 'inline';
-                setTimeout(() => { statusSpan.style.display = 'none'; }, 2000);
-                calculateAll();
-            });
-        }
-
-        function alternarStatusOnline() {
-            if (!usuarioAtivoPainel) return;
-
-            const novoStatus = configMotoboyAtual.status === 'offline' ? 'online' : 'offline';
-
-            if (novoStatus === 'online') {
-                if (!navigator.geolocation) { alert('GPS não suportado.'); return; }
-                navigator.geolocation.getCurrentPosition((position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-
-                    db.ref('entregadores/' + usuarioAtivoPainel).update({ status: 'online', lat: lat, lon: lon }).then(() => {
-                        myCurrentCoords = L.latLng(lat, lon);
-                        mostrarToast('🟢 Status alterado para ONLINE!');
-                        calculateAll();
-                    });
-                }, () => { alert('Erro ao obter GPS.'); }, { enableHighAccuracy: true });
-            } else {
-                db.ref('entregadores/' + usuarioAtivoPainel).update({ status: 'offline' }).then(() => {
-                    mostrarToast('🔴 Status alterado para OFFLINE.');
-                });
-            }
-        }
-
-        function fazerLogout() {
-            usuarioAtivoPainel = null;
-            voltarParaModoCliente();
-            mostrarToast('🔒 Desconectado do painel com segurança.');
-        }
-
-        // MAPA DO CLIENTE
+        // Inicialização básica do mapa
         const map = L.map('map').setView([-1.4558, -48.4902], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        let routingControl = null;
-        let deliveryDistanceKm = 0;
-        let myToPickupDistanceKm = 0;
-        let calculatedFinalPrice = 0;
-        let deslocamentoFee = 0;
-        let pickupCoords = null;
-        let deliveryCoords = null;
-
-        function saveInputs() {
-            localStorage.setItem('clientName', document.getElementById('clientName').value);
-            localStorage.setItem('clientPhone', document.getElementById('clientPhone').value);
-            localStorage.setItem('pickupAddress', document.getElementById('pickupAddress').value);
-            localStorage.setItem('pickupNumber', document.getElementById('pickupNumber').value);
-            localStorage.setItem('deliveryAddress', document.getElementById('deliveryAddress').value);
-            localStorage.setItem('deliveryNumber', document.getElementById('deliveryNumber').value);
-        }
-
-        function centralizarNaRota() {
-            if (pickupCoords && deliveryCoords) {
-                let bounds = L.latLngBounds([pickupCoords, deliveryCoords]);
-                map.fitBounds(bounds, { padding: [50, 50] });
-            }
-        }
-
-        function atualizarPinsNoMapa() {
-            // Atualiza ou cria o pin de Coleta (A - Verde)
-            if (pickupCoords) {
-                if (!pickupMarker) {
-                    pickupMarker = L.marker(pickupCoords, { icon: pickupIcon }).addTo(map).bindPopup('Ponto de Coleta (A)');
-                } else {
-                    pickupMarker.setLatLng(pickupCoords);
-                    if (!map.hasLayer(pickupMarker)) pickupMarker.addTo(map);
-                }
-            }
-
-            // Atualiza ou cria o pin de Entrega (B - Vermelho)
-            if (deliveryCoords) {
-                if (!deliveryMarker) {
-                    deliveryMarker = L.marker(deliveryCoords, { icon: deliveryIcon }).addTo(map).bindPopup('Ponto de Entrega (B)');
-                } else {
-                    deliveryMarker.setLatLng(deliveryCoords);
-                    if (!map.hasLayer(deliveryMarker)) deliveryMarker.addTo(map);
-                }
-            }
-        }
-
-        function localizarMotoboyPeloCliente() {
-            db.ref('entregadores/cristian').once('value').then((snapshot) => {
-                if (snapshot.exists()) {
-                    const dados = snapshot.val();
-                    if (dados.status === 'offline') {
-                        mostrarToast('⚠️ O entregador está OFFLINE no momento.');
-                        document.getElementById('statusMotoboyDistancia').innerText = `🔴 Entregador Offline`;
-                        return;
-                    }
-                    if (dados.lat && dados.lon) {
-                        myCurrentCoords = L.latLng(dados.lat, dados.lon);
-                        if (!motoMarker) {
-                            motoMarker = L.marker(myCurrentCoords, { icon: blackMotoIcon }).addTo(map).bindPopup('Entregador 🏍️');
-                        } else {
-                            motoMarker.setLatLng(myCurrentCoords);
-                            if (!map.hasLayer(motoMarker)) motoMarker.addTo(map);
-                        }
-                        map.setView(myCurrentCoords, 15);
-                        document.getElementById('statusMotoboyDistancia').innerText = `🏍️ Entregador Online e localizado!`;
-                        mostrarToast('📍 Entregador localizado com sucesso!');
-                        calculateAll();
-                    } else {
-                        mostrarToast('⚠️ Entregador ainda não enviou a posição.');
-                    }
-                } else {
-                    mostrarToast('⚠️ Entregador não encontrado.');
-                }
-            });
-        }
-
-        function useGpsForField(fieldType) {
-            if (!navigator.geolocation) { alert('GPS não suportado.'); return; }
-            navigator.geolocation.getCurrentPosition(function(position) {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                const latLng = L.latLng(lat, lon);
-
-                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        const addr = data.display_name || 'Localização Atual';
-                        if (fieldType === 'pickup') {
-                            document.getElementById('pickupAddress').value = addr;
-                            pickupCoords = latLng;
-                        } else {
-                            document.getElementById('deliveryAddress').value = addr;
-                            deliveryCoords = latLng;
-                        }
-                        saveInputs();
-                        atualizarPinsNoMapa();
-                        map.setView(latLng, 15);
-                        calculateAll();
-                    });
-            }, () => { alert('Erro ao obter GPS.'); }, { timeout: 10000, enableHighAccuracy: true });
-        }
-
-        function setupAutocomplete(inputId, suggestionsId, isPickup) {
-            const input = document.getElementById(inputId);
-            const suggestions = document.getElementById(suggestionsId);
-            let timeout = null;
-
-            input.addEventListener('input', function() {
-                saveInputs();
-                clearTimeout(timeout);
-                const query = this.value;
-                if (query.length < 3) { suggestions.style.display = 'none'; return; }
-
-                timeout = setTimeout(() => {
-                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Belém, Pará')}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            suggestions.innerHTML = '';
-                            if (data.length > 0) {
-                                suggestions.style.display = 'block';
-                                data.forEach(item => {
-                                    const div = document.createElement('div');
-                                    div.className = 'suggestion-item';
-                                    div.innerText = item.display_name;
-                                    div.onclick = function() {
-                                        input.value = item.display_name;
-                                        suggestions.style.display = 'none';
-                                        saveInputs();
-                                        const coords = L.latLng(parseFloat(item.lat), parseFloat(item.lon));
-                                        if (isPickup) pickupCoords = coords; else deliveryCoords = coords;
-                                        atualizarPinsNoMapa();
-                                        calculateAll();
-                                    };
-                                    suggestions.appendChild(div);
-                                });
-                            } else { suggestions.style.display = 'none'; }
-                        });
-                }, 400);
-            });
-        }
-
-        setupAutocomplete('pickupAddress', 'pickupSuggestions', true);
-        setupAutocomplete('deliveryAddress', 'deliverySuggestions', false);
-
-        function geocode(address, isPickup, callback) {
-            if (isPickup && pickupCoords) { callback(pickupCoords); return; }
-            if (!isPickup && deliveryCoords) { callback(deliveryCoords); return; }
-
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data && data.length > 0) {
-                        const latLng = L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
-                        if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
-                        atualizarPinsNoMapa();
-                        callback(latLng);
-                    } else { callback(null); }
-                });
-        }
-
-        function calculateAll() {
-            const pickup = document.getElementById('pickupAddress').value;
-            const delivery = document.getElementById('deliveryAddress').value;
-            if (!pickup || !delivery) return;
-
-            document.getElementById('loadingStatus').style.display = 'block';
-
-            geocode(pickup, true, function(latLngPickup) {
-                if (!latLngPickup) { document.getElementById('loadingStatus').style.display = 'none'; return; }
-
-                geocode(delivery, false, function(latLngDelivery) {
-                    if (!latLngDelivery) { document.getElementById('loadingStatus').style.display = 'none'; return; }
-
-                    document.getElementById('loadingStatus').style.display = 'none';
-                    if (routingControl) map.removeControl(routingControl);
-
-                    myToPickupDistanceKm = myCurrentCoords.distanceTo(latLngPickup) / 1000;
-                    let taxaDeslocamentoConfig = configMotoboyAtual.taxaDeslocamento ?? 0.49;
-
-                    if (myToPickupDistanceKm > 4.0) {
-                        let kmExcedente = myToPickupDistanceKm - 4.0;
-                        deslocamentoFee = kmExcedente * taxaDeslocamentoConfig;
-                        document.getElementById('deslocamentoText').innerText = `+ R$ ${deslocamentoFee.toFixed(2).replace('.', ',')} (${myToPickupDistanceKm.toFixed(1)} km extra)`;
-                        document.getElementById('deslocamentoRow').style.color = '#d97706';
-                    } else {
-                        deslocamentoFee = 0;
-                        document.getElementById('deslocamentoText').innerText = `Grátis (Até 4 km)`;
-                        document.getElementById('deslocamentoRow').style.color = '#16a34a';
-                    }
-
-                    routingControl = L.Routing.control({
-                        waypoints: [latLngPickup, latLngDelivery],
-                        routeWhileDragging: false,
-                        addWaypoints: false,
-                        createMarker: function() { return null; }, // Desativa os marcadores padrões feios da biblioteca para usarmos os nossos limpos (A e B)
-                        lineOptions: { styles: [{ color: '#2563eb', weight: 5, opacity: 0.8 }] },
-                        show: false
-                    }).addTo(map);
-
-                    routingControl.on('routesfound', function(e) {
-                        const summary = e.routes[0].summary;
-                        deliveryDistanceKm = summary.totalDistance / 1000;
-
-                        // Mantém os pins atualizados e centraliza na rota
-                        atualizarPinsNoMapa();
-                        centralizarNaRota();
-                        document.getElementById('btnRecentrar').style.display = 'block';
-
-                        const baseRate = configMotoboyAtual.tarifaBase ?? 3.00;
-                        const kmRate = configMotoboyAtual.precoKm ?? 1.50;
-                        const minRate = configMotoboyAtual.tarifaMinima ?? 10.00;
-
-                        let rawDeliveryValue = baseRate + (deliveryDistanceKm * kmRate);
-                        let finalDeliveryValue = rawDeliveryValue < minRate ? minRate : rawDeliveryValue;
-
-                        calculatedFinalPrice = finalDeliveryValue + deslocamentoFee;
-
-                        document.getElementById('myDistText').innerText = myToPickupDistanceKm.toFixed(2) + ' km';
-                        document.getElementById('distText').innerText = deliveryDistanceKm.toFixed(2) + ' km';
-                        document.getElementById('kmValueText').innerText = 'R$ ' + finalDeliveryValue.toFixed(2).replace('.', ',');
-                        document.getElementById('totalText').innerText = 'R$ ' + calculatedFinalPrice.toFixed(2).replace('.', ',');
-                        document.getElementById('summaryCard').style.display = 'block';
-                    });
-                });
-            });
-        }
-
-        function showPixArea() {
-            const name = document.getElementById('clientName').value;
-            const phone = document.getElementById('clientPhone').value;
-            if (!name || !phone) { alert('Preencha seu Nome e WhatsApp.'); return; }
-
-            document.getElementById('pixArea').style.display = 'block';
-            document.getElementById('btnPay').style.display = 'none';
-            document.getElementById('btnWhatsapp').style.display = 'block';
-        }
-
-        function copyPixKey() {
-            navigator.clipboard.writeText(document.getElementById('pixKeyDisplay').innerText).then(() => {
-                mostrarToast('📋 Chave Pix copiada com sucesso!');
-            });
-        }
+        // Atualiza a interface com os valores iniciais de exemplo
+        document.getElementById('distanceText').innerText = deliveryDistanceKm.toFixed(2) + ' km';
+        document.getElementById('priceText').innerText = 'R$ ' + calculatedFinalPrice.toFixed(2).replace('.', ',');
 
         function sendToWhatsappMotoboy() {
             const name = document.getElementById('clientName').value;
@@ -782,11 +202,17 @@
             const pickup = document.getElementById('pickupAddress').value + (document.getElementById('pickupNumber').value ? `, Nº ${document.getElementById('pickupNumber').value}` : '');
             const delivery = document.getElementById('deliveryAddress').value + (document.getElementById('deliveryNumber').value ? `, Nº ${document.getElementById('deliveryNumber').value}` : '');
 
+            // Pega as coordenadas para montar os links limpos do Google Maps
+            let linkColeta = pickupCoords ? `https://www.google.com/maps?q=${pickupCoords.lat},${pickupCoords.lng}` : 'Endereço digitado';
+            let linkEntrega = deliveryCoords ? `https://www.google.com/maps?q=${deliveryCoords.lat},${deliveryCoords.lng}` : 'Endereço digitado';
+
             const message = `*Nova Solicitação de Entrega*\n\n` +
-                `👤 *Nome:* ${name}\n` +
-                `📱 *Telefone:* ${phone}\n` +
-                `📍 *Coleta (A):* ${pickup}\n` +
-                `🏁 *Destino (B):* ${delivery}\n` +
+                `👤 *Nome:* ${name || 'Não informado'}\n` +
+                `📱 *Telefone:* ${phone || 'Não informado'}\n\n` +
+                `📍 *Coleta (A):* ${pickup || 'Não informado'}\n` +
+                `🗺️ *Mapa Coleta:* ${linkColeta}\n\n` +
+                `🏁 *Destino (B):* ${delivery || 'Não informado'}\n` +
+                `🗺️ *Mapa Destino:* ${linkEntrega}\n\n` +
                 `📏 *Distância:* ${deliveryDistanceKm.toFixed(2)} km\n` +
                 `💰 *Valor Total:* R$ ${calculatedFinalPrice.toFixed(2).replace('.', ',')}\n` +
                 `💳 *Pagamento:* Pix realizado`;
