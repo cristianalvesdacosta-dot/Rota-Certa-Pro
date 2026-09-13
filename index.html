@@ -75,13 +75,13 @@
             <button type="button" class="btn btn-primary" onclick="fazerLoginOuCadastro()">Entrar / Criar Conta</button>
         </div>
 
-        <!-- 2. TELA DE BLOQUEIO (VENCIDO / 30 DIAS) -->
+        <!-- 2. TELA DE BLOQUEIO (VENCIDO / BLOQUEADO PELO MASTER) -->
         <div id="bloqueio-container" class="auth-card" style="display: none; background: #fff5f5; border: 1px solid #feb2b2;">
-            <h2 style="color: #c53030; justify-content: center;">⚠️ Período de Uso Expirado</h2>
-            <p style="font-size: 0.9rem; color: #742a2a; margin: 15px 0;">Seu período de 30 dias de uso deste painel chegou ao fim.</p>
-            <p style="font-size: 0.85rem; color: #4a5568; margin-bottom: 10px;">Para renovar sua licença por mais 30 dias, fale diretamente com o suporte técnico:</p>
+            <h2 style="color: #c53030; justify-content: center;">⚠️ Acesso Suspenso / Expirado</h2>
+            <p style="font-size: 0.9rem; color: #742a2a; margin: 15px 0;">Seu período de uso deste painel foi encerrado ou bloqueado pela administração.</p>
+            <p style="font-size: 0.85rem; color: #4a5568; margin-bottom: 10px;">Para regularizar e liberar seu acesso, fale diretamente com o suporte:</p>
             
-            <a href="https://wa.me/5519997648211?text=Olá%20Cristian,%20gostaria%20de%20renovar%20minha%20assinatura%20do%20Rota%20Certa%20por%20mais%2030%20dias!" target="_blank" class="whatsapp-btn">
+            <a href="https://wa.me/5519997648211?text=Olá%20Cristian,%20gostaria%20de%20regularizar%20minha%20assinatura%20do%20Rota%20Certa!" target="_blank" class="whatsapp-btn">
                 💬 Falar com Suporte (19 99764-8211)
             </a>
 
@@ -159,7 +159,6 @@
             <div class="card">
                 <h2>📍 Solicitar Entrega</h2>
                 
-                <!-- BOTÃO PARA O CLIENTE LOCALIZAR O MOTOBOY NO MAPA -->
                 <button type="button" class="btn" style="background: #0f172a; color: white; margin-bottom: 15px;" onclick="localizarMotoboyPeloCliente()">🏍️ Localizar Motoboy no Mapa</button>
                 <div id="statusMotoboyDistancia" style="font-size: 0.8rem; color: #2563eb; font-weight: 600; margin-bottom: 12px; text-align: center;"></div>
 
@@ -326,6 +325,7 @@
                     let novoPerfil = {
                         senha: sInput,
                         status: 'online',
+                        licenca: 'ativo',
                         nome: uInput,
                         whatsapp: '5591988888888',
                         pix: 'exemplo-chave-pix',
@@ -356,8 +356,10 @@
                 let dados = snapshot.val();
                 let expiraEm = dados.expiraEm || 0;
                 let agora = Date.now();
+                let licencaBloqueada = dados.licenca === 'bloqueado'; // <--- Verificação do Painel Master
 
-                if (agora > expiraEm) {
+                // Se venceu o prazo OU se foi bloqueado pelo Painel Master:
+                if (agora > expiraEm || licencaBloqueada) {
                     document.getElementById('auth-container').style.display = 'none';
                     document.getElementById('app-container').style.display = 'none';
                     document.getElementById('bloqueio-container').style.display = 'block';
@@ -441,7 +443,6 @@
             });
         }
 
-        // ALTERAR STATUS ONLINE / OFFLINE E CAPTURAR GPS AUTOMATICAMENTE
         function alternarStatusOnline() {
             const usuario = localStorage.getItem('rotaCertaUsuario');
             if (!usuario) return;
@@ -483,7 +484,6 @@
             window.location.reload();
         }
 
-        // Mapa e rotas
         const map = L.map('map').setView([-1.4558, -48.4902], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
@@ -507,7 +507,6 @@
             localStorage.setItem('deliveryNumber', document.getElementById('deliveryNumber').value);
         }
 
-        // CLIENTE TENTA LOCALIZAR O MOTOBOY
         function localizarMotoboyPeloCliente() {
             const usuario = localStorage.getItem('rotaCertaUsuario');
             if (!usuario) return;
