@@ -178,7 +178,7 @@
                     <label for="pickupAddress">Endereço de Coleta (Onde buscar)</label>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="pickupAddress" placeholder="Ex: Rua Exemplo, Bairro" oninput="saveInputs()">
+                            <input type="text" id="pickupAddress" placeholder="Ex: Av. Almirante Barroso, Belém" oninput="saveInputs()">
                             <div id="pickupSuggestions" class="suggestions"></div>
                         </div>
                         <div class="number-field">
@@ -192,7 +192,7 @@
                     <label for="deliveryAddress">Endereço de Destino (Onde entregar)</label>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="deliveryAddress" placeholder="Ex: Av. Principal, Nº" oninput="saveInputs()">
+                            <input type="text" id="deliveryAddress" placeholder="Ex: Passagem Alvorada, Jaderlândia" oninput="saveInputs()">
                             <div id="deliverySuggestions" class="suggestions"></div>
                         </div>
                         <div class="number-field">
@@ -271,7 +271,7 @@
         }
         const db = firebase.database();
 
-        let myCurrentCoords = L.latLng(-1.4558, -48.4902); 
+        let myCurrentCoords = L.latLng(-1.4558, -48.4902); // Coordenada central padrão em Belém (Centro / Nazaré)
         let motoMarker = null;
         let pickupMarker = null;
         let deliveryMarker = null;
@@ -320,7 +320,6 @@
         window.addEventListener('DOMContentLoaded', () => {
             escutarStatusEmTempoReal('cristian');
             
-            // Carregar valores salvos no localStorage se houver
             if(localStorage.getItem('clientName')) document.getElementById('clientName').value = localStorage.getItem('clientName');
             if(localStorage.getItem('clientPhone')) document.getElementById('clientPhone').value = localStorage.getItem('clientPhone');
             if(localStorage.getItem('pickupAddress')) document.getElementById('pickupAddress').value = localStorage.getItem('pickupAddress');
@@ -531,8 +530,8 @@
             mostrarToast('🔒 Desconectado do painel com segurança.');
         }
 
-        // MAPA DO CLIENTE
-        const map = L.map('map').setView([-1.4558, -48.4902], 13);
+        // MAPA DO CLIENTE (Focado inicialmente na região central de Belém e abrangendo toda a Grande Belém)
+        const map = L.map('map').setView([-1.4558, -48.4902], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap'
@@ -638,7 +637,7 @@
             }, () => { alert('Erro ao obter GPS.'); }, { timeout: 10000, enableHighAccuracy: true });
         }
 
-        // Sistema de Autocomplete Otimizado e Flexível para Belém
+        // Sistema de Autocomplete Amplo (Belém, Ananindeua e Pará)
         function setupAutocomplete(inputId, suggestionsId, isPickup) {
             const input = document.getElementById(inputId);
             const suggestions = document.getElementById(suggestionsId);
@@ -651,8 +650,8 @@
                 if (query.length < 3) { suggestions.style.display = 'none'; return; }
 
                 timeout = setTimeout(() => {
-                    // Adicionando viewbox e delimitando para Belém, Pará para melhorar a precisão dos resultados
-                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Belém, Pará, Brasil')}&countrycodes=br&limit=6`;
+                    // Busca abrangente em Belém/Pará
+                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Pará, Brasil')}&countrycodes=br&limit=6`;
 
                     fetch(url)
                         .then(res => res.json())
@@ -663,7 +662,6 @@
                                 data.forEach(item => {
                                     const div = document.createElement('div');
                                     div.className = 'suggestion-item';
-                                    // Deixa o nome exibido mais limpo
                                     let cleanName = item.display_name.split(',').slice(0, 3).join(',');
                                     div.innerText = cleanName;
                                     div.onclick = function() {
@@ -678,21 +676,19 @@
                                     suggestions.appendChild(div);
                                 });
                             } else { 
-                                suggestions.style.display = 'none'; 
+                                suggestions.style.display = 'none';
                             }
                         })
                         .catch(() => { suggestions.style.display = 'none'; });
                 }, 400);
             });
 
-            // Fecha a lista ao clicar fora
             document.addEventListener('click', function(e) {
                 if (!input.contains(e.target) && !suggestions.contains(e.target)) {
                     suggestions.style.display = 'none';
                 }
             });
             
-            // Quando o utilizador sai do campo, tenta geocodificar o texto livre digitado caso não tenha clicado numa sugestão
             input.addEventListener('blur', function() {
                 setTimeout(() => { suggestions.style.display = 'none'; }, 250);
                 if (input.value.length > 3) {
@@ -714,7 +710,7 @@
             if (isPickup && pickupCoords && address === document.getElementById('pickupAddress').value) { callback(pickupCoords); return; }
             if (!isPickup && deliveryCoords && address === document.getElementById('deliveryAddress').value) { callback(deliveryCoords); return; }
 
-            const queryFull = address.toLowerCase().includes('belém') ? address : (address + ", Belém, Pará, Brasil");
+            const queryFull = address.toLowerCase().includes('pará') || address.toLowerCase().includes('pa') ? address : (address + ", Pará, Brasil");
 
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryFull)}&limit=1`)
                 .then(res => res.json())
@@ -724,7 +720,21 @@
                         if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
                         atualizarPinsNoMapa();
                         callback(latLng);
-                    } else { callback(null); }
+                    } else {
+                        // Fallback genérico para Belém caso o endereço exato não seja encontrado
+                        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('Belém, Pará, Brasil')}&limit=1`)
+                            .then(res2 => res2.json())
+                            .then(data2 => {
+                                if (data2 && data2.length > 0) {
+                                    const latLng = L.latLng(parseFloat(data2[0].lat), parseFloat(data2[0].lon));
+                                    if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
+                                    atualizarPinsNoMapa();
+                                    callback(latLng);
+                                } else {
+                                    callback(null);
+                                }
+                            });
+                    }
                 })
                 .catch(() => callback(null));
         }
