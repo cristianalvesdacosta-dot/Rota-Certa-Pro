@@ -35,16 +35,14 @@
         .suggestion-item { padding: 10px 12px; font-size: 0.85rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
         .suggestion-item:hover { background-color: #f8fafc; }
         
-        /* Contêiner do Mapa com botão flutuante para recentralizar */
         .map-wrapper { position: relative; margin-top: 10px; }
         #map { width: 100%; height: 260px; border-radius: 8px; border: 1px solid #e2e8f0; }
         .btn-recentrar { position: absolute; bottom: 12px; right: 12px; z-index: 1000; background: #0f172a; color: white; border: none; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; display: none; }
         .btn-recentrar:hover { background: #1e293b; }
 
-        /* Estilos dos Pins personalizados no Mapa */
         .pin-marker { display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; border-radius: 50%; box-shadow: 0 3px 6px rgba(0,0,0,0.3); color: white; border: 2px solid white; }
-        .pin-pickup { background-color: #16a34a; } /* Verde para Coleta (A) */
-        .pin-delivery { background-color: #dc2626; } /* Vermelho para Entrega (B) */
+        .pin-pickup { background-color: #16a34a; } 
+        .pin-delivery { background-color: #dc2626; } 
         .moto-marker-icon { background: #0f172a; border: 2px solid #ffffff; border-radius: 50%; color: #ffffff; font-size: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 6px rgba(0,0,0,0.3); }
 
         .summary-box { background: #f8fafc; border-radius: 8px; padding: 14px; border: 1px solid #e2e8f0; }
@@ -296,7 +294,6 @@
             iconAnchor: [18, 18]
         });
 
-        // Ícones customizados para o Ponto A (Coleta - Verde) e Ponto B (Entrega - Vermelho)
         const pickupIcon = L.divIcon({
             className: 'pin-marker pin-pickup',
             html: 'A',
@@ -322,6 +319,14 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             escutarStatusEmTempoReal('cristian');
+            
+            // Carregar valores salvos no localStorage se houver
+            if(localStorage.getItem('clientName')) document.getElementById('clientName').value = localStorage.getItem('clientName');
+            if(localStorage.getItem('clientPhone')) document.getElementById('clientPhone').value = localStorage.getItem('clientPhone');
+            if(localStorage.getItem('pickupAddress')) document.getElementById('pickupAddress').value = localStorage.getItem('pickupAddress');
+            if(localStorage.getItem('pickupNumber')) document.getElementById('pickupNumber').value = localStorage.getItem('pickupNumber');
+            if(localStorage.getItem('deliveryAddress')) document.getElementById('deliveryAddress').value = localStorage.getItem('deliveryAddress');
+            if(localStorage.getItem('deliveryNumber')) document.getElementById('deliveryNumber').value = localStorage.getItem('deliveryNumber');
         });
 
         function escutarStatusEmTempoReal(usuario) {
@@ -633,6 +638,7 @@
             }, () => { alert('Erro ao obter GPS.'); }, { timeout: 10000, enableHighAccuracy: true });
         }
 
+        // Sistema de Autocomplete Otimizado e Flexível para Belém
         function setupAutocomplete(inputId, suggestionsId, isPickup) {
             const input = document.getElementById(inputId);
             const suggestions = document.getElementById(suggestionsId);
@@ -645,7 +651,10 @@
                 if (query.length < 3) { suggestions.style.display = 'none'; return; }
 
                 timeout = setTimeout(() => {
-                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Belém, Pará')}`)
+                    // Adicionando viewbox e delimitando para Belém, Pará para melhorar a precisão dos resultados
+                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Belém, Pará, Brasil')}&countrycodes=br&limit=6`;
+
+                    fetch(url)
                         .then(res => res.json())
                         .then(data => {
                             suggestions.innerHTML = '';
@@ -654,9 +663,11 @@
                                 data.forEach(item => {
                                     const div = document.createElement('div');
                                     div.className = 'suggestion-item';
-                                    div.innerText = item.display_name;
+                                    // Deixa o nome exibido mais limpo
+                                    let cleanName = item.display_name.split(',').slice(0, 3).join(',');
+                                    div.innerText = cleanName;
                                     div.onclick = function() {
-                                        input.value = item.display_name;
+                                        input.value = cleanName;
                                         suggestions.style.display = 'none';
                                         saveInputs();
                                         const coords = L.latLng(parseFloat(item.lat), parseFloat(item.lon));
@@ -666,9 +677,33 @@
                                     };
                                     suggestions.appendChild(div);
                                 });
-                            } else { suggestions.style.display = 'none'; }
-                        });
+                            } else { 
+                                suggestions.style.display = 'none'; 
+                            }
+                        })
+                        .catch(() => { suggestions.style.display = 'none'; });
                 }, 400);
+            });
+
+            // Fecha a lista ao clicar fora
+            document.addEventListener('click', function(e) {
+                if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+                    suggestions.style.display = 'none';
+                }
+            });
+            
+            // Quando o utilizador sai do campo, tenta geocodificar o texto livre digitado caso não tenha clicado numa sugestão
+            input.addEventListener('blur', function() {
+                setTimeout(() => { suggestions.style.display = 'none'; }, 250);
+                if (input.value.length > 3) {
+                    geocode(input.value, isPickup, function(coords) {
+                        if (coords) {
+                            if (isPickup) pickupCoords = coords; else deliveryCoords = coords;
+                            atualizarPinsNoMapa();
+                            calculateAll();
+                        }
+                    });
+                }
             });
         }
 
@@ -676,10 +711,12 @@
         setupAutocomplete('deliveryAddress', 'deliverySuggestions', false);
 
         function geocode(address, isPickup, callback) {
-            if (isPickup && pickupCoords) { callback(pickupCoords); return; }
-            if (!isPickup && deliveryCoords) { callback(deliveryCoords); return; }
+            if (isPickup && pickupCoords && address === document.getElementById('pickupAddress').value) { callback(pickupCoords); return; }
+            if (!isPickup && deliveryCoords && address === document.getElementById('deliveryAddress').value) { callback(deliveryCoords); return; }
 
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+            const queryFull = address.toLowerCase().includes('belém') ? address : (address + ", Belém, Pará, Brasil");
+
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryFull)}&limit=1`)
                 .then(res => res.json())
                 .then(data => {
                     if (data && data.length > 0) {
@@ -688,7 +725,8 @@
                         atualizarPinsNoMapa();
                         callback(latLng);
                     } else { callback(null); }
-                });
+                })
+                .catch(() => callback(null));
         }
 
         function calculateAll() {
@@ -779,7 +817,6 @@
             const pickup = document.getElementById('pickupAddress').value + (document.getElementById('pickupNumber').value ? `, Nº ${document.getElementById('pickupNumber').value}` : '');
             const delivery = document.getElementById('deliveryAddress').value + (document.getElementById('deliveryNumber').value ? `, Nº ${document.getElementById('deliveryNumber').value}` : '');
 
-            // Pega as coordenadas exatas obtidas pelo mapa para enviar links limpos do Google Maps
             let linkColeta = pickupCoords ? `https://www.google.com/maps?q=${pickupCoords.lat},${pickupCoords.lng}` : 'Endereço digitado';
             let linkEntrega = deliveryCoords ? `https://www.google.com/maps?q=${deliveryCoords.lat},${deliveryCoords.lng}` : 'Endereço digitado';
 
