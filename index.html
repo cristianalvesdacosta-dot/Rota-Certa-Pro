@@ -106,7 +106,7 @@
                 
                 <div class="form-group">
                     <label>Status do Expediente</label>
-                    <div class="help-text">Ligado (Online): Sua moto aparece no mapa para os clientes em tempo real.<br>Desligado (Offline): Você some do mapa.</div>
+                    <div class="help-text">Ligado (Online): Mantém sua moto ativa no mapa e evita que o GPS duvme.<br>Desligado (Offline): Você some do mapa.</div>
                     <button type="button" id="btnToggleStatus" class="btn" style="background: #16a34a; color: white; margin-top: 0;" onclick="alternarStatusOnline()">🟢 Online (Recebendo Pedidos)</button>
                 </div>
 
@@ -306,6 +306,7 @@
         let deliveryMarker = null;
         let usuarioAtivoPainel = null; 
         let watchIdGPS = null;
+        let wakeLock = null; // Mantém a tela acordada para o GPS não dormir no Android
 
         let configMotoboyAtual = {
             nome: "Rota Certa",
@@ -545,6 +546,16 @@
             });
         }
 
+        async function solicitarWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
         function alternarStatusOnline() {
             if (!usuarioAtivoPainel) return;
 
@@ -553,21 +564,26 @@
             if (novoStatus === 'online') {
                 if (!navigator.geolocation) { alert('GPS não suportado.'); return; }
                 
+                solicitarWakeLock();
+
                 watchIdGPS = navigator.geolocation.watchPosition((position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
 
                     db.ref('entregadores/' + usuarioAtivoPainel).update({ status: 'online', lat: lat, lon: lon });
                     myCurrentCoords = L.latLng(lat, lon);
-                }, (err) => { console.error(err); }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
+                }, (err) => { console.error(err); }, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
 
                 db.ref('entregadores/' + usuarioAtivoPainel).update({ status: 'online' }).then(() => {
-                    mostrarToast('🟢 Status Online! Sua moto está visível.');
+                    mostrarToast('🟢 Status Online! GPS ativado.');
                 });
             } else {
                 if (watchIdGPS !== null) {
                     navigator.geolocation.clearWatch(watchIdGPS);
                     watchIdGPS = null;
+                }
+                if (wakeLock !== null) {
+                    wakeLock.release().then(() => { wakeLock = null; });
                 }
                 db.ref('entregadores/' + usuarioAtivoPainel).update({ status: 'offline' }).then(() => {
                     mostrarToast('🔴 Status Offline. Você saiu do mapa.');
@@ -577,6 +593,7 @@
 
         function fazerLogout() {
             if (watchIdGPS !== null) navigator.geolocation.clearWatch(watchIdGPS);
+            if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
             usuarioAtivoPainel = null;
             voltarParaModoCliente();
             mostrarToast('🔒 Desconectado do painel com segurança.');
@@ -765,74 +782,80 @@
 
             document.getElementById('loadingStatus').style.display = 'block';
 
-            geocode(pickup, true, function(latLngPickup) {
-                if (!latLngPickup) { document.getElementById('loadingStatus').style.display = 'none'; return; }
+            // FORÇA BUSCA DA POSIÇÃO MAIS RECENTE ANTES DO CÁLCULO
+            db.ref('entregadores/cristian').once('value').then((snapshot) => {
+                if (snapshot.exists() && snapshot.val().lat && snapshot.val().lon) {
+                    myCurrentCoords = L.latLng(snapshot.val().lat, snapshot.val().lon);
+                }
 
-                geocode(delivery, false, function(latLngDelivery) {
-                    if (!latLngDelivery) { document.getElementById('loadingStatus').style.display = 'none'; return; }
+                geocode(pickup, true, function(latLngPickup) {
+                    if (!latLngPickup) { document.getElementById('loadingStatus').style.display = 'none'; return; }
 
-                    document.getElementById('loadingStatus').style.display = 'none';
-                    if (routingControl) map.removeControl(routingControl);
+                    geocode(delivery, false, function(latLngDelivery) {
+                        if (!latLngDelivery) { document.getElementById('loadingStatus').style.display = 'none'; return; }
 
-                    myToPickupDistanceKm = myCurrentCoords.distanceTo(latLngPickup) / 1000;
-                    let taxaDeslocamentoConfig = configMotoboyAtual.taxaDeslocamento ?? 0.49;
+                        document.getElementById('loadingStatus').style.display = 'none';
+                        if (routingControl) map.removeControl(routingControl);
 
-                    if (myToPickupDistanceKm > 4.0) {
-                        let kmExcedente = myToPickupDistanceKm - 4.0;
-                        deslocamentoFee = kmExcedente * taxaDeslocamentoConfig;
-                        document.getElementById('deslocamentoText').innerText = `+ R$ ${deslocamentoFee.toFixed(2).replace('.', ',')} (${myToPickupDistanceKm.toFixed(1)} km extra)`;
-                        document.getElementById('deslocamentoRow').style.color = '#d97706';
-                    } else {
-                        deslocamentoFee = 0;
-                        document.getElementById('deslocamentoText').innerText = `Grátis (Até 4 km)`;
-                        document.getElementById('deslocamentoRow').style.color = '#16a34a';
-                    }
+                        myToPickupDistanceKm = myCurrentCoords.distanceTo(latLngPickup) / 1000;
+                        let taxaDeslocamentoConfig = configMotoboyAtual.taxaDeslocamento ?? 0.49;
 
-                    routingControl = L.Routing.control({
-                        waypoints: [latLngPickup, latLngDelivery],
-                        routeWhileDragging: false,
-                        addWaypoints: false,
-                        createMarker: function() { return null; },
-                        lineOptions: { styles: [{ color: '#2563eb', weight: 5, opacity: 0.8 }] },
-                        show: false
-                    }).addTo(map);
-
-                    routingControl.on('routesfound', function(e) {
-                        const summary = e.routes[0].summary;
-                        deliveryDistanceKm = summary.totalDistance / 1000;
-
-                        atualizarPinsNoMapa();
-                        centralizarNaRota();
-                        document.getElementById('btnRecentrar').style.display = 'block';
-
-                        const baseRate = configMotoboyAtual.tarifaBase ?? 3.00;
-                        const kmRate = configMotoboyAtual.precoKm ?? 1.50;
-                        const minRate = configMotoboyAtual.tarifaMinima ?? 10.00;
-
-                        let rawDeliveryValue = baseRate + (deliveryDistanceKm * kmRate);
-                        let finalDeliveryValue = rawDeliveryValue < minRate ? minRate : rawDeliveryValue;
-
-                        // REGRA DE RETORNO VAZIO (MULTIPLICA TODOS OS KM DA CORRIDA)
-                        let ativarRaioConfig = configMotoboyAtual.ativarRaio ?? 'sim';
-                        let raioMaximoConfig = parseFloat(configMotoboyAtual.raioMaximo) || 12;
-                        let custoKmExcedenteConfig = parseFloat(configMotoboyAtual.custoKmExcedente) || 0.49;
-
-                        raioExtraFee = 0;
-                        if (ativarRaioConfig === 'sim' && deliveryDistanceKm > raioMaximoConfig) {
-                            raioExtraFee = deliveryDistanceKm * custoKmExcedenteConfig;
-                            document.getElementById('textoAlertaRetorno').innerText = `⚠️ Acima de ${raioMaximoConfig}km (Retorno Vazio): +R$ ${raioExtraFee.toFixed(2).replace('.', ',')} (${deliveryDistanceKm.toFixed(1)} km x R$ ${custoKmExcedenteConfig.toFixed(2)})`;
-                            document.getElementById('alertaRetornoRow').style.display = 'flex';
+                        if (myToPickupDistanceKm > 4.0) {
+                            let kmExcedente = myToPickupDistanceKm - 4.0;
+                            deslocamentoFee = kmExcedente * taxaDeslocamentoConfig;
+                            document.getElementById('deslocamentoText').innerText = `+ R$ ${deslocamentoFee.toFixed(2).replace('.', ',')} (${myToPickupDistanceKm.toFixed(1)} km extra)`;
+                            document.getElementById('deslocamentoRow').style.color = '#d97706';
                         } else {
-                            document.getElementById('alertaRetornoRow').style.display = 'none';
+                            deslocamentoFee = 0;
+                            document.getElementById('deslocamentoText').innerText = `Grátis (Até 4 km)`;
+                            document.getElementById('deslocamentoRow').style.color = '#16a34a';
                         }
 
-                        calculatedFinalPrice = finalDeliveryValue + deslocamentoFee + raioExtraFee;
+                        routingControl = L.Routing.control({
+                            waypoints: [latLngPickup, latLngDelivery],
+                            routeWhileDragging: false,
+                            addWaypoints: false,
+                            createMarker: function() { return null; },
+                            lineOptions: { styles: [{ color: '#2563eb', weight: 5, opacity: 0.8 }] },
+                            show: false
+                        }).addTo(map);
 
-                        document.getElementById('myDistText').innerText = myToPickupDistanceKm.toFixed(2) + ' km';
-                        document.getElementById('distText').innerText = deliveryDistanceKm.toFixed(2) + ' km';
-                        document.getElementById('kmValueText').innerText = 'R$ ' + finalDeliveryValue.toFixed(2).replace('.', ',');
-                        document.getElementById('totalText').innerText = 'R$ ' + calculatedFinalPrice.toFixed(2).replace('.', ',');
-                        document.getElementById('summaryCard').style.display = 'block';
+                        routingControl.on('routesfound', function(e) {
+                            const summary = e.routes[0].summary;
+                            deliveryDistanceKm = summary.totalDistance / 1000;
+
+                            atualizarPinsNoMapa();
+                            centralizarNaRota();
+                            document.getElementById('btnRecentrar').style.display = 'block';
+
+                            const baseRate = configMotoboyAtual.tarifaBase ?? 3.00;
+                            const kmRate = configMotoboyAtual.precoKm ?? 1.50;
+                            const minRate = configMotoboyAtual.tarifaMinima ?? 10.00;
+
+                            let rawDeliveryValue = baseRate + (deliveryDistanceKm * kmRate);
+                            let finalDeliveryValue = rawDeliveryValue < minRate ? minRate : rawDeliveryValue;
+
+                            let ativarRaioConfig = configMotoboyAtual.ativarRaio ?? 'sim';
+                            let raioMaximoConfig = parseFloat(configMotoboyAtual.raioMaximo) || 12;
+                            let custoKmExcedenteConfig = parseFloat(configMotoboyAtual.custoKmExcedente) || 0.49;
+
+                            raioExtraFee = 0;
+                            if (ativarRaioConfig === 'sim' && deliveryDistanceKm > raioMaximoConfig) {
+                                raioExtraFee = deliveryDistanceKm * custoKmExcedenteConfig;
+                                document.getElementById('textoAlertaRetorno').innerText = `⚠️ Acima de ${raioMaximoConfig}km (Retorno Vazio): +R$ ${raioExtraFee.toFixed(2).replace('.', ',')} (${deliveryDistanceKm.toFixed(1)} km x R$ ${custoKmExcedenteConfig.toFixed(2)})`;
+                                document.getElementById('alertaRetornoRow').style.display = 'flex';
+                            } else {
+                                document.getElementById('alertaRetornoRow').style.display = 'none';
+                            }
+
+                            calculatedFinalPrice = finalDeliveryValue + deslocamentoFee + raioExtraFee;
+
+                            document.getElementById('myDistText').innerText = myToPickupDistanceKm.toFixed(2) + ' km';
+                            document.getElementById('distText').innerText = deliveryDistanceKm.toFixed(2) + ' km';
+                            document.getElementById('kmValueText').innerText = 'R$ ' + finalDeliveryValue.toFixed(2).replace('.', ',');
+                            document.getElementById('totalText').innerText = 'R$ ' + calculatedFinalPrice.toFixed(2).replace('.', ',');
+                            document.getElementById('summaryCard').style.display = 'block';
+                        });
                     });
                 });
             });
@@ -871,7 +894,9 @@
                 `🗺️ *Mapa Coleta:* ${linkColeta}\n\n` +
                 `🏁 *Destino (B):* ${delivery}\n` +
                 `🗺️ *Mapa Destino:* ${linkEntrega}\n\n` +
-                `📏 *Distância:* ${deliveryDistanceKm.toFixed(2)} km\n` +
+                `📏 *Distância Até Você:* ${myToPickupDistanceKm.toFixed(2)} km\n` +
+                `💰 *Taxa de Deslocamento:* R$ ${deslocamentoFee.toFixed(2).replace('.', ',')}\n` +
+                `📏 *Distância Entrega:* ${deliveryDistanceKm.toFixed(2)} km\n` +
                 `💰 *Valor Total:* R$ ${calculatedFinalPrice.toFixed(2).replace('.', ',')}\n\n` +
                 `💳 *Chave Pix para Pagamento:* \`${chavePixAtual}\`\n\n` +
                 `📎 *[ Segue abaixo o meu Comprovante de Pagamento do Pix ]*`;
