@@ -201,7 +201,7 @@
                     <label for="pickupAddress">Endereço de Coleta (Onde buscar)</label>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="pickupAddress" placeholder="Ex: Shopping, Loja, Restaurante..." autocomplete="off" oninput="saveInputs()">
+                            <input type="text" id="pickupAddress" placeholder="Ex: Passagem Alvorada, Jaderlândia..." autocomplete="off" oninput="saveInputs()">
                             <div id="pickupSuggestions" class="suggestions"></div>
                         </div>
                         <div class="number-field">
@@ -215,7 +215,7 @@
                     <label for="deliveryAddress">Endereço de Destino (Onde entregar)</label>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="deliveryAddress" placeholder="Ex: Sua casa, trabalho..." autocomplete="off" oninput="saveInputs()">
+                            <input type="text" id="deliveryAddress" placeholder="Ex: Av. Almirante Barroso, Belém..." autocomplete="off" oninput="saveInputs()">
                             <div id="deliverySuggestions" class="suggestions"></div>
                         </div>
                         <div class="number-field">
@@ -634,7 +634,7 @@
                 if (query.length < 2) { suggestions.style.display = 'none'; return; }
 
                 timeout = setTimeout(() => {
-                    let searchQuery = query.toLowerCase().includes('belém') ? query : (query + ', Belém, Pará');
+                    let searchQuery = query.toLowerCase().includes('belém') || query.toLowerCase().includes('ananindeua') ? query : (query + ', Belém e Ananindeua, Pará');
                     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=6`)
                         .then(res => res.json())
                         .then(data => {
@@ -666,7 +666,10 @@
             if (isPickup && pickupCoords && address === document.getElementById('pickupAddress').value) { callback(pickupCoords); return; }
             if (!isPickup && deliveryCoords && address === document.getElementById('deliveryAddress').value) { callback(deliveryCoords); return; }
 
-            let q = address.toLowerCase().includes('belém') ? address : (address + ", Belém, Pará, Brasil");
+            // Limpa o número exato da rua para garantir que a API encontre o logradouro
+            let enderecoLimpo = address.replace(/,\s*\d+([,\s-].*)?/g, '');
+            let q = enderecoLimpo.toLowerCase().includes('belém') || enderecoLimpo.toLowerCase().includes('ananindeua') ? enderecoLimpo : (enderecoLimpo + ", Belém e Ananindeua, Pará, Brasil");
+
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`)
                 .then(res => res.json())
                 .then(data => {
@@ -675,7 +678,19 @@
                         if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
                         atualizarPinsNoMapa();
                         callback(latLng);
-                    } else { callback(null); }
+                    } else {
+                        // Segunda tentativa genérica caso a primeira falhe
+                        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + ", Pará, Brasil")}&limit=1`)
+                            .then(res2 => res2.json())
+                            .then(data2 => {
+                                if (data2 && data2.length > 0) {
+                                    let latLng = L.latLng(parseFloat(data2[0].lat), parseFloat(data2[0].lon));
+                                    if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
+                                    atualizarPinsNoMapa();
+                                    callback(latLng);
+                                } else { callback(null); }
+                            });
+                    }
                 })
                 .catch(() => callback(null));
         }
