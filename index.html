@@ -27,16 +27,16 @@
         .row-fields .number-field { flex: 1; }
         label { display: block; font-size: 0.8rem; font-weight: 500; color: #64748b; margin-bottom: 4px; }
         .help-text { font-size: 0.75rem; color: #0284c7; margin-top: 4px; margin-bottom: 6px; line-height: 1.4; background: #f0f9ff; padding: 8px; border-radius: 6px; border: 1px solid #bae6fd; }
-        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: #fff; }
         input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
         .inline-gps { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; font-size: 0.75rem; padding: 6px 10px; margin-top: 6px; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
         .inline-gps:hover { background: #dbeafe; }
-        .suggestions { background: white; border: 1px solid #cbd5e1; border-top: none; border-radius: 0 0 8px 8px; max-height: 150px; overflow-y: auto; position: absolute; width: 100%; z-index: 1000; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .suggestions { background: white; border: 1px solid #cbd5e1; border-top: none; border-radius: 0 0 8px 8px; max-height: 180px; overflow-y: auto; position: absolute; width: 100%; z-index: 1000; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .suggestion-item { padding: 10px 12px; font-size: 0.85rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
         .suggestion-item:hover { background-color: #f8fafc; }
         
         .map-wrapper { position: relative; margin-top: 10px; }
-        #map { width: 100%; height: 260px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        #map { width: 100%; height: 280px; border-radius: 8px; border: 1px solid #e2e8f0; z-index: 1; }
         .btn-recentrar { position: absolute; bottom: 12px; right: 12px; z-index: 1000; background: #0f172a; color: white; border: none; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; display: none; }
         .btn-recentrar:hover { background: #1e293b; }
 
@@ -106,7 +106,7 @@
                 
                 <div class="form-group">
                     <label>Status do Expediente</label>
-                    <div class="help-text">Ligado (Online): Mantém sua moto ativa no mapa e evita que o GPS duvme.<br>Desligado (Offline): Você some do mapa.</div>
+                    <div class="help-text">Ligado (Online): Mantém sua moto ativa no mapa e impede o GPS de dormir.<br>Desligado (Offline): Você some do mapa.</div>
                     <button type="button" id="btnToggleStatus" class="btn" style="background: #16a34a; color: white; margin-top: 0;" onclick="alternarStatusOnline()">🟢 Online (Recebendo Pedidos)</button>
                 </div>
 
@@ -129,27 +129,22 @@
                 <div class="config-grid">
                     <div class="form-group">
                         <label for="cfgTarifaBase">Valor Fixo Inicial (R$)</label>
-                        <div class="help-text">Preço fixo cobrado logo no início da corrida.</div>
                         <input type="number" step="0.50" id="cfgTarifaBase" value="3.00" onchange="salvarConfiguracoesMotoboy()">
                     </div>
                     <div class="form-group">
                         <label for="cfgTarifaMinima">Valor Mínimo (R$)</label>
-                        <div class="help-text">Nenhuma corrida fica abaixo deste valor.</div>
                         <input type="number" step="0.50" id="cfgTarifaMinima" value="10.00" onchange="salvarConfiguracoesMotoboy()">
                     </div>
                     <div class="form-group">
                         <label for="cfgPrecoKm">Preço por Quilômetro (R$)</label>
-                        <div class="help-text">Quanto é cobrado por cada km rodado na entrega.</div>
                         <input type="number" step="0.10" id="cfgPrecoKm" value="1.50" onchange="salvarConfiguracoesMotoboy()">
                     </div>
                     <div class="form-group">
                         <label for="cfgTaxaDeslocamento">Taxa Km Extra (>4km coleta)</label>
-                        <div class="help-text">Cobrado se você rodar mais de 4km até a coleta.</div>
                         <input type="number" step="0.01" id="cfgTaxaDeslocamento" value="0.49" onchange="salvarConfiguracoesMotoboy()">
                     </div>
                 </div>
 
-                <!-- PROTEÇÃO DE RETORNO VAZIO -->
                 <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 12px; border-radius: 8px; margin-top: 10px; margin-bottom: 14px;">
                     <label style="color: #92400e; font-weight: 700; margin-bottom: 6px;">⚠️ Proteção de Retorno Vazio (Km a Km)</label>
                     <div class="help-text" style="background: #fef3c7; border-color: #fcd34d; color: #78350f;">
@@ -158,7 +153,7 @@
                     <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
                         <div style="flex: 1;">
                             <label for="cfgAtivarRaio" style="font-size: 0.75rem;">Ativar Proteção?</label>
-                            <select id="cfgAtivarRaio" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.9rem;" onchange="salvarConfiguracoesMotoboy()">
+                            <select id="cfgAtivarRaio" onchange="salvarConfiguracoesMotoboy()">
                                 <option value="sim">Sim (Cobrar retorno)</option>
                                 <option value="nao">Não (Preço normal)</option>
                             </select>
@@ -204,7 +199,7 @@
                     <label for="pickupAddress">Endereço de Coleta (Onde buscar)</label>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="pickupAddress" placeholder="Ex: Av. Almirante Barroso, Belém" oninput="saveInputs()">
+                            <input type="text" id="pickupAddress" placeholder="Ex: Av. Almirante Barroso, Belém" autocomplete="off" oninput="saveInputs()">
                             <div id="pickupSuggestions" class="suggestions"></div>
                         </div>
                         <div class="number-field">
@@ -218,7 +213,7 @@
                     <label for="deliveryAddress">Endereço de Destino (Onde entregar)</label>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="deliveryAddress" placeholder="Ex: Passagem Alvorada, Jaderlândia" oninput="saveInputs()">
+                            <input type="text" id="deliveryAddress" placeholder="Ex: Shopping Bosque Grão-Pará, Belém" autocomplete="off" oninput="saveInputs()">
                             <div id="deliverySuggestions" class="suggestions"></div>
                         </div>
                         <div class="number-field">
@@ -300,13 +295,13 @@
         }
         const db = firebase.database();
 
-        let myCurrentCoords = L.latLng(-1.4558, -48.4902); 
+        let myCurrentCoords = L.latLng(-1.4558, -48.4902); // Belém-PA padrão
         let motoMarker = null;
         let pickupMarker = null;
         let deliveryMarker = null;
         let usuarioAtivoPainel = null; 
         let watchIdGPS = null;
-        let wakeLock = null; // Mantém a tela acordada para o GPS não dormir no Android
+        let wakeLock = null;
 
         let configMotoboyAtual = {
             nome: "Rota Certa",
@@ -352,7 +347,15 @@
             }, 3500);
         }
 
+        const map = L.map('map').setView([-1.4558, -48.4902], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
         window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { map.invalidateSize(); }, 300);
+
             escutarStatusEmTempoReal('cristian');
             
             if(localStorage.getItem('clientName')) document.getElementById('clientName').value = localStorage.getItem('clientName');
@@ -419,6 +422,7 @@
             document.getElementById('motoboy-portal-container').style.display = 'none';
             document.getElementById('client-app-container').style.display = 'block';
             document.getElementById('btnAlternarModo').innerText = '🔒 Área do Motoboy';
+            setTimeout(() => { map.invalidateSize(); }, 200);
         }
 
         function fazerLoginOuCadastro() {
@@ -599,12 +603,6 @@
             mostrarToast('🔒 Desconectado do painel com segurança.');
         }
 
-        const map = L.map('map').setView([-1.4558, -48.4902], 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
         let routingControl = null;
         let deliveryDistanceKm = 0;
         let myToPickupDistanceKm = 0;
@@ -648,6 +646,7 @@
                     if (!map.hasLayer(deliveryMarker)) deliveryMarker.addTo(map);
                 }
             }
+            map.invalidateSize();
         }
 
         function useGpsForField(fieldType) {
@@ -684,22 +683,24 @@
             input.addEventListener('input', function() {
                 saveInputs();
                 clearTimeout(timeout);
-                const query = this.value;
-                if (query.length < 3) { suggestions.style.display = 'none'; return; }
+                const query = this.value.trim();
+                if (query.length < 2) { suggestions.style.display = 'none'; return; }
 
                 timeout = setTimeout(() => {
-                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Pará, Brasil')}&countrycodes=br&limit=6`;
+                    // Força a busca a priorizar Belém para qualquer termo (inclusive 'shopping')
+                    const searchQuery = query.toLowerCase().includes('belém') ? query : (query + ', Belém, Pará');
+                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&countrycodes=br&limit=8`;
 
                     fetch(url)
                         .then(res => res.json())
                         .then(data => {
                             suggestions.innerHTML = '';
-                            if (data.length > 0) {
+                            if (data && data.length > 0) {
                                 suggestions.style.display = 'block';
                                 data.forEach(item => {
                                     const div = document.createElement('div');
                                     div.className = 'suggestion-item';
-                                    let cleanName = item.display_name.split(',').slice(0, 3).join(',');
+                                    let cleanName = item.display_name.split(',').slice(0, 4).join(',');
                                     div.innerText = cleanName;
                                     div.onclick = function() {
                                         input.value = cleanName;
@@ -717,7 +718,7 @@
                             }
                         })
                         .catch(() => { suggestions.style.display = 'none'; });
-                }, 400);
+                }, 300);
             });
 
             document.addEventListener('click', function(e) {
@@ -728,7 +729,7 @@
             
             input.addEventListener('blur', function() {
                 setTimeout(() => { suggestions.style.display = 'none'; }, 250);
-                if (input.value.length > 3) {
+                if (input.value.length > 2) {
                     geocode(input.value, isPickup, function(coords) {
                         if (coords) {
                             if (isPickup) pickupCoords = coords; else deliveryCoords = coords;
@@ -747,7 +748,7 @@
             if (isPickup && pickupCoords && address === document.getElementById('pickupAddress').value) { callback(pickupCoords); return; }
             if (!isPickup && deliveryCoords && address === document.getElementById('deliveryAddress').value) { callback(deliveryCoords); return; }
 
-            const queryFull = address.toLowerCase().includes('pará') || address.toLowerCase().includes('pa') ? address : (address + ", Pará, Brasil");
+            const queryFull = address.toLowerCase().includes('belém') ? address : (address + ", Belém, Pará, Brasil");
 
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryFull)}&limit=1`)
                 .then(res => res.json())
@@ -758,18 +759,7 @@
                         atualizarPinsNoMapa();
                         callback(latLng);
                     } else {
-                        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('Belém, Pará, Brasil')}&limit=1`)
-                            .then(res2 => res2.json())
-                            .then(data2 => {
-                                if (data2 && data2.length > 0) {
-                                    const latLng = L.latLng(parseFloat(data2[0].lat), parseFloat(data2[0].lon));
-                                    if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
-                                    atualizarPinsNoMapa();
-                                    callback(latLng);
-                                } else {
-                                    callback(null);
-                                }
-                            });
+                        callback(null);
                     }
                 })
                 .catch(() => callback(null));
@@ -782,7 +772,6 @@
 
             document.getElementById('loadingStatus').style.display = 'block';
 
-            // FORÇA BUSCA DA POSIÇÃO MAIS RECENTE ANTES DO CÁLCULO
             db.ref('entregadores/cristian').once('value').then((snapshot) => {
                 if (snapshot.exists() && snapshot.val().lat && snapshot.val().lon) {
                     myCurrentCoords = L.latLng(snapshot.val().lat, snapshot.val().lon);
