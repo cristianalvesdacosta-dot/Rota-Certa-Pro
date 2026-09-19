@@ -447,8 +447,7 @@
                     let dados = snapshot.val();
                     if (dados.senha === sInput) {
                         usuarioAtivoPainel = uInput;
-                        carregarDadosPainel(uInput);
-                        escutarStatusEmTempoReal(uInput);
+                        carregarDadosPainelOnce(uInput);
                     } else {
                         errDiv.style.display = 'block';
                         errDiv.innerText = 'Senha incorreta!';
@@ -473,8 +472,7 @@
                     };
                     refCliente.set(novoPerfil).then(() => {
                         usuarioAtivoPainel = uInput;
-                        carregarDadosPainel(uInput);
-                        escutarStatusEmTempoReal(uInput);
+                        carregarDadosPainelOnce(uInput);
                     }).catch((err) => {
                         errDiv.style.display = 'block';
                         errDiv.innerText = 'Erro: ' + err.message;
@@ -483,8 +481,8 @@
             });
         }
 
-        function carregarDadosPainel(usuario) {
-            db.ref('entregadores/' + usuario).on('value', (snapshot) => {
+        function carregarDadosPainelOnce(usuario) {
+            db.ref('entregadores/' + usuario).once('value').then((snapshot) => {
                 if (!snapshot.exists()) return;
                 let dados = snapshot.val();
                 let expiraEm = dados.expiraEm || 0;
@@ -515,15 +513,19 @@
                 document.getElementById('cfgRaioMaximo').value = dados.raioMaximo ?? 12;
                 document.getElementById('cfgCustoKmExcedente').value = dados.custoKmExcedente ?? 0.49;
 
-                const btnStatus = document.getElementById('btnToggleStatus');
-                if (dados.status === 'offline') {
-                    btnStatus.style.background = '#dc2626';
-                    btnStatus.innerText = '🔴 Offline (Desligado)';
-                } else {
-                    btnStatus.style.background = '#16a34a';
-                    btnStatus.innerText = '🟢 Online (Ligado)';
-                }
+                atualizarBotaoStatusVisual(dados.status);
             });
+        }
+
+        function atualizarBotaoStatusVisual(status) {
+            const btnStatus = document.getElementById('btnToggleStatus');
+            if (status === 'offline') {
+                btnStatus.style.background = '#dc2626';
+                btnStatus.innerText = '🔴 Offline (Desligado)';
+            } else {
+                btnStatus.style.background = '#16a34a';
+                btnStatus.innerText = '🟢 Online (Ligado)';
+            }
         }
 
         function salvarConfiguracoesMotoboy() {
@@ -542,11 +544,13 @@
                 custoKmExcedente: parseFloat(document.getElementById('cfgCustoKmExcedente').value) || 0.49
             };
 
+            // Atualiza na memória local também para refletir imediatamente
+            configMotoboyAtual = { ...configMotoboyAtual, ...novosDados };
+
             db.ref('entregadores/' + usuarioAtivoPainel).update(novosDados).then(() => {
                 const statusSpan = document.getElementById('saveStatus');
                 statusSpan.style.display = 'inline';
                 setTimeout(() => { statusSpan.style.display = 'none'; }, 2000);
-                calculateAll();
             });
         }
 
@@ -564,6 +568,8 @@
             if (!usuarioAtivoPainel) return;
 
             const novoStatus = configMotoboyAtual.status === 'offline' ? 'online' : 'offline';
+            configMotoboyAtual.status = novoStatus;
+            atualizarBotaoStatusVisual(novoStatus);
 
             if (novoStatus === 'online') {
                 if (!navigator.geolocation) { alert('GPS não suportado.'); return; }
@@ -687,7 +693,6 @@
                 if (query.length < 2) { suggestions.style.display = 'none'; return; }
 
                 timeout = setTimeout(() => {
-                    // Força a busca a priorizar Belém para qualquer termo (inclusive 'shopping')
                     const searchQuery = query.toLowerCase().includes('belém') ? query : (query + ', Belém, Pará');
                     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&countrycodes=br&limit=8`;
 
@@ -773,8 +778,12 @@
             document.getElementById('loadingStatus').style.display = 'block';
 
             db.ref('entregadores/cristian').once('value').then((snapshot) => {
-                if (snapshot.exists() && snapshot.val().lat && snapshot.val().lon) {
-                    myCurrentCoords = L.latLng(snapshot.val().lat, snapshot.val().lon);
+                if (snapshot.exists()) {
+                    let d = snapshot.val();
+                    if (d.lat && d.lon) {
+                        myCurrentCoords = L.latLng(d.lat, d.lon);
+                    }
+                    configMotoboyAtual = d;
                 }
 
                 geocode(pickup, true, function(latLngPickup) {
