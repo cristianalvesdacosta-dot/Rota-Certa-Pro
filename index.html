@@ -112,36 +112,36 @@
 
                 <div class="form-group">
                     <label for="cfgNome">Seu Nome na Página</label>
-                    <input type="text" id="cfgNome" placeholder="Ex: Cristian Entregas" onchange="salvarConfiguracoesMotoboy()">
+                    <input type="text" id="cfgNome" placeholder="Ex: Cristian Entregas">
                 </div>
 
                 <div class="form-group">
                     <label for="cfgWhatsapp">Seu WhatsApp</label>
                     <div class="help-text">Número onde você vai receber os pedidos dos clientes (com DDD).</div>
-                    <input type="tel" id="cfgWhatsapp" placeholder="Ex: 5591988888888" onchange="salvarConfiguracoesMotoboy()">
+                    <input type="tel" id="cfgWhatsapp" placeholder="Ex: 5591988888888">
                 </div>
 
                 <div class="form-group">
                     <label for="cfgPix">Sua Chave Pix (Para receber pagamentos)</label>
-                    <input type="text" id="cfgPix" placeholder="Ex: seu-email@gmail.com ou CPF/CNPJ" onchange="salvarConfiguracoesMotoboy()">
+                    <input type="text" id="cfgPix" placeholder="Ex: seu-email@gmail.com ou CPF/CNPJ">
                 </div>
 
                 <div class="config-grid">
                     <div class="form-group">
                         <label for="cfgTarifaBase">Valor Fixo Inicial (R$)</label>
-                        <input type="number" step="0.50" id="cfgTarifaBase" value="3.00" onchange="salvarConfiguracoesMotoboy()">
+                        <input type="number" step="0.50" id="cfgTarifaBase" value="3.00">
                     </div>
                     <div class="form-group">
                         <label for="cfgTarifaMinima">Valor Mínimo (R$)</label>
-                        <input type="number" step="0.50" id="cfgTarifaMinima" value="10.00" onchange="salvarConfiguracoesMotoboy()">
+                        <input type="number" step="0.50" id="cfgTarifaMinima" value="10.00">
                     </div>
                     <div class="form-group">
                         <label for="cfgPrecoKm">Preço por Quilômetro (R$)</label>
-                        <input type="number" step="0.10" id="cfgPrecoKm" value="1.50" onchange="salvarConfiguracoesMotoboy()">
+                        <input type="number" step="0.10" id="cfgPrecoKm" value="1.50">
                     </div>
                     <div class="form-group">
                         <label for="cfgTaxaDeslocamento">Taxa Km Extra (>4km coleta)</label>
-                        <input type="number" step="0.01" id="cfgTaxaDeslocamento" value="0.49" onchange="salvarConfiguracoesMotoboy()">
+                        <input type="number" step="0.01" id="cfgTaxaDeslocamento" value="0.49">
                     </div>
                 </div>
 
@@ -153,24 +153,27 @@
                     <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
                         <div style="flex: 1;">
                             <label for="cfgAtivarRaio" style="font-size: 0.75rem;">Ativar Proteção?</label>
-                            <select id="cfgAtivarRaio" onchange="salvarConfiguracoesMotoboy()">
+                            <select id="cfgAtivarRaio">
                                 <option value="sim">Sim (Cobrar retorno)</option>
                                 <option value="nao">Não (Preço normal)</option>
                             </select>
                         </div>
                         <div style="flex: 1;">
                             <label for="cfgRaioMaximo" style="font-size: 0.75rem;">Limite Máximo (Km)</label>
-                            <input type="number" step="1" id="cfgRaioMaximo" value="12" onchange="salvarConfiguracoesMotoboy()">
+                            <input type="number" step="1" id="cfgRaioMaximo" value="12">
                         </div>
                         <div style="flex: 1;">
                             <label for="cfgCustoKmExcedente" style="font-size: 0.75rem;">Custo/Km Retorno (R$)</label>
-                            <input type="number" step="0.01" id="cfgCustoKmExcedente" value="0.49" onchange="salvarConfiguracoesMotoboy()">
+                            <input type="number" step="0.01" id="cfgCustoKmExcedente" value="0.49">
                         </div>
                     </div>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                    <span id="saveStatus" style="font-size: 0.75rem; color: #16a34a; font-weight: 600; display: none;">Salvo ✅</span>
+                <!-- Botão de Salvar Explícito -->
+                <button type="button" class="btn btn-success" onclick="salvarConfiguracoesMotoboy()">💾 Salvar Configurações</button>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                    <span id="saveStatus" style="font-size: 0.8rem; color: #16a34a; font-weight: 600; display: none;">Salvo com sucesso! ✅</span>
                     <button type="button" class="btn" style="background: #fee2e2; color: #b91c1c; font-size: 0.85rem; width: auto;" onclick="fazerLogout()">Sair do Painel</button>
                 </div>
             </div>
@@ -231,7 +234,7 @@
                 </div>
             </div>
 
-            <!-- RESUMO E PAGAMENTO PIX -->
+            <!-- RESUMO E PAGAMENTO PIX (Com Base e Quilometragem separados) -->
             <div class="card" id="summaryCard" style="display: none;">
                 <h2>💰 Resumo da Corrida</h2>
                 <div class="summary-box">
@@ -247,12 +250,16 @@
                         <span>Distância da Entrega:</span>
                         <strong id="distText">0 km</strong>
                     </div>
-                    <div class="summary-row" id="alertaRetornoRow" style="display: none; color: #d97706; font-weight: 600; font-size: 0.8rem; margin-bottom: 6px;">
-                        <span id="textoAlertaRetorno">⚠️ Taxa de retorno vazio (km total x R$)</span>
+                    <div class="summary-row">
+                        <span>Tarifa Base Fixa:</span>
+                        <span id="baseValueText">R$ 3,00</span>
                     </div>
                     <div class="summary-row">
-                        <span>Base + Quilometragem:</span>
+                        <span>Quilometragem da Entrega:</span>
                         <span id="kmValueText">R$ 0,00</span>
+                    </div>
+                    <div class="summary-row" id="alertaRetornoRow" style="display: none; color: #d97706; font-weight: 600; font-size: 0.8rem; margin-bottom: 6px;">
+                        <span id="textoAlertaRetorno">⚠️ Taxa de retorno vazio</span>
                     </div>
                     <div class="summary-row total">
                         <span>Total da Corrida:</span>
@@ -544,13 +551,12 @@
                 custoKmExcedente: parseFloat(document.getElementById('cfgCustoKmExcedente').value) || 0.49
             };
 
-            // Atualiza na memória local também para refletir imediatamente
             configMotoboyAtual = { ...configMotoboyAtual, ...novosDados };
 
             db.ref('entregadores/' + usuarioAtivoPainel).update(novosDados).then(() => {
                 const statusSpan = document.getElementById('saveStatus');
                 statusSpan.style.display = 'inline';
-                setTimeout(() => { statusSpan.style.display = 'none'; }, 2000);
+                setTimeout(() => { statusSpan.style.display = 'none'; }, 2500);
             });
         }
 
@@ -830,8 +836,9 @@
                             const kmRate = configMotoboyAtual.precoKm ?? 1.50;
                             const minRate = configMotoboyAtual.tarifaMinima ?? 10.00;
 
-                            let rawDeliveryValue = baseRate + (deliveryDistanceKm * kmRate);
-                            let finalDeliveryValue = rawDeliveryValue < minRate ? minRate : rawDeliveryValue;
+                            let rawKmValue = deliveryDistanceKm * kmRate;
+                            let subtotalBaseMaisKm = baseRate + rawKmValue;
+                            let finalDeliveryValue = subtotalBaseMaisKm < minRate ? minRate : subtotalBaseMaisKm;
 
                             let ativarRaioConfig = configMotoboyAtual.ativarRaio ?? 'sim';
                             let raioMaximoConfig = parseFloat(configMotoboyAtual.raioMaximo) || 12;
@@ -850,7 +857,11 @@
 
                             document.getElementById('myDistText').innerText = myToPickupDistanceKm.toFixed(2) + ' km';
                             document.getElementById('distText').innerText = deliveryDistanceKm.toFixed(2) + ' km';
-                            document.getElementById('kmValueText').innerText = 'R$ ' + finalDeliveryValue.toFixed(2).replace('.', ',');
+                            
+                            // Exibição limpa separando Base e Quilometragem
+                            document.getElementById('baseValueText').innerText = 'R$ ' + baseRate.toFixed(2).replace('.', ',');
+                            document.getElementById('kmValueText').innerText = 'R$ ' + rawKmValue.toFixed(2).replace('.', ',') + ` (${deliveryDistanceKm.toFixed(1)} km x R$ ${kmRate.toFixed(2)})`;
+                            
                             document.getElementById('totalText').innerText = 'R$ ' + calculatedFinalPrice.toFixed(2).replace('.', ',');
                             document.getElementById('summaryCard').style.display = 'block';
                         });
