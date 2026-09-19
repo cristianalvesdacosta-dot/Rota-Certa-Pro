@@ -106,7 +106,7 @@
                 
                 <div class="form-group">
                     <label>Status do Expediente</label>
-                    <div class="help-text">Ligado (Online): Sua moto aparece no mapa para os clientes.<br>Desligado (Offline): Você some do mapa.</div>
+                    <div class="help-text">Ligado (Online): Sua moto aparece no mapa para os clientes em tempo real.<br>Desligado (Offline): Você some do mapa.</div>
                     <button type="button" id="btnToggleStatus" class="btn" style="background: #16a34a; color: white; margin-top: 0;" onclick="alternarStatusOnline()">🟢 Online (Recebendo Pedidos)</button>
                 </div>
 
@@ -122,8 +122,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="cfgPix">Sua Chave Pix</label>
-                    <input type="text" id="cfgPix" placeholder="Sua chave Pix para receber o pagamento" onchange="salvarConfiguracoesMotoboy()">
+                    <label for="cfgPix">Sua Chave Pix (Para receber pagamentos)</label>
+                    <input type="text" id="cfgPix" placeholder="Ex: seu-email@gmail.com ou CPF/CNPJ" onchange="salvarConfiguracoesMotoboy()">
                 </div>
 
                 <div class="config-grid">
@@ -143,9 +143,34 @@
                         <input type="number" step="0.10" id="cfgPrecoKm" value="1.50" onchange="salvarConfiguracoesMotoboy()">
                     </div>
                     <div class="form-group">
-                        <label for="cfgTaxaDeslocamento">Taxa Km Extra (>4km)</label>
-                        <div class="help-text">Cobrado caso você precise rodar mais de 4km até a coleta.</div>
+                        <label for="cfgTaxaDeslocamento">Taxa Km Extra (>4km coleta)</label>
+                        <div class="help-text">Cobrado se você rodar mais de 4km até a coleta.</div>
                         <input type="number" step="0.01" id="cfgTaxaDeslocamento" value="0.49" onchange="salvarConfiguracoesMotoboy()">
+                    </div>
+                </div>
+
+                <!-- PROTEÇÃO DE RETORNO VAZIO -->
+                <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 12px; border-radius: 8px; margin-top: 10px; margin-bottom: 14px;">
+                    <label style="color: #92400e; font-weight: 700; margin-bottom: 6px;">⚠️ Proteção de Retorno Vazio (Km a Km)</label>
+                    <div class="help-text" style="background: #fef3c7; border-color: #fcd34d; color: #78350f;">
+                        Se a distância total ultrapassar o raio limite, multiplica todos os quilômetros da corrida pelo valor de retorno vazio configurado abaixo.
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
+                        <div style="flex: 1;">
+                            <label for="cfgAtivarRaio" style="font-size: 0.75rem;">Ativar Proteção?</label>
+                            <select id="cfgAtivarRaio" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.9rem;" onchange="salvarConfiguracoesMotoboy()">
+                                <option value="sim">Sim (Cobrar retorno)</option>
+                                <option value="nao">Não (Preço normal)</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1;">
+                            <label for="cfgRaioMaximo" style="font-size: 0.75rem;">Limite Máximo (Km)</label>
+                            <input type="number" step="1" id="cfgRaioMaximo" value="12" onchange="salvarConfiguracoesMotoboy()">
+                        </div>
+                        <div style="flex: 1;">
+                            <label for="cfgCustoKmExcedente" style="font-size: 0.75rem;">Custo/Km Retorno (R$)</label>
+                            <input type="number" step="0.01" id="cfgCustoKmExcedente" value="0.49" onchange="salvarConfiguracoesMotoboy()">
+                        </div>
                     </div>
                 </div>
 
@@ -162,8 +187,9 @@
             <div class="card">
                 <h2>📍 Solicitar Entrega</h2>
                 
-                <button type="button" class="btn" style="background: #0f172a; color: white; margin-bottom: 15px;" onclick="localizarMotoboyPeloCliente()">🏍️ Localizar Entregador no Mapa</button>
-                <div id="statusMotoboyDistancia" style="font-size: 0.8rem; color: #2563eb; font-weight: 600; margin-bottom: 12px; text-align: center;"></div>
+                <div id="statusMotoboyDistancia" style="font-size: 0.85rem; color: #16a34a; font-weight: 600; margin-bottom: 12px; text-align: center; background: #f0fdf4; padding: 8px; border-radius: 6px; border: 1px solid #bbf7d0;">
+                    📡 Buscando status do entregador...
+                </div>
 
                 <div>
                     <label for="clientName">Seu Nome</label>
@@ -226,6 +252,9 @@
                         <span>Distância da Entrega:</span>
                         <strong id="distText">0 km</strong>
                     </div>
+                    <div class="summary-row" id="alertaRetornoRow" style="display: none; color: #d97706; font-weight: 600; font-size: 0.8rem; margin-bottom: 6px;">
+                        <span id="textoAlertaRetorno">⚠️ Taxa de retorno vazio (km total x R$)</span>
+                    </div>
                     <div class="summary-row">
                         <span>Base + Quilometragem:</span>
                         <span id="kmValueText">R$ 0,00</span>
@@ -242,10 +271,10 @@
                     <p style="font-size: 0.9rem; font-weight: 600; color: #166534;">Chave Pix do Entregador:</p>
                     <div class="pix-key" id="pixKeyDisplay">Chave Pix não configurada</div>
                     <button type="button" class="copy-btn" onclick="copyPixKey()">Copiar Chave Pix</button>
-                    <p style="font-size: 0.75rem; color: #64748b; margin-top: 10px;">Após pagar, envie o pedido no WhatsApp:</p>
+                    <p style="font-size: 0.75rem; color: #64748b; margin-top: 10px;">Após realizar o pagamento, envie o pedido no WhatsApp:</p>
                 </div>
 
-                <button type="button" class="btn btn-success" id="btnWhatsapp" style="display: none;" onclick="sendToWhatsappMotoboy()">Enviar Pedido no WhatsApp</button>
+                <button type="button" class="btn btn-success" id="btnWhatsapp" style="display: none;" onclick="sendToWhatsappMotoboy()">Enviar Pedido e Comprovante no WhatsApp</button>
             </div>
 
         </div>
@@ -271,11 +300,13 @@
         }
         const db = firebase.database();
 
-        let myCurrentCoords = L.latLng(-1.4558, -48.4902); // Coordenada central padrão em Belém (Centro / Nazaré)
+        let myCurrentCoords = L.latLng(-1.4558, -48.4902); 
         let motoMarker = null;
         let pickupMarker = null;
         let deliveryMarker = null;
         let usuarioAtivoPainel = null; 
+        let watchIdGPS = null;
+
         let configMotoboyAtual = {
             nome: "Rota Certa",
             whatsapp: "5519997648211",
@@ -284,6 +315,9 @@
             tarifaMinima: 10.00,
             precoKm: 1.50,
             taxaDeslocamento: 0.49,
+            ativarRaio: "sim",
+            raioMaximo: 12,
+            custoKmExcedente: 0.49,
             status: "offline"
         };
 
@@ -339,9 +373,13 @@
                     }
 
                     if (dados.status === 'online') {
+                        document.getElementById('statusMotoboyDistancia').innerHTML = `🟢 <b>${dados.nome || 'Entregador'}</b> está Online no mapa!`;
+                        document.getElementById('headerName').innerText = dados.nome || 'Rota Certa';
+                        document.getElementById('pixKeyDisplay').innerText = dados.pix || 'Chave Pix não definida';
+
                         if (dados.lat && dados.lon) {
                             if (!motoMarker) {
-                                motoMarker = L.marker(myCurrentCoords, { icon: blackMotoIcon }).addTo(map).bindPopup('Entregador 🏍️');
+                                motoMarker = L.marker(myCurrentCoords, { icon: blackMotoIcon }).addTo(map).bindPopup('Entregador Online 🏍️');
                             } else {
                                 motoMarker.setLatLng(myCurrentCoords);
                                 if (!map.hasLayer(motoMarker)) {
@@ -350,6 +388,7 @@
                             }
                         }
                     } else {
+                        document.getElementById('statusMotoboyDistancia').innerHTML = `🔴 <b>${dados.nome || 'Entregador'}</b> está Offline no momento.`;
                         if (motoMarker && map.hasLayer(motoMarker)) {
                             map.removeLayer(motoMarker);
                         }
@@ -416,11 +455,14 @@
                         licenca: 'ativo',
                         nome: uInput,
                         whatsapp: '5591988888888',
-                        pix: 'exemplo-chave-pix',
+                        pix: 'Sua Chave Pix Aqui',
                         tarifaBase: 3.00,
                         tarifaMinima: 10.00,
                         precoKm: 1.50,
                         taxaDeslocamento: 0.49,
+                        ativarRaio: 'sim',
+                        raioMaximo: 12,
+                        custoKmExcedente: 0.49,
                         criadoEm: agora,
                         expiraEm: agora + trintaDiasMs
                     };
@@ -464,9 +506,9 @@
                 document.getElementById('cfgTarifaMinima').value = dados.tarifaMinima ?? 10.00;
                 document.getElementById('cfgPrecoKm').value = dados.precoKm ?? 1.50;
                 document.getElementById('cfgTaxaDeslocamento').value = dados.taxaDeslocamento ?? 0.49;
-
-                document.getElementById('headerName').innerText = dados.nome || usuario;
-                document.getElementById('pixKeyDisplay').innerText = dados.pix || 'Chave Pix não definida';
+                document.getElementById('cfgAtivarRaio').value = dados.ativarRaio ?? 'sim';
+                document.getElementById('cfgRaioMaximo').value = dados.raioMaximo ?? 12;
+                document.getElementById('cfgCustoKmExcedente').value = dados.custoKmExcedente ?? 0.49;
 
                 const btnStatus = document.getElementById('btnToggleStatus');
                 if (dados.status === 'offline') {
@@ -489,7 +531,10 @@
                 tarifaBase: parseFloat(document.getElementById('cfgTarifaBase').value) || 3.00,
                 tarifaMinima: parseFloat(document.getElementById('cfgTarifaMinima').value) || 10.00,
                 precoKm: parseFloat(document.getElementById('cfgPrecoKm').value) || 1.50,
-                taxaDeslocamento: parseFloat(document.getElementById('cfgTaxaDeslocamento').value) || 0.49
+                taxaDeslocamento: parseFloat(document.getElementById('cfgTaxaDeslocamento').value) || 0.49,
+                ativarRaio: document.getElementById('cfgAtivarRaio').value,
+                raioMaximo: parseFloat(document.getElementById('cfgRaioMaximo').value) || 12,
+                custoKmExcedente: parseFloat(document.getElementById('cfgCustoKmExcedente').value) || 0.49
             };
 
             db.ref('entregadores/' + usuarioAtivoPainel).update(novosDados).then(() => {
@@ -507,30 +552,36 @@
 
             if (novoStatus === 'online') {
                 if (!navigator.geolocation) { alert('GPS não suportado.'); return; }
-                navigator.geolocation.getCurrentPosition((position) => {
+                
+                watchIdGPS = navigator.geolocation.watchPosition((position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
 
-                    db.ref('entregadores/' + usuarioAtivoPainel).update({ status: 'online', lat: lat, lon: lon }).then(() => {
-                        myCurrentCoords = L.latLng(lat, lon);
-                        mostrarToast('🟢 Status alterado para ONLINE!');
-                        calculateAll();
-                    });
-                }, () => { alert('Erro ao obter GPS.'); }, { enableHighAccuracy: true });
+                    db.ref('entregadores/' + usuarioAtivoPainel).update({ status: 'online', lat: lat, lon: lon });
+                    myCurrentCoords = L.latLng(lat, lon);
+                }, (err) => { console.error(err); }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
+
+                db.ref('entregadores/' + usuarioAtivoPainel).update({ status: 'online' }).then(() => {
+                    mostrarToast('🟢 Status Online! Sua moto está visível.');
+                });
             } else {
+                if (watchIdGPS !== null) {
+                    navigator.geolocation.clearWatch(watchIdGPS);
+                    watchIdGPS = null;
+                }
                 db.ref('entregadores/' + usuarioAtivoPainel).update({ status: 'offline' }).then(() => {
-                    mostrarToast('🔴 Status alterado para OFFLINE.');
+                    mostrarToast('🔴 Status Offline. Você saiu do mapa.');
                 });
             }
         }
 
         function fazerLogout() {
+            if (watchIdGPS !== null) navigator.geolocation.clearWatch(watchIdGPS);
             usuarioAtivoPainel = null;
             voltarParaModoCliente();
             mostrarToast('🔒 Desconectado do painel com segurança.');
         }
 
-        // MAPA DO CLIENTE (Focado inicialmente na região central de Belém e abrangendo toda a Grande Belém)
         const map = L.map('map').setView([-1.4558, -48.4902], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
@@ -542,6 +593,7 @@
         let myToPickupDistanceKm = 0;
         let calculatedFinalPrice = 0;
         let deslocamentoFee = 0;
+        let raioExtraFee = 0;
         let pickupCoords = null;
         let deliveryCoords = null;
 
@@ -581,36 +633,6 @@
             }
         }
 
-        function localizarMotoboyPeloCliente() {
-            db.ref('entregadores/cristian').once('value').then((snapshot) => {
-                if (snapshot.exists()) {
-                    const dados = snapshot.val();
-                    if (dados.status === 'offline') {
-                        mostrarToast('⚠️ O entregador está OFFLINE no momento.');
-                        document.getElementById('statusMotoboyDistancia').innerText = `🔴 Entregador Offline`;
-                        return;
-                    }
-                    if (dados.lat && dados.lon) {
-                        myCurrentCoords = L.latLng(dados.lat, dados.lon);
-                        if (!motoMarker) {
-                            motoMarker = L.marker(myCurrentCoords, { icon: blackMotoIcon }).addTo(map).bindPopup('Entregador 🏍️');
-                        } else {
-                            motoMarker.setLatLng(myCurrentCoords);
-                            if (!map.hasLayer(motoMarker)) motoMarker.addTo(map);
-                        }
-                        map.setView(myCurrentCoords, 15);
-                        document.getElementById('statusMotoboyDistancia').innerText = `🏍️ Entregador Online e localizado!`;
-                        mostrarToast('📍 Entregador localizado com sucesso!');
-                        calculateAll();
-                    } else {
-                        mostrarToast('⚠️ Entregador ainda não enviou a posição.');
-                    }
-                } else {
-                    mostrarToast('⚠️ Entregador não encontrado.');
-                }
-            });
-        }
-
         function useGpsForField(fieldType) {
             if (!navigator.geolocation) { alert('GPS não suportado.'); return; }
             navigator.geolocation.getCurrentPosition(function(position) {
@@ -637,7 +659,6 @@
             }, () => { alert('Erro ao obter GPS.'); }, { timeout: 10000, enableHighAccuracy: true });
         }
 
-        // Sistema de Autocomplete Amplo (Belém, Ananindeua e Pará)
         function setupAutocomplete(inputId, suggestionsId, isPickup) {
             const input = document.getElementById(inputId);
             const suggestions = document.getElementById(suggestionsId);
@@ -650,7 +671,6 @@
                 if (query.length < 3) { suggestions.style.display = 'none'; return; }
 
                 timeout = setTimeout(() => {
-                    // Busca abrangente em Belém/Pará
                     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Pará, Brasil')}&countrycodes=br&limit=6`;
 
                     fetch(url)
@@ -721,7 +741,6 @@
                         atualizarPinsNoMapa();
                         callback(latLng);
                     } else {
-                        // Fallback genérico para Belém caso o endereço exato não seja encontrado
                         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent('Belém, Pará, Brasil')}&limit=1`)
                             .then(res2 => res2.json())
                             .then(data2 => {
@@ -793,7 +812,21 @@
                         let rawDeliveryValue = baseRate + (deliveryDistanceKm * kmRate);
                         let finalDeliveryValue = rawDeliveryValue < minRate ? minRate : rawDeliveryValue;
 
-                        calculatedFinalPrice = finalDeliveryValue + deslocamentoFee;
+                        // REGRA DE RETORNO VAZIO (MULTIPLICA TODOS OS KM DA CORRIDA)
+                        let ativarRaioConfig = configMotoboyAtual.ativarRaio ?? 'sim';
+                        let raioMaximoConfig = parseFloat(configMotoboyAtual.raioMaximo) || 12;
+                        let custoKmExcedenteConfig = parseFloat(configMotoboyAtual.custoKmExcedente) || 0.49;
+
+                        raioExtraFee = 0;
+                        if (ativarRaioConfig === 'sim' && deliveryDistanceKm > raioMaximoConfig) {
+                            raioExtraFee = deliveryDistanceKm * custoKmExcedenteConfig;
+                            document.getElementById('textoAlertaRetorno').innerText = `⚠️ Acima de ${raioMaximoConfig}km (Retorno Vazio): +R$ ${raioExtraFee.toFixed(2).replace('.', ',')} (${deliveryDistanceKm.toFixed(1)} km x R$ ${custoKmExcedenteConfig.toFixed(2)})`;
+                            document.getElementById('alertaRetornoRow').style.display = 'flex';
+                        } else {
+                            document.getElementById('alertaRetornoRow').style.display = 'none';
+                        }
+
+                        calculatedFinalPrice = finalDeliveryValue + deslocamentoFee + raioExtraFee;
 
                         document.getElementById('myDistText').innerText = myToPickupDistanceKm.toFixed(2) + ' km';
                         document.getElementById('distText').innerText = deliveryDistanceKm.toFixed(2) + ' km';
@@ -829,8 +862,9 @@
 
             let linkColeta = pickupCoords ? `https://www.google.com/maps?q=${pickupCoords.lat},${pickupCoords.lng}` : 'Endereço digitado';
             let linkEntrega = deliveryCoords ? `https://www.google.com/maps?q=${deliveryCoords.lat},${deliveryCoords.lng}` : 'Endereço digitado';
+            let chavePixAtual = configMotoboyAtual.pix || 'Chave Pix não informada';
 
-            const message = `*Nova Solicitação de Entrega*\n\n` +
+            const message = `*Nova Solicitação de Entrega - Rota Certa*\n\n` +
                 `👤 *Nome:* ${name}\n` +
                 `📱 *Telefone:* ${phone}\n\n` +
                 `📍 *Coleta (A):* ${pickup}\n` +
@@ -838,8 +872,9 @@
                 `🏁 *Destino (B):* ${delivery}\n` +
                 `🗺️ *Mapa Destino:* ${linkEntrega}\n\n` +
                 `📏 *Distância:* ${deliveryDistanceKm.toFixed(2)} km\n` +
-                `💰 *Valor Total:* R$ ${calculatedFinalPrice.toFixed(2).replace('.', ',')}\n` +
-                `💳 *Pagamento:* Pix realizado`;
+                `💰 *Valor Total:* R$ ${calculatedFinalPrice.toFixed(2).replace('.', ',')}\n\n` +
+                `💳 *Chave Pix para Pagamento:* \`${chavePixAtual}\`\n\n` +
+                `📎 *[ Segue abaixo o meu Comprovante de Pagamento do Pix ]*`;
 
             let whatsappDestino = configMotoboyAtual.whatsapp || '5591988888888';
             window.open(`https://wa.me/${whatsappDestino}?text=${encodeURIComponent(message)}`, '_blank');
