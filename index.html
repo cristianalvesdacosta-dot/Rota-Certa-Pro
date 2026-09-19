@@ -128,10 +128,6 @@
 
                 <div class="config-grid">
                     <div class="form-group">
-                        <label for="cfgTarifaBase">Valor Fixo Inicial (R$)</label>
-                        <input type="number" step="0.50" id="cfgTarifaBase" value="3.00">
-                    </div>
-                    <div class="form-group">
                         <label for="cfgTarifaMinima">Valor Mínimo (R$)</label>
                         <input type="number" step="0.50" id="cfgTarifaMinima" value="10.00">
                     </div>
@@ -140,7 +136,11 @@
                         <input type="number" step="0.10" id="cfgPrecoKm" value="1.50">
                     </div>
                     <div class="form-group">
-                        <label for="cfgTaxaDeslocamento">Taxa Km Extra (>4km coleta)</label>
+                        <label for="cfgLimiteKmColetaGrats">Franquia Km Coleta Grátis</label>
+                        <input type="number" step="0.5" id="cfgLimiteKmColetaGrats" value="4.0">
+                    </div>
+                    <div class="form-group">
+                        <label for="cfgTaxaDeslocamento">Taxa Km Extra Coleta (R$)</label>
                         <input type="number" step="0.01" id="cfgTaxaDeslocamento" value="0.49">
                     </div>
                 </div>
@@ -169,7 +169,7 @@
                     </div>
                 </div>
 
-                <!-- Botão de Salvar Explícito -->
+                <!-- Botão de Salvar Direto -->
                 <button type="button" class="btn btn-success" onclick="salvarConfiguracoesMotoboy()">💾 Salvar Configurações</button>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
@@ -234,7 +234,7 @@
                 </div>
             </div>
 
-            <!-- RESUMO E PAGAMENTO PIX (Com Base e Quilometragem separados) -->
+            <!-- RESUMO E PAGAMENTO PIX (Sem taxa fixa, detalhado limpo) -->
             <div class="card" id="summaryCard" style="display: none;">
                 <h2>💰 Resumo da Corrida</h2>
                 <div class="summary-box">
@@ -243,16 +243,12 @@
                         <strong id="myDistText">0 km</strong>
                     </div>
                     <div class="summary-row" id="deslocamentoRow" style="color: #16a34a; font-weight: 500;">
-                        <span>Taxa de Deslocamento (>4km):</span>
-                        <strong id="deslocamentoText">Grátis (Até 4 km)</strong>
+                        <span>Taxa de Deslocamento:</span>
+                        <strong id="deslocamentoText">Grátis</strong>
                     </div>
                     <div class="summary-row">
                         <span>Distância da Entrega:</span>
                         <strong id="distText">0 km</strong>
-                    </div>
-                    <div class="summary-row">
-                        <span>Tarifa Base Fixa:</span>
-                        <span id="baseValueText">R$ 3,00</span>
                     </div>
                     <div class="summary-row">
                         <span>Quilometragem da Entrega:</span>
@@ -302,7 +298,7 @@
         }
         const db = firebase.database();
 
-        let myCurrentCoords = L.latLng(-1.4558, -48.4902); // Belém-PA padrão
+        let myCurrentCoords = L.latLng(-1.4558, -48.4902);
         let motoMarker = null;
         let pickupMarker = null;
         let deliveryMarker = null;
@@ -314,9 +310,9 @@
             nome: "Rota Certa",
             whatsapp: "5519997648211",
             pix: "Chave Pix não configurada",
-            tarifaBase: 3.00,
             tarifaMinima: 10.00,
             precoKm: 1.50,
+            limiteKmColetaGrats: 4.0,
             taxaDeslocamento: 0.49,
             ativarRaio: "sim",
             raioMaximo: 12,
@@ -467,9 +463,9 @@
                         nome: uInput,
                         whatsapp: '5591988888888',
                         pix: 'Sua Chave Pix Aqui',
-                        tarifaBase: 3.00,
                         tarifaMinima: 10.00,
                         precoKm: 1.50,
+                        limiteKmColetaGrats: 4.0,
                         taxaDeslocamento: 0.49,
                         ativarRaio: 'sim',
                         raioMaximo: 12,
@@ -512,9 +508,9 @@
                 document.getElementById('cfgNome').value = dados.nome || usuario;
                 document.getElementById('cfgWhatsapp').value = dados.whatsapp || '';
                 document.getElementById('cfgPix').value = dados.pix || '';
-                document.getElementById('cfgTarifaBase').value = dados.tarifaBase ?? 3.00;
                 document.getElementById('cfgTarifaMinima').value = dados.tarifaMinima ?? 10.00;
                 document.getElementById('cfgPrecoKm').value = dados.precoKm ?? 1.50;
+                document.getElementById('cfgLimiteKmColetaGrats').value = dados.limiteKmColetaGrats ?? 4.0;
                 document.getElementById('cfgTaxaDeslocamento').value = dados.taxaDeslocamento ?? 0.49;
                 document.getElementById('cfgAtivarRaio').value = dados.ativarRaio ?? 'sim';
                 document.getElementById('cfgRaioMaximo').value = dados.raioMaximo ?? 12;
@@ -536,27 +532,29 @@
         }
 
         function salvarConfiguracoesMotoboy() {
-            if (!usuarioAtivoPainel) return;
+            let userToSave = usuarioAtivoPainel || 'cristian';
 
             const novosDados = {
                 nome: document.getElementById('cfgNome').value,
                 whatsapp: document.getElementById('cfgWhatsapp').value,
                 pix: document.getElementById('cfgPix').value,
-                tarifaBase: parseFloat(document.getElementById('cfgTarifaBase').value) || 3.00,
                 tarifaMinima: parseFloat(document.getElementById('cfgTarifaMinima').value) || 10.00,
                 precoKm: parseFloat(document.getElementById('cfgPrecoKm').value) || 1.50,
+                limiteKmColetaGrats: parseFloat(document.getElementById('cfgLimiteKmColetaGrats').value) || 4.0,
                 taxaDeslocamento: parseFloat(document.getElementById('cfgTaxaDeslocamento').value) || 0.49,
                 ativarRaio: document.getElementById('cfgAtivarRaio').value,
                 raioMaximo: parseFloat(document.getElementById('cfgRaioMaximo').value) || 12,
                 custoKmExcedente: parseFloat(document.getElementById('cfgCustoKmExcedente').value) || 0.49
             };
 
-            configMotoboyAtual = { ...configMotoboyAtual, ...novosDados };
-
-            db.ref('entregadores/' + usuarioAtivoPainel).update(novosDados).then(() => {
+            db.ref('entregadores/' + userToSave).update(novosDados).then(() => {
+                configMotoboyAtual = { ...configMotoboyAtual, ...novosDados };
                 const statusSpan = document.getElementById('saveStatus');
                 statusSpan.style.display = 'inline';
+                mostrarToast('⚙️ Configurações salvas com sucesso!');
                 setTimeout(() => { statusSpan.style.display = 'none'; }, 2500);
+            }).catch((error) => {
+                alert('Erro ao salvar no Firebase: ' + error.message);
             });
         }
 
@@ -571,26 +569,23 @@
         }
 
         function alternarStatusOnline() {
-            if (!usuarioAtivoPainel) return;
-
+            let userToSave = usuarioAtivoPainel || 'cristian';
             const novoStatus = configMotoboyAtual.status === 'offline' ? 'online' : 'offline';
             configMotoboyAtual.status = novoStatus;
             atualizarBotaoStatusVisual(novoStatus);
 
             if (novoStatus === 'online') {
                 if (!navigator.geolocation) { alert('GPS não suportado.'); return; }
-                
                 solicitarWakeLock();
 
                 watchIdGPS = navigator.geolocation.watchPosition((position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
-
-                    db.ref('entregadores/' + usuarioAtivoPainel).update({ status: 'online', lat: lat, lon: lon });
+                    db.ref('entregadores/' + userToSave).update({ status: 'online', lat: lat, lon: lon });
                     myCurrentCoords = L.latLng(lat, lon);
                 }, (err) => { console.error(err); }, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
 
-                db.ref('entregadores/' + usuarioAtivoPainel).update({ status: 'online' }).then(() => {
+                db.ref('entregadores/' + userToSave).update({ status: 'online' }).then(() => {
                     mostrarToast('🟢 Status Online! GPS ativado.');
                 });
             } else {
@@ -601,7 +596,7 @@
                 if (wakeLock !== null) {
                     wakeLock.release().then(() => { wakeLock = null; });
                 }
-                db.ref('entregadores/' + usuarioAtivoPainel).update({ status: 'offline' }).then(() => {
+                db.ref('entregadores/' + userToSave).update({ status: 'offline' }).then(() => {
                     mostrarToast('🔴 Status Offline. Você saiu do mapa.');
                 });
             }
@@ -802,16 +797,17 @@
                         if (routingControl) map.removeControl(routingControl);
 
                         myToPickupDistanceKm = myCurrentCoords.distanceTo(latLngPickup) / 1000;
-                        let taxaDeslocamentoConfig = configMotoboyAtual.taxaDeslocamento ?? 0.49;
+                        let limiteColetaGrats = parseFloat(configMotoboyAtual.limiteKmColetaGrats) ?? 4.0;
+                        let taxaDeslocamentoConfig = parseFloat(configMotoboyAtual.taxaDeslocamento) ?? 0.49;
 
-                        if (myToPickupDistanceKm > 4.0) {
-                            let kmExcedente = myToPickupDistanceKm - 4.0;
+                        if (myToPickupDistanceKm > limiteColetaGrats) {
+                            let kmExcedente = myToPickupDistanceKm - limiteColetaGrats;
                             deslocamentoFee = kmExcedente * taxaDeslocamentoConfig;
                             document.getElementById('deslocamentoText').innerText = `+ R$ ${deslocamentoFee.toFixed(2).replace('.', ',')} (${myToPickupDistanceKm.toFixed(1)} km extra)`;
                             document.getElementById('deslocamentoRow').style.color = '#d97706';
                         } else {
                             deslocamentoFee = 0;
-                            document.getElementById('deslocamentoText').innerText = `Grátis (Até 4 km)`;
+                            document.getElementById('deslocamentoText').innerText = `Grátis (Até ${limiteColetaGrats} km)`;
                             document.getElementById('deslocamentoRow').style.color = '#16a34a';
                         }
 
@@ -832,13 +828,11 @@
                             centralizarNaRota();
                             document.getElementById('btnRecentrar').style.display = 'block';
 
-                            const baseRate = configMotoboyAtual.tarifaBase ?? 3.00;
-                            const kmRate = configMotoboyAtual.precoKm ?? 1.50;
-                            const minRate = configMotoboyAtual.tarifaMinima ?? 10.00;
+                            const kmRate = parseFloat(configMotoboyAtual.precoKm) ?? 1.50;
+                            const minRate = parseFloat(configMotoboyAtual.tarifaMinima) ?? 10.00;
 
                             let rawKmValue = deliveryDistanceKm * kmRate;
-                            let subtotalBaseMaisKm = baseRate + rawKmValue;
-                            let finalDeliveryValue = subtotalBaseMaisKm < minRate ? minRate : subtotalBaseMaisKm;
+                            let finalDeliveryValue = rawKmValue < minRate ? minRate : rawKmValue;
 
                             let ativarRaioConfig = configMotoboyAtual.ativarRaio ?? 'sim';
                             let raioMaximoConfig = parseFloat(configMotoboyAtual.raioMaximo) || 12;
@@ -858,8 +852,6 @@
                             document.getElementById('myDistText').innerText = myToPickupDistanceKm.toFixed(2) + ' km';
                             document.getElementById('distText').innerText = deliveryDistanceKm.toFixed(2) + ' km';
                             
-                            // Exibição limpa separando Base e Quilometragem
-                            document.getElementById('baseValueText').innerText = 'R$ ' + baseRate.toFixed(2).replace('.', ',');
                             document.getElementById('kmValueText').innerText = 'R$ ' + rawKmValue.toFixed(2).replace('.', ',') + ` (${deliveryDistanceKm.toFixed(1)} km x R$ ${kmRate.toFixed(2)})`;
                             
                             document.getElementById('totalText').innerText = 'R$ ' + calculatedFinalPrice.toFixed(2).replace('.', ',');
@@ -910,7 +902,7 @@
                 `💳 *Chave Pix para Pagamento:* \`${chavePixAtual}\`\n\n` +
                 `📎 *[ Segue abaixo o meu Comprovante de Pagamento do Pix ]*`;
 
-            let whatsappDestino = configMotoboyAtual.whatsapp || '5591988888888';
+            let whatsappDestino = configMotoboyAtual.whatsapp || '5519997648211';
             window.open(`https://wa.me/${whatsappDestino}?text=${encodeURIComponent(message)}`, '_blank');
         }
     </script>
