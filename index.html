@@ -26,7 +26,7 @@
         .row-fields .main-field { flex: 3; position: relative; }
         .row-fields .number-field { flex: 1; }
         label { display: block; font-size: 0.8rem; font-weight: 500; color: #64748b; margin-bottom: 4px; }
-        .section-title { font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-top: 15px; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .section-title { font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-top: 15px; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
         .help-text { font-size: 0.75rem; color: #0284c7; margin-top: 4px; margin-bottom: 6px; line-height: 1.4; background: #f0f9ff; padding: 8px; border-radius: 6px; border: 1px solid #bae6fd; }
         input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: #fff; }
         input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
@@ -187,7 +187,7 @@
         <div id="client-app-container">
             
             <div class="card">
-                <h2>📍 Solicitar Entrega com Múltiplas Paradas</h2>
+                <h2>📍 Solicitar Entrega Rápida</h2>
                 
                 <div id="statusMotoboyDistancia" style="font-size: 0.85rem; color: #16a34a; font-weight: 600; margin-bottom: 12px; text-align: center; background: #f0fdf4; padding: 8px; border-radius: 6px; border: 1px solid #bbf7d0;">
                     📡 Buscando status do entregador...
@@ -202,20 +202,18 @@
                     <input type="tel" id="clientPhone" placeholder="Ex: (91) 98888-8888" oninput="saveInputs()">
                 </div>
 
-                <!-- SEÇÃO DE COLETAS (Múltiplas Origens) -->
-                <div class="section-title">
-                    <span>📦 Locais de Coleta (Retirada)</span>
-                </div>
+                <!-- SEÇÃO DE COLETAS -->
+                <div class="section-title">📦 Locais de Coleta (Retirada)</div>
                 <div id="coletasContainer">
                     <div class="form-group ponto-item" data-index="0">
                         <label>Endereço de Coleta (1)</label>
                         <div class="row-fields">
                             <div class="main-field" style="position: relative;">
-                                <input type="text" class="pickup-address" placeholder="Ex: Loja, Restaurante, Shopping..." autocomplete="off">
+                                <input type="text" class="pickup-address" placeholder="Ex: Shopping, Loja, Restaurante..." autocomplete="off" oninput="saveInputs()">
                                 <div class="suggestions pickup-suggestions"></div>
                             </div>
                             <div class="number-field">
-                                <input type="text" class="pickup-number" placeholder="Nº / Comp">
+                                <input type="text" class="pickup-number" placeholder="Nº / Comp" oninput="saveInputs()">
                             </div>
                         </div>
                         <button type="button" class="inline-gps" onclick="useGpsParaColeta(this)">📍 Usar minha localização atual</button>
@@ -223,20 +221,18 @@
                 </div>
                 <button type="button" class="btn-add-ponto" onclick="adicionarNovaColeta()">➕ Adicionar Outro Local de Coleta</button>
 
-                <!-- SEÇÃO DE DESTINOS (Múltiplas Entregas) -->
-                <div class="section-title">
-                    <span>🏁 Locais de Destino (Entrega)</span>
-                </div>
+                <!-- SEÇÃO DE DESTINOS -->
+                <div class="section-title">🏁 Locais de Destino (Entrega)</div>
                 <div id="destinosContainer">
                     <div class="form-group ponto-item" data-index="0">
                         <label>Endereço de Destino (1)</label>
                         <div class="row-fields">
                             <div class="main-field" style="position: relative;">
-                                <input type="text" class="delivery-address" placeholder="Ex: Sua casa, trabalho..." autocomplete="off">
+                                <input type="text" class="delivery-address" placeholder="Ex: Sua casa, trabalho..." autocomplete="off" oninput="saveInputs()">
                                 <div class="suggestions delivery-suggestions"></div>
                             </div>
                             <div class="number-field">
-                                <input type="text" class="delivery-number" placeholder="Nº / Comp">
+                                <input type="text" class="delivery-number" placeholder="Nº / Comp" oninput="saveInputs()">
                             </div>
                         </div>
                         <button type="button" class="inline-gps" onclick="useGpsParaDestino(this)">📍 Usar minha localização atual</button>
@@ -257,11 +253,11 @@
                 <h2>💰 Resumo da Corrida</h2>
                 <div class="summary-box">
                     <div class="summary-row">
-                        <span>Distância da Moto até a 1ª Coleta:</span>
+                        <span>Distância até a 1ª Coleta:</span>
                         <strong id="myDistText">0 km</strong>
                     </div>
                     <div class="summary-row" id="deslocamentoRow" style="color: #16a34a; font-weight: 500;">
-                        <span>Taxa de Deslocamento Inicial:</span>
+                        <span>Taxa de Deslocamento:</span>
                         <strong id="deslocamentoText">Grátis</strong>
                     </div>
                     <div class="summary-row">
@@ -273,7 +269,7 @@
                         <strong id="etaText" style="color: #2563eb;">0 min</strong>
                     </div>
                     <div class="summary-row">
-                        <span>Quilometragem Total:</span>
+                        <span>Quilometragem da Entrega:</span>
                         <span id="kmValueText">R$ 0,00</span>
                     </div>
                     <div class="summary-row" id="alertaRetornoRow" style="display: none; color: #d97706; font-weight: 600; font-size: 0.8rem; margin-bottom: 6px;">
@@ -354,7 +350,7 @@
             const toast = document.getElementById('toastAviso');
             toast.innerText = mensagem;
             toast.style.display = 'block';
-            setTimeout => { toast.style.display = 'none'; }, 3500);
+            setTimeout(() => { toast.style.display = 'none'; }, 3500);
         }
 
         const map = L.map('map').setView([-1.4558, -48.4902], 13);
@@ -367,8 +363,8 @@
             setTimeout(() => { map.invalidateSize(); }, 300);
 
             escutarStatusEmTempoReal('cristian');
-            configurarAutocompleteInput(document.querySelector('.pickup-address'), document.querySelector('.pickup-suggestions'), 0, 'coleta');
-            configurarAutocompleteInput(document.querySelector('.delivery-address'), document.querySelector('.delivery-suggestions'), 0, 'entrega');
+            configurarAutocompleteInput(document.querySelector('.pickup-address'), document.querySelector('.pickup-suggestions'));
+            configurarAutocompleteInput(document.querySelector('.delivery-address'), document.querySelector('.delivery-suggestions'));
             
             if(localStorage.getItem('clientName')) document.getElementById('clientName').value = localStorage.getItem('clientName');
             if(localStorage.getItem('clientPhone')) document.getElementById('clientPhone').value = localStorage.getItem('clientPhone');
@@ -516,6 +512,12 @@
             });
         }
 
+        async function solicitarWakeLock() {
+            try {
+                if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+            } catch (err) { console.error(err); }
+        }
+
         function alternarStatusOnline() {
             let userToSave = usuarioAtivoPainel || 'cristian';
             const novoStatus = configMotoboyAtual.status === 'offline' ? 'online' : 'offline';
@@ -527,6 +529,7 @@
 
             if (novoStatus === 'online') {
                 if (!navigator.geolocation) return;
+                solicitarWakeLock();
                 watchIdGPS = navigator.geolocation.watchPosition((pos) => {
                     db.ref('entregadores/' + userToSave).update({ status: 'online', lat: pos.coords.latitude, lon: pos.coords.longitude });
                     myCurrentCoords = L.latLng(pos.coords.latitude, pos.coords.longitude);
@@ -535,12 +538,14 @@
                 db.ref('entregadores/' + userToSave).update({ status: 'online' });
             } else {
                 if (watchIdGPS !== null) navigator.geolocation.clearWatch(watchIdGPS);
+                if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
                 db.ref('entregadores/' + userToSave).update({ status: 'offline' });
             }
         }
 
         function fazerLogout() {
             if (watchIdGPS !== null) navigator.geolocation.clearWatch(watchIdGPS);
+            if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
             usuarioAtivoPainel = null;
             voltarParaModoCliente();
             mostrarToast('🔒 Desconectado com segurança.');
@@ -551,6 +556,7 @@
         let myToPickupDistanceKm = 0;
         let calculatedFinalPrice = 0;
         let deslocamentoFee = 0;
+        let raioExtraFee = 0;
         let coletasCoords = [];
         let destinosCoords = [];
 
@@ -565,7 +571,7 @@
             const div = document.createElement('div');
             div.className = 'form-group ponto-item';
             div.innerHTML = `
-                <button type="button" class="btn-remover-ponto" onclick="removerPonto(this, 'coleta')">❌ Remover</button>
+                <button type="button" class="btn-remover-ponto" onclick="removerPonto(this)">❌ Remover</button>
                 <label>Endereço de Coleta (${index + 1})</label>
                 <div class="row-fields">
                     <div class="main-field" style="position: relative;">
@@ -579,7 +585,7 @@
                 <button type="button" class="inline-gps" onclick="useGpsParaColeta(this)">📍 Usar minha localização atual</button>
             `;
             container.appendChild(div);
-            configurarAutocompleteInput(div.querySelector('.pickup-address'), div.querySelector('.pickup-suggestions'), index, 'coleta');
+            configurarAutocompleteInput(div.querySelector('.pickup-address'), div.querySelector('.pickup-suggestions'));
         }
 
         function adicionarNovoDestino() {
@@ -588,7 +594,7 @@
             const div = document.createElement('div');
             div.className = 'form-group ponto-item';
             div.innerHTML = `
-                <button type="button" class="btn-remover-ponto" onclick="removerPonto(this, 'entrega')">❌ Remover</button>
+                <button type="button" class="btn-remover-ponto" onclick="removerPonto(this)">❌ Remover</button>
                 <label>Endereço de Destino (${index + 1})</label>
                 <div class="row-fields">
                     <div class="main-field" style="position: relative;">
@@ -602,27 +608,27 @@
                 <button type="button" class="inline-gps" onclick="useGpsParaDestino(this)">📍 Usar minha localização atual</button>
             `;
             container.appendChild(div);
-            configurarAutocompleteInput(div.querySelector('.delivery-address'), div.querySelector('.delivery-suggestions'), index, 'entrega');
+            configurarAutocompleteInput(div.querySelector('.delivery-address'), div.querySelector('.delivery-suggestions'));
         }
 
-        function removerPonto(btn, tipo) {
+        function removerPonto(btn) {
             btn.closest('.ponto-item').remove();
-            reindexarPontos(tipo);
+            reindexarPontos();
             calculateAll();
         }
 
-        function reindexarPontos(tipo) {
-            const seletor = tipo === 'coleta' ? '#coletasContainer .ponto-item' : '#destinosContainer .ponto-item';
-            document.querySelectorAll(seletor).forEach((item, idx) => {
-                item.querySelector('label').innerText = `${tipo === 'coleta' ? 'Endereço de Coleta' : 'Endereço de Destino'} (${idx + 1})`;
+        function reindexarPontos() {
+            document.querySelectorAll('#coletasContainer .ponto-item').forEach((item, idx) => {
+                item.querySelector('label').innerText = `Endereço de Coleta (${idx + 1})`;
+            });
+            document.querySelectorAll('#destinosContainer .ponto-item').forEach((item, idx) => {
+                item.querySelector('label').innerText = `Endereço de Destino (${idx + 1})`;
             });
         }
 
         function centralizarNaRota() {
             let points = [...coletasCoords, ...destinosCoords];
-            if (points.length > 0) {
-                map.fitBounds(L.latLngBounds(points), { padding: [50, 50] });
-            }
+            if (points.length > 0) map.fitBounds(L.latLngBounds(points), { padding: [50, 50] });
         }
 
         function atualizarPinsNoMapa() {
@@ -632,24 +638,21 @@
             deliveryMarkers = [];
 
             coletasCoords.forEach((coord, idx) => {
-                let label = String.fromCharCode(65 + idx); // A, B, C...
+                let label = String.fromCharCode(65 + idx);
                 let icon = L.divIcon({ className: 'pin-marker pin-pickup', html: label, iconSize: [30, 30], iconAnchor: [15, 15] });
                 pickupMarkers.push(L.marker(coord, { icon: icon }).addTo(map).bindPopup(`Coleta (${label})`));
             });
 
             destinosCoords.forEach((coord, idx) => {
-                let label = String.fromCharCode(80 + idx); // P, Q, R... ou números
                 let icon = L.divIcon({ className: 'pin-marker pin-delivery', html: (idx + 1), iconSize: [30, 30], iconAnchor: [15, 15] });
                 deliveryMarkers.push(L.marker(coord, { icon: icon }).addTo(map).bindPopup(`Entrega (${idx + 1})`));
             });
-
             map.invalidateSize();
         }
 
         function useGpsParaColeta(btn) {
             if (!navigator.geolocation) return;
             navigator.geolocation.getCurrentPosition((pos) => {
-                let latLng = L.latLng(pos.coords.latitude, pos.coords.longitude);
                 let item = btn.closest('.ponto-item');
                 fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
                     .then(res => res.json())
@@ -663,7 +666,6 @@
         function useGpsParaDestino(btn) {
             if (!navigator.geolocation) return;
             navigator.geolocation.getCurrentPosition((pos) => {
-                let latLng = L.latLng(pos.coords.latitude, pos.coords.longitude);
                 let item = btn.closest('.ponto-item');
                 fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
                     .then(res => res.json())
@@ -674,7 +676,7 @@
             });
         }
 
-        function configurarAutocompleteInput(inputEl, suggestionsEl, index, tipo) {
+        function configurarAutocompleteInput(inputEl, suggestionsEl) {
             let timeout = null;
             inputEl.addEventListener('input', function() {
                 clearTimeout(timeout);
@@ -728,70 +730,98 @@
 
             document.getElementById('loadingStatus').style.display = 'block';
 
-            Promise.all([
-                ...coletasTextos.map(txt => new Promise(res => geocode(txt, res))),
-                ...destinosTextos.map(txt => new Promise(res => geocode(txt, res)))
-            ]).then(results => {
-                document.getElementById('loadingStatus').style.display = 'none';
-                if (results.some(r => r === null)) return;
-
-                coletasCoords = results.slice(0, coletasTextos.length);
-                destinosCoords = results.slice(coletasTextos.length);
-
-                if (routingControl) map.removeControl(routingControl);
-
-                myToPickupDistanceKm = myCurrentCoords.distanceTo(coletasCoords[0]) / 1000;
-                let limiteGrats = parseFloat(configMotoboyAtual.limiteKmColetaGrats) ?? 4.0;
-                let taxaExtra = parseFloat(configMotoboyAtual.taxaDeslocamento) ?? 0.49;
-
-                if (myToPickupDistanceKm > limiteGrats) {
-                    deslocamentoFee = (myToPickupDistanceKm - limiteGrats) * taxaExtra;
-                    document.getElementById('deslocamentoText').innerText = `+ R$ ${deslocamentoFee.toFixed(2).replace('.', ',')} (${myToPickupDistanceKm.toFixed(1)} km extra)`;
-                    document.getElementById('deslocamentoRow').style.color = '#d97706';
-                } else {
-                    deslocamentoFee = 0;
-                    document.getElementById('deslocamentoText').innerText = `Grátis (Até ${limiteGrats} km)`;
-                    document.getElementById('deslocamentoRow').style.color = '#16a34a';
+            db.ref('entregadores/cristian').once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    let d = snapshot.val();
+                    if (d.lat && d.lon) myCurrentCoords = L.latLng(d.lat, d.lon);
+                    configMotoboyAtual = d;
                 }
 
-                // Ordem completa da rota: Moto -> Coletas -> Destinos
-                let waypointsRota = [myCurrentCoords, ...coletasCoords, ...destinosCoords];
+                Promise.all([
+                    ...coletasTextos.map(txt => new Promise(res => geocode(txt, res))),
+                    ...destinosTextos.map(txt => new Promise(res => geocode(txt, res)))
+                ]).then(results => {
+                    document.getElementById('loadingStatus').style.display = 'none';
+                    if (results.some(r => r === null)) return;
 
-                routingControl = L.Routing.control({
-                    waypoints: waypointsRota,
-                    routeWhileDragging: false,
-                    addWaypoints: false,
-                    createMarker: () => null,
-                    lineOptions: { styles: [{ color: '#2563eb', weight: 5, opacity: 0.8 }] },
-                    show: false
-                }).addTo(map);
+                    coletasCoords = results.slice(0, coletasTextos.length);
+                    destinosCoords = results.slice(coletasTextos.length);
 
-                routingControl.on('routesfound', function(e) {
-                    const summary = e.routes[0].summary;
-                    deliveryDistanceKm = summary.totalDistance / 1000;
-                    let tempoMinutos = Math.round((deliveryDistanceKm / 30) * 60) + 5;
+                    if (routingControl) map.removeControl(routingControl);
 
-                    atualizarPinsNoMapa();
-                    centralizarNaRota();
-                    document.getElementById('btnRecentrar').style.display = 'block';
+                    myToPickupDistanceKm = myCurrentCoords.distanceTo(coletasCoords[0]) / 1000;
+                    let limiteGrats = parseFloat(configMotoboyAtual.limiteKmColetaGrats) ?? 4.0;
+                    let taxaExtra = parseFloat(configMotoboyAtual.taxaDeslocamento) ?? 0.49;
 
-                    let kmRate = parseFloat(configMotoboyAtual.precoKm) ?? 1.50;
-                    let minRate = parseFloat(configMotoboyAtual.tarifaMinima) ?? 10.00;
+                    if (myToPickupDistanceKm > limiteGrats) {
+                        deslocamentoFee = (myToPickupDistanceKm - limiteGrats) * taxaExtra;
+                        document.getElementById('deslocamentoText').innerText = `+ R$ ${deslocamentoFee.toFixed(2).replace('.', ',')} (${myToPickupDistanceKm.toFixed(1)} km extra)`;
+                        document.getElementById('deslocamentoRow').style.color = '#d97706';
+                    } else {
+                        deslocamentoFee = 0;
+                        document.getElementById('deslocamentoText').innerText = `Grátis (Até ${limiteGrats} km)`;
+                        document.getElementById('deslocamentoRow').style.color = '#16a34a';
+                    }
 
-                    let rawKmValue = deliveryDistanceKm * kmRate;
-                    let finalDeliveryValue = rawKmValue < minRate ? minRate : rawKmValue;
+                    let waypointsRota = [myCurrentCoords, ...coletasCoords, ...destinosCoords];
 
-                    calculatedFinalPrice = finalDeliveryValue + deslocamentoFee;
+                    routingControl = L.Routing.control({
+                        waypoints: waypointsRota,
+                        routeWhileDragging: false,
+                        addWaypoints: false,
+                        createMarker: () => null,
+                        lineOptions: { styles: [{ color: '#2563eb', weight: 5, opacity: 0.8 }] },
+                        show: false
+                    }).addTo(map);
 
-                    document.getElementById('myDistText').innerText = myToPickupDistanceKm.toFixed(2) + ' km';
-                    document.getElementById('distText').innerText = deliveryDistanceKm.toFixed(2) + ' km';
-                    document.getElementById('etaText').innerText = `Aprox. ${tempoMinutos} min`;
-                    document.getElementById('kmValueText').innerText = 'R$ ' + rawKmValue.toFixed(2).replace('.', ',') + ` (${deliveryDistanceKm.toFixed(1)} km x R$ ${kmRate.toFixed(2)})`;
-                    document.getElementById('totalText').innerText = 'R$ ' + calculatedFinalPrice.toFixed(2).replace('.', ',');
-                    document.getElementById('summaryCard').style.display = 'block';
+                    routingControl.on('routesfound', function(e) {
+                        const summary = e.routes[0].summary;
+                        deliveryDistanceKm = summary.totalDistance / 1000;
+                        let tempoMinutos = Math.round((deliveryDistanceKm / 30) * 60) + 5;
+
+                        atualizarPinsNoMapa();
+                        centralizarNaRota();
+                        document.getElementById('btnRecentrar').style.display = 'block';
+
+                        let kmRate = parseFloat(configMotoboyAtual.precoKm) ?? 1.50;
+                        let minRate = parseFloat(configMotoboyAtual.tarifaMinima) ?? 10.00;
+
+                        let rawKmValue = deliveryDistanceKm * kmRate;
+                        let finalDeliveryValue = rawKmValue < minRate ? minRate : rawKmValue;
+
+                        // Proteção de Retorno Vazio
+                        let ativarRaioConfig = configMotoboyAtual.ativarRaio ?? 'sim';
+                        let raioMaximoConfig = parseFloat(configMotoboyAtual.raioMaximo) || 12;
+                        let custoKmExcedenteConfig = parseFloat(configMotoboyAtual.custoKmExcedente) || 0.49;
+
+                        raioExtraFee = 0;
+                        if (ativarRaioConfig === 'sim' && deliveryDistanceKm > raioMaximoConfig) {
+                            raioExtraFee = deliveryDistanceKm * custoKmExcedenteConfig;
+                            document.getElementById('textoAlertaRetorno').innerText = `⚠️ Acima de ${raioMaximoConfig}km (Retorno Vazio): +R$ ${raioExtraFee.toFixed(2).replace('.', ',')} (${deliveryDistanceKm.toFixed(1)} km x R$ ${custoKmExcedenteConfig.toFixed(2)})`;
+                            document.getElementById('alertaRetornoRow').style.display = 'flex';
+                        } else {
+                            document.getElementById('alertaRetornoRow').style.display = 'none';
+                        }
+
+                        calculatedFinalPrice = finalDeliveryValue + deslocamentoFee + raioExtraFee;
+
+                        document.getElementById('myDistText').innerText = myToPickupDistanceKm.toFixed(2) + ' km';
+                        document.getElementById('distText').innerText = deliveryDistanceKm.toFixed(2) + ' km';
+                        document.getElementById('etaText').innerText = `Aprox. ${tempoMinutos} min`;
+                        document.getElementById('kmValueText').innerText = 'R$ ' + rawKmValue.toFixed(2).replace('.', ',') + ` (${deliveryDistanceKm.toFixed(1)} km x R$ ${kmRate.toFixed(2)})`;
+                        document.getElementById('totalText').innerText = 'R$ ' + calculatedFinalPrice.toFixed(2).replace('.', ',');
+                        document.getElementById('summaryCard').style.display = 'block';
+                    });
                 });
             });
         }
+
+        // Recalcular quando sair dos campos
+        document.addEventListener('blur', function(e) {
+            if ((e.target.classList.contains('pickup-address') || e.target.classList.contains('delivery-address')) && e.target.value.length > 3) {
+                calculateAll();
+            }
+        }, true);
 
         function showPixArea() {
             let name = document.getElementById('clientName').value;
@@ -813,21 +843,17 @@
             let phone = document.getElementById('clientPhone').value;
             
             let coletasTxt = '';
-            document.querySelectorAll('.ponto-item').forEach((item, idx) => {
-                let endInput = item.querySelector('.pickup-address');
-                let numInput = item.querySelector('.pickup-number');
-                if (endInput && endInput.value.trim()) {
-                    coletasTxt += `📍 *Coleta (${String.fromCharCode(65 + idx)}):* ${endInput.value}${numInput.value ? `, Nº ${numInput.value}` : ''}\n`;
-                }
+            document.querySelectorAll('#coletasContainer .ponto-item').forEach((item, idx) => {
+                let end = item.querySelector('.pickup-address').value;
+                let num = item.querySelector('.pickup-number').value;
+                if (end) coletasTxt += `📍 *Coleta (${String.fromCharCode(65 + idx)}):* ${end}${num ? `, Nº ${num}` : ''}\n`;
             });
 
             let destinosTxt = '';
             document.querySelectorAll('#destinosContainer .ponto-item').forEach((item, idx) => {
-                let endInput = item.querySelector('.delivery-address');
-                let numInput = item.querySelector('.delivery-number');
-                if (endInput && endInput.value.trim()) {
-                    destinosTxt += `🏁 *Destino (${idx + 1}):* ${endInput.value}${numInput.value ? `, Nº ${numInput.value}` : ''}\n`;
-                }
+                let end = item.querySelector('.delivery-address').value;
+                let num = item.querySelector('.delivery-number').value;
+                if (end) destinosTxt += `🏁 *Destino (${idx + 1}):* ${end}${num ? `, Nº ${num}` : ''}\n`;
             });
 
             let pixKey = configMotoboyAtual.pix || 'Chave Pix não informada';
