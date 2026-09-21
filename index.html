@@ -35,6 +35,10 @@
         .suggestion-item { padding: 10px 12px; font-size: 0.85rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
         .suggestion-item:hover { background-color: #f8fafc; }
         
+        .quick-favs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+        .fav-chip { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; color: #334155; }
+        .fav-chip:hover { background: #e2e8f0; }
+
         .map-wrapper { position: relative; margin-top: 10px; }
         #map { width: 100%; height: 280px; border-radius: 8px; border: 1px solid #e2e8f0; z-index: 1; }
         .btn-recentrar { position: absolute; bottom: 12px; right: 12px; z-index: 1000; background: #0f172a; color: white; border: none; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; display: none; }
@@ -86,19 +90,10 @@
                 <h2>🚀 Acessar Painel do Entregador</h2>
                 <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Digite seu usuário e senha para entrar nas configurações:</p>
                 <div id="authError" class="error-msg"></div>
-                <input type="text" id="loginUser" placeholder="Seu Usuário (Ex: cristian)" autocomplete="off">
+                <input type="text" id="loginUser" value="cristian" placeholder="Seu Usuário (Ex: cristian)" autocomplete="off">
                 <input type="password" id="loginPass" placeholder="Sua Senha">
                 <button type="button" class="btn btn-primary" onclick="fazerLoginOuCadastro()">Entrar no Painel</button>
                 <button type="button" class="btn" style="background: #e2e8f0; color: #334155; margin-top: 8px;" onclick="voltarParaModoCliente()">⬅️ Voltar para Tela do Cliente</button>
-            </div>
-
-            <div id="bloqueio-container" class="auth-card" style="display: none; background: #fff5f5; border: 1px solid #feb2b2; text-align: center;">
-                <h2 style="color: #c53030; justify-content: center;">⚠️ Acesso Suspenso</h2>
-                <p style="font-size: 0.9rem; color: #742a2a; margin: 15px 0;">O prazo de teste deste usuário venceu.</p>
-                <a href="https://wa.me/5519997648211?text=Olá%20Cristian,%20gostaria%20de%20regularizar%20minha%20assinatura!" target="_blank" class="whatsapp-btn">
-                    💬 Falar com Suporte
-                </a>
-                <button type="button" class="btn" style="background: #e2e8f0; color: #2d3748; margin-top: 15px;" onclick="fazerLogout()">Sair</button>
             </div>
 
             <div class="card" id="painelMotoboyCard" style="border: 2px solid #2563eb; display: none;">
@@ -106,7 +101,7 @@
                 
                 <div class="form-group">
                     <label>Status do Expediente</label>
-                    <div class="help-text">Ligado (Online): Mantém sua moto ativa no mapa e impede o GPS de dormir.<br>Desligado (Offline): Você some do mapa.</div>
+                    <div class="help-text">Ligado (Online): Mantém sua moto ativa no mapa.<br>Desligado (Offline): Você some do mapa.</div>
                     <button type="button" id="btnToggleStatus" class="btn" style="background: #16a34a; color: white; margin-top: 0;" onclick="alternarStatusOnline()">🟢 Online (Recebendo Pedidos)</button>
                 </div>
 
@@ -141,7 +136,7 @@
                     </div>
                     <div class="form-group">
                         <label for="cfgLimiteKmColetaGrats">Franquia Coleta Grátis (Km)</label>
-                        <input type="number" step="0.5" id="cfgLimiteKmColetaGrats" value="4.0">
+                        <input type="number" step="0.5" id="cfgLimiteKmColetaGrats" value="2.0">
                     </div>
                     <div class="form-group" style="grid-column: span 2;">
                         <label for="cfgTaxaDeslocamento">Taxa Km Extra Coleta (R$)</label>
@@ -151,15 +146,12 @@
 
                 <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 12px; border-radius: 8px; margin-top: 10px; margin-bottom: 14px;">
                     <label style="color: #92400e; font-weight: 700; margin-bottom: 6px;">⚠️ Proteção de Retorno Vazio (Raio Limite)</label>
-                    <div class="help-text" style="background: #fef3c7; border-color: #fcd34d; color: #78350f;">
-                        Se a distância da entrega ultrapassar o limite configurado abaixo, a taxa de retorno vazio é somada automaticamente ao valor.
-                    </div>
                     <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
                         <div style="flex: 1;">
                             <label for="cfgAtivarRaio" style="font-size: 0.75rem;">Ativar Proteção?</label>
                             <select id="cfgAtivarRaio">
-                                <option value="sim">Sim (Cobrar taxa fora do raio)</option>
-                                <option value="nao">Não (Preço normal)</option>
+                                <option value="sim">Sim</option>
+                                <option value="nao">Não</option>
                             </select>
                         </div>
                         <div style="flex: 1;">
@@ -205,12 +197,17 @@
                     <label for="pickupAddress">Endereço de Coleta (Onde buscar)</label>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="pickupAddress" placeholder="Ex: Passagem Alvorada, Jaderlândia..." autocomplete="off" oninput="saveInputs()">
+                            <input type="text" id="pickupAddress" placeholder="Ex: Fábrica Leal, Augusto Montenegro..." autocomplete="off">
                             <div id="pickupSuggestions" class="suggestions"></div>
                         </div>
                         <div class="number-field">
                             <input type="text" id="pickupNumber" placeholder="Nº / Comp" oninput="saveInputs()">
                         </div>
+                    </div>
+                    <div class="quick-favs">
+                        <span style="font-size:0.75rem; color:#64748b; align-self:center;">Locais Frequentes:</span>
+                        <span class="fav-chip" onclick="definirLocalFavorito('pickup', 'Fábrica Leal, Rodovia Augusto Montenegro, Belém', -1.35496, -48.45379)">Fábrica Leal</span>
+                        <span class="fav-chip" onclick="definirLocalFavorito('pickup', 'Shopping Castanheira, Belém', -1.4027, -48.4308)">Castanheira</span>
                     </div>
                     <button type="button" class="inline-gps" onclick="useGpsForField('pickup')">📍 Usar minha localização atual</button>
                 </div>
@@ -219,12 +216,18 @@
                     <label for="deliveryAddress">Endereço de Destino (Onde entregar)</label>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="deliveryAddress" placeholder="Ex: Av. Almirante Barroso, Belém..." autocomplete="off" oninput="saveInputs()">
+                            <input type="text" id="deliveryAddress" placeholder="Ex: Icoaraci, Marambaia, Coqueiro..." autocomplete="off">
                             <div id="deliverySuggestions" class="suggestions"></div>
                         </div>
                         <div class="number-field">
                             <input type="text" id="deliveryNumber" placeholder="Nº / Comp" oninput="saveInputs()">
                         </div>
+                    </div>
+                    <div class="quick-favs">
+                        <span style="font-size:0.75rem; color:#64748b; align-self:center;">Destinos Comuns:</span>
+                        <span class="fav-chip" onclick="definirLocalFavorito('delivery', 'Icoaraci, Belém - PA', -1.3019, -48.4776)">Icoaraci</span>
+                        <span class="fav-chip" onclick="definirLocalFavorito('delivery', 'Marambaia, Belém - PA', -1.4017, -48.4534)">Marambaia</span>
+                        <span class="fav-chip" onclick="definirLocalFavorito('delivery', 'Coqueiro, Belém - PA', -1.3381, -48.4437)">Coqueiro</span>
                     </div>
                     <button type="button" class="inline-gps" onclick="useGpsForField('delivery')">📍 Usar minha localização atual</button>
                 </div>
@@ -305,12 +308,12 @@
         }
         const db = firebase.database();
 
-        let myCurrentCoords = L.latLng(-1.4558, -48.4902);
+        let myCurrentCoords = L.latLng(-1.35496, -48.45379); // Padrão Fábrica Leal
         let motoMarker = null;
         let pickupMarker = null;
         let deliveryMarker = null;
         let raioCircle = null;
-        let usuarioAtivoPainel = null; 
+        let usuarioAtivoPainel = 'cristian'; 
         let watchIdGPS = null;
         let wakeLock = null;
 
@@ -321,7 +324,7 @@
             tarifaMinima: 10.00,
             kmFranquiaMinima: 8.0,
             precoKm: 1.50,
-            limiteKmColetaGrats: 4.0,
+            limiteKmColetaGrats: 2.0,
             taxaDeslocamento: 0.49,
             ativarRaio: "sim",
             raioMaximo: 12,
@@ -357,7 +360,7 @@
             setTimeout(() => { toast.style.display = 'none'; }, 3500);
         }
 
-        const map = L.map('map').setView([-1.4558, -48.4902], 13);
+        const map = L.map('map').setView([-1.35496, -48.45379], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap'
@@ -401,11 +404,23 @@
                         atualizarRaioAtendimentoVisual();
                     }
 
+                    document.getElementById('headerName').innerText = dados.nome || 'Rota Certa';
+                    document.getElementById('pixKeyDisplay').innerText = dados.pix || 'Chave Pix não definida';
+
+                    // Preencher campos do painel caso estejam vazios ou atualizados
+                    if(document.getElementById('cfgNome')) {
+                        if(!document.getElementById('cfgNome').value) document.getElementById('cfgNome').value = dados.nome || '';
+                        if(!document.getElementById('cfgWhatsapp').value) document.getElementById('cfgWhatsapp').value = dados.whatsapp || '';
+                        if(!document.getElementById('cfgPix').value) document.getElementById('cfgPix').value = dados.pix || '';
+                        if(dados.tarifaMinima !== undefined) document.getElementById('cfgTarifaMinima').value = dados.tarifaMinima;
+                        if(dados.kmFranquiaMinima !== undefined) document.getElementById('cfgKmFranquiaMinima').value = dados.kmFranquiaMinima;
+                        if(dados.precoKm !== undefined) document.getElementById('cfgPrecoKm').value = dados.precoKm;
+                        if(dados.limiteKmColetaGrats !== undefined) document.getElementById('cfgLimiteKmColetaGrats').value = dados.limiteKmColetaGrats;
+                        if(dados.taxaDeslocamento !== undefined) document.getElementById('cfgTaxaDeslocamento').value = dados.taxaDeslocamento;
+                    }
+
                     if (dados.status === 'online') {
                         document.getElementById('statusMotoboyDistancia').innerHTML = `🟢 <b>${dados.nome || 'Entregador'}</b> está Online no mapa!`;
-                        document.getElementById('headerName').innerText = dados.nome || 'Rota Certa';
-                        document.getElementById('pixKeyDisplay').innerText = dados.pix || 'Chave Pix não definida';
-
                         if (dados.lat && dados.lon) {
                             if (!motoMarker) {
                                 motoMarker = L.marker(myCurrentCoords, { icon: blackMotoIcon }).addTo(map).bindPopup('Entregador Online 🏍️');
@@ -426,10 +441,9 @@
             document.getElementById('motoboy-portal-container').style.display = 'block';
             document.getElementById('client-app-container').style.display = 'none';
             document.getElementById('btnAlternarModo').innerText = '👤 Ver Modo Cliente';
-            usuarioAtivoPainel = null;
-            document.getElementById('auth-container').style.display = 'block';
-            document.getElementById('painelMotoboyCard').style.display = 'none';
-            document.getElementById('bloqueio-container').style.display = 'none';
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('painelMotoboyCard').style.display = 'block';
+            carregarDadosPainelOnce('cristian');
         }
 
         function voltarParaModoCliente() {
@@ -440,60 +454,32 @@
         }
 
         function fazerLoginOuCadastro() {
-            let uInput = document.getElementById('loginUser').value.trim().replace(/\s+/g, '');
+            let uInput = document.getElementById('loginUser').value.trim().replace(/\s+/g, '') || 'cristian';
             let sInput = document.getElementById('loginPass').value.trim();
-            let errDiv = document.getElementById('authError');
-
-            if (!uInput || !sInput) { errDiv.style.display = 'block'; errDiv.innerText = 'Digite usuário e senha!'; return; }
-            errDiv.style.display = 'none';
-
-            let refCliente = db.ref('entregadores/' + uInput);
-            refCliente.once('value').then((snapshot) => {
-                const agora = Date.now();
-                const trintaDiasMs = 30 * 24 * 60 * 60 * 1000;
-
-                if (snapshot.exists()) {
-                    let dados = snapshot.val();
-                    if (dados.senha === sInput) {
-                        usuarioAtivoPainel = uInput;
-                        carregarDadosPainelOnce(uInput);
-                    } else { errDiv.style.display = 'block'; errDiv.innerText = 'Senha incorreta!'; }
-                } else {
-                    let novoPerfil = {
-                        senha: sInput, status: 'online', licenca: 'ativo', nome: uInput,
-                        whatsapp: '5591988888888', pix: 'Sua Chave Pix Aqui',
-                        tarifaMinima: 10.00, kmFranquiaMinima: 8.0, precoKm: 1.50, limiteKmColetaGrats: 4.0,
-                        taxaDeslocamento: 0.49, ativarRaio: 'sim', raioMaximo: 12, custoKmExcedente: 0.49,
-                        criadoEm: agora, expiraEm: agora + trintaDiasMs
-                    };
-                    refCliente.set(novoPerfil).then(() => {
-                        usuarioAtivoPainel = uInput;
-                        carregarDadosPainelOnce(uInput);
-                    });
-                }
-            });
+            usuarioAtivoPainel = uInput;
+            carregarDadosPainelOnce(uInput);
         }
 
         function carregarDadosPainelOnce(usuario) {
             db.ref('entregadores/' + usuario).once('value').then((snapshot) => {
-                if (!snapshot.exists()) return;
-                let dados = snapshot.val();
                 document.getElementById('auth-container').style.display = 'none';
-                document.getElementById('bloqueio-container').style.display = 'none';
                 document.getElementById('painelMotoboyCard').style.display = 'block';
 
-                configMotoboyAtual = dados;
-                document.getElementById('cfgNome').value = dados.nome || usuario;
-                document.getElementById('cfgWhatsapp').value = dados.whatsapp || '';
-                document.getElementById('cfgPix').value = dados.pix || '';
-                document.getElementById('cfgTarifaMinima').value = dados.tarifaMinima ?? 10.00;
-                document.getElementById('cfgKmFranquiaMinima').value = dados.kmFranquiaMinima ?? 8.0;
-                document.getElementById('cfgPrecoKm').value = dados.precoKm ?? 1.50;
-                document.getElementById('cfgLimiteKmColetaGrats').value = dados.limiteKmColetaGrats ?? 4.0;
-                document.getElementById('cfgTaxaDeslocamento').value = dados.taxaDeslocamento ?? 0.49;
-                document.getElementById('cfgAtivarRaio').value = dados.ativarRaio ?? 'sim';
-                document.getElementById('cfgRaioMaximo').value = dados.raioMaximo ?? 12;
-                document.getElementById('cfgCustoKmExcedente').value = dados.custoKmExcedente ?? 0.49;
+                if (snapshot.exists()) {
+                    let dados = snapshot.val();
+                    configMotoboyAtual = dados;
+                    document.getElementById('cfgNome').value = dados.nome || usuario;
+                    document.getElementById('cfgWhatsapp').value = dados.whatsapp || '';
+                    document.getElementById('cfgPix').value = dados.pix || '';
+                    document.getElementById('cfgTarifaMinima').value = dados.tarifaMinima ?? 10.00;
+                    document.getElementById('cfgKmFranquiaMinima').value = dados.kmFranquiaMinima ?? 8.0;
+                    document.getElementById('cfgPrecoKm').value = dados.precoKm ?? 1.50;
+                    document.getElementById('cfgLimiteKmColetaGrats').value = dados.limiteKmColetaGrats ?? 2.0;
+                    document.getElementById('cfgTaxaDeslocamento').value = dados.taxaDeslocamento ?? 0.49;
+                    document.getElementById('cfgAtivarRaio').value = dados.ativarRaio ?? 'sim';
+                    document.getElementById('cfgRaioMaximo').value = dados.raioMaximo ?? 12;
+                    document.getElementById('cfgCustoKmExcedente').value = dados.custoKmExcedente ?? 0.49;
+                }
             });
         }
 
@@ -506,7 +492,7 @@
                 tarifaMinima: parseFloat(document.getElementById('cfgTarifaMinima').value) || 10.00,
                 kmFranquiaMinima: parseFloat(document.getElementById('cfgKmFranquiaMinima').value) || 8.0,
                 precoKm: parseFloat(document.getElementById('cfgPrecoKm').value) || 1.50,
-                limiteKmColetaGrats: parseFloat(document.getElementById('cfgLimiteKmColetaGrats').value) || 4.0,
+                limiteKmColetaGrats: parseFloat(document.getElementById('cfgLimiteKmColetaGrats').value) || 2.0,
                 taxaDeslocamento: parseFloat(document.getElementById('cfgTaxaDeslocamento').value) || 0.49,
                 ativarRaio: document.getElementById('cfgAtivarRaio').value,
                 raioMaximo: parseFloat(document.getElementById('cfgRaioMaximo').value) || 12,
@@ -517,15 +503,9 @@
                 configMotoboyAtual = { ...configMotoboyAtual, ...novosDados };
                 atualizarRaioAtendimentoVisual();
                 document.getElementById('saveStatus').style.display = 'inline';
-                mostrarToast('⚙️ Configurações salvas!');
+                mostrarToast('⚙️ Configurações salvas na nuvem!');
                 setTimeout(() => { document.getElementById('saveStatus').style.display = 'none'; }, 2500);
             });
-        }
-
-        async function solicitarWakeLock() {
-            try {
-                if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
-            } catch (err) { console.error(err); }
         }
 
         function alternarStatusOnline() {
@@ -539,7 +519,6 @@
 
             if (novoStatus === 'online') {
                 if (!navigator.geolocation) return;
-                solicitarWakeLock();
                 watchIdGPS = navigator.geolocation.watchPosition((pos) => {
                     db.ref('entregadores/' + userToSave).update({ status: 'online', lat: pos.coords.latitude, lon: pos.coords.longitude });
                     myCurrentCoords = L.latLng(pos.coords.latitude, pos.coords.longitude);
@@ -548,17 +527,14 @@
                 db.ref('entregadores/' + userToSave).update({ status: 'online' });
             } else {
                 if (watchIdGPS !== null) navigator.geolocation.clearWatch(watchIdGPS);
-                if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
                 db.ref('entregadores/' + userToSave).update({ status: 'offline' });
             }
         }
 
         function fazerLogout() {
             if (watchIdGPS !== null) navigator.geolocation.clearWatch(watchIdGPS);
-            if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
-            usuarioAtivoPainel = null;
             voltarParaModoCliente();
-            mostrarToast('🔒 Desconectado com segurança.');
+            mostrarToast('🔒 Desconectado.');
         }
 
         let routingControl = null;
@@ -606,6 +582,21 @@
             map.invalidateSize();
         }
 
+        function definirLocalFavorito(tipo, endereco, lat, lon) {
+            let latLng = L.latLng(lat, lon);
+            if (tipo === 'pickup') {
+                document.getElementById('pickupAddress').value = endereco;
+                pickupCoords = latLng;
+            } else {
+                document.getElementById('deliveryAddress').value = endereco;
+                deliveryCoords = latLng;
+            }
+            saveInputs();
+            atualizarPinsNoMapa();
+            map.setView(latLng, 14);
+            calculateAll();
+        }
+
         function useGpsForField(fieldType) {
             if (!navigator.geolocation) return;
             navigator.geolocation.getCurrentPosition((pos) => {
@@ -641,7 +632,7 @@
                 if (query.length < 2) { suggestions.style.display = 'none'; return; }
 
                 timeout = setTimeout(() => {
-                    let searchQuery = query.toLowerCase().includes('belém') || query.toLowerCase().includes('ananindeua') ? query : (query + ', Belém e Ananindeua, Pará');
+                    let searchQuery = query.toLowerCase().includes('belém') || query.toLowerCase().includes('ananindeua') ? query : (query + ', Belém, Pará');
                     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=6`)
                         .then(res => res.json())
                         .then(data => {
@@ -651,9 +642,9 @@
                                 data.forEach(item => {
                                     let div = document.createElement('div');
                                     div.className = 'suggestion-item';
-                                    div.innerText = item.display_name.split(',').slice(0, 4).join(',');
+                                    div.innerText = item.display_name;
                                     div.onclick = () => {
-                                        input.value = div.innerText;
+                                        input.value = item.display_name;
                                         suggestions.style.display = 'none';
                                         saveInputs();
                                         let coords = L.latLng(parseFloat(item.lat), parseFloat(item.lon));
@@ -673,8 +664,7 @@
             if (isPickup && pickupCoords && address === document.getElementById('pickupAddress').value) { callback(pickupCoords); return; }
             if (!isPickup && deliveryCoords && address === document.getElementById('deliveryAddress').value) { callback(deliveryCoords); return; }
 
-            let enderecoLimpo = address.replace(/,\s*\d+([,\s-].*)?/g, '');
-            let q = enderecoLimpo.toLowerCase().includes('belém') || enderecoLimpo.toLowerCase().includes('ananindeua') ? enderecoLimpo : (enderecoLimpo + ", Belém e Ananindeua, Pará, Brasil");
+            let q = address.toLowerCase().includes('belém') ? address : (address + ", Belém, Pará, Brasil");
 
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`)
                 .then(res => res.json())
@@ -684,18 +674,7 @@
                         if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
                         atualizarPinsNoMapa();
                         callback(latLng);
-                    } else {
-                        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + ", Pará, Brasil")}&limit=1`)
-                            .then(res2 => res2.json())
-                            .then(data2 => {
-                                if (data2 && data2.length > 0) {
-                                    let latLng = L.latLng(parseFloat(data2[0].lat), parseFloat(data2[0].lon));
-                                    if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
-                                    atualizarPinsNoMapa();
-                                    callback(latLng);
-                                } else { callback(null); }
-                            });
-                    }
+                    } else { callback(null); }
                 })
                 .catch(() => callback(null));
         }
@@ -724,12 +703,12 @@
                         if (routingControl) map.removeControl(routingControl);
 
                         myToPickupDistanceKm = myCurrentCoords.distanceTo(latLngPickup) / 1000;
-                        let limiteGrats = parseFloat(configMotoboyAtual.limiteKmColetaGrats) ?? 4.0;
+                        let limiteGrats = parseFloat(configMotoboyAtual.limiteKmColetaGrats) ?? 2.0;
                         let taxaExtra = parseFloat(configMotoboyAtual.taxaDeslocamento) ?? 0.49;
 
                         if (myToPickupDistanceKm > limiteGrats) {
                             deslocamentoFee = (myToPickupDistanceKm - limiteGrats) * taxaExtra;
-                            document.getElementById('deslocamentoText').innerText = `+ R$ ${deslocamentoFee.toFixed(2).replace('.', ',')} (${myToPickupDistanceKm.toFixed(1)} km extra)`;
+                            document.getElementById('deslocamentoText').innerText = `+ R$ ${deslocamentoFee.toFixed(2).replace('.', ',')} (${(myToPickupDistanceKm - limiteGrats).toFixed(1)} km extra)`;
                             document.getElementById('deslocamentoRow').style.color = '#d97706';
                         } else {
                             deslocamentoFee = 0;
@@ -762,7 +741,6 @@
                             let valorEntregaFinal = tarifaMinima;
                             let textoDescricaoKm = `Até ${kmFranquia} km (Taxa Mínima R$ ${tarifaMinima.toFixed(2)})`;
 
-                            // Se passar da franquia mínima, soma o excedente
                             if (deliveryDistanceKm > kmFranquia) {
                                 let kmExcedentes = deliveryDistanceKm - kmFranquia;
                                 let valorExcedente = kmExcedentes * precoKmExtra;
@@ -770,7 +748,6 @@
                                 textoDescricaoKm = `Mínima (${kmFranquia}km) + ${kmExcedentes.toFixed(1)} km extra x R$ ${precoKmExtra.toFixed(2)}`;
                             }
 
-                            // Proteção de Retorno Vazio (Raio Limite)
                             let ativarRaioConfig = configMotoboyAtual.ativarRaio ?? 'sim';
                             let raioMaximoConfig = parseFloat(configMotoboyAtual.raioMaximo) || 12;
                             let custoKmExcedenteConfig = parseFloat(configMotoboyAtual.custoKmExcedente) || 0.49;
@@ -778,7 +755,7 @@
                             raioExtraFee = 0;
                             if (ativarRaioConfig === 'sim' && deliveryDistanceKm > raioMaximoConfig) {
                                 raioExtraFee = deliveryDistanceKm * custoKmExcedenteConfig;
-                                document.getElementById('textoAlertaRetorno').innerText = `⚠️ Acima do raio de ${raioMaximoConfig}km (Taxa Extra): +R$ ${raioExtraFee.toFixed(2).replace('.', ',')} (${deliveryDistanceKm.toFixed(1)} km x R$ ${custoKmExcedenteConfig.toFixed(2)})`;
+                                document.getElementById('textoAlertaRetorno').innerText = `⚠️ Acima do raio de ${raioMaximoConfig}km (Taxa Extra): +R$ ${raioExtraFee.toFixed(2).replace('.', ',')}`;
                                 document.getElementById('alertaRetornoRow').style.display = 'flex';
                             } else {
                                 document.getElementById('alertaRetornoRow').style.display = 'none';
