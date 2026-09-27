@@ -65,7 +65,7 @@
         .copy-btn:hover { background: #16a34a; }
         .loading { font-size: 0.85rem; color: #64748b; text-align: center; margin-top: 8px; display: none; }
         .auth-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 16px; }
-        .auth-card input { margin-bottom: 15px; }
+        .auth-card input { margin-bottom: 12px; }
         .error-msg { color: #e74c3c; font-size: 0.85rem; margin-bottom: 10px; display: none; }
         .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         #toastAviso { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 10px 20px; border-radius: 30px; z-index: 9999; font-weight: 600; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: none; text-align: center; }
@@ -83,19 +83,59 @@
 
     <div class="container">
 
-        <!-- 1. PAINEL DE LOGIN / GESTÃO DO MOTOBOY -->
+        <!-- 1. PAINEL DE LOGIN / CADASTRO E GESTÃO DO MOTOBOY -->
         <div id="motoboy-portal-container" style="display: none;">
             
             <div id="auth-container" class="auth-card">
-                <h2>🚀 Acessar Painel do Entregador</h2>
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Digite seu usuário e senha para entrar nas configurações:</p>
-                <div id="authError" class="error-msg"></div>
-                <input type="text" id="loginUser" value="cristian" placeholder="Seu Usuário (Ex: cristian)" autocomplete="off">
-                <input type="password" id="loginPass" placeholder="Sua Senha">
-                <button type="button" class="btn btn-primary" onclick="fazerLoginOuCadastro()">Entrar no Painel</button>
-                <button type="button" class="btn" style="background: #e2e8f0; color: #334155; margin-top: 8px;" onclick="voltarParaModoCliente()">⬅️ Voltar para Tela do Cliente</button>
+                <div id="loginFormArea">
+                    <h2>🚀 Acessar Painel do Entregador</h2>
+                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Entre com seus dados ou cadastre-se:</p>
+                    <div id="authError" class="error-msg"></div>
+                    
+                    <label>Seu Nome (Usuário de Acesso)</label>
+                    <input type="text" id="loginUser" placeholder="Ex: cristian" autocomplete="off">
+                    
+                    <label>Sua Senha</label>
+                    <input type="password" id="loginPass" placeholder="Sua Senha">
+                    
+                    <button type="button" class="btn btn-primary" onclick="fazerLoginEntregador()">Entrar no Painel</button>
+                    <button type="button" class="btn" style="background: #f1f5f9; color: #334155; margin-top: 8px;" onclick="mostrarTelaCadastro(true)">✨ Não tem conta? Cadastre-se grátis (7 dias)</button>
+                </div>
+
+                <div id="cadastroFormArea" style="display: none;">
+                    <h2>📝 Cadastro de Novo Entregador</h2>
+                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Ganhe 7 dias de teste grátis no aplicativo!</p>
+                    <div id="cadastroError" class="error-msg"></div>
+
+                    <label>Seu Nome Completo</label>
+                    <input type="text" id="cadNome" placeholder="Ex: João Motoboy">
+
+                    <label>Seu WhatsApp (com DDD)</label>
+                    <input type="tel" id="cadTelefone" placeholder="Ex: 91988888888">
+
+                    <label>Crie uma Senha</label>
+                    <input type="password" id="cadSenha" placeholder="Sua senha de acesso">
+
+                    <button type="button" class="btn btn-success" onclick="salvarNovoCadastro()">Concluir Cadastro</button>
+                    <button type="button" class="btn" style="background: #e2e8f0; color: #334155; margin-top: 8px;" onclick="mostrarTelaCadastro(false)">⬅️ Já tenho conta (Fazer Login)</button>
+                </div>
+
+                <button type="button" class="btn" style="background: #cbd5e1; color: #334155; margin-top: 12px;" onclick="voltarParaModoCliente()">⬅️ Voltar para Tela do Cliente</button>
             </div>
 
+            <!-- TELA DE BLOQUEIO / SUPORTE -->
+            <div id="bloqueioCard" class="auth-card" style="display: none; text-align: center; border: 2px solid #dc2626;">
+                <h2 style="color: #dc2626; justify-content: center;">⚠️ Acesso Expirado ou Bloqueado</h2>
+                <p style="font-size: 0.9rem; color: #475569; margin-top: 15px; line-height: 1.5;">
+                    O seu período de uso expirou. Para continuar aproveitando todas as rotas e o painel completo, entre em contato com o suporte para realizar a renovação.
+                </p>
+                <a id="linkSuporteWhatsapp" href="https://wa.me/5519997648211?text=Olá,%20gostaria%20de%20renovar%20o%20acesso%20do%20meu%20aplicativo%20Rota%20Certa!" target="_blank" class="whatsapp-btn">
+                    💬 Entrar em Contato com o Suporte (WhatsApp)
+                </a>
+                <button type="button" class="btn" style="background: #e2e8f0; color: #334155; margin-top: 12px;" onclick="voltarParaModoCliente()">⬅️ Voltar para Tela do Cliente</button>
+            </div>
+
+            <!-- PAINEL DE CONFIGURAÇÕES -->
             <div class="card" id="painelMotoboyCard" style="border: 2px solid #2563eb; display: none;">
                 <h2>⚙️ Configurações do Entregador</h2>
                 
@@ -174,7 +214,7 @@
             </div>
         </div>
 
-        <!-- 2. APLICAÇÃO DO CLIENTE -->
+        <!-- 2. APLICAÇÃO DO CLIENTE (SEMPRE ABERTA E LIVRE) -->
         <div id="client-app-container">
             
             <div class="card">
@@ -313,9 +353,8 @@
         let pickupMarker = null;
         let deliveryMarker = null;
         let raioCircle = null;
-        let usuarioAtivoPainel = 'cristian'; 
+        let usuarioAtivoPainel = localStorage.getItem('usuarioAtivoPainel') || 'cristian'; 
         let watchIdGPS = null;
-        let wakeLock = null;
 
         let configMotoboyAtual = {
             nome: "Rota Certa",
@@ -369,7 +408,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => { map.invalidateSize(); }, 300);
 
-            escutarStatusEmTempoReal('cristian');
+            escutarStatusEmTempoReal(usuarioAtivoPainel);
             setupAutocomplete('pickupAddress', 'pickupSuggestions', true);
             setupAutocomplete('deliveryAddress', 'deliverySuggestions', false);
             
@@ -407,18 +446,6 @@
                     document.getElementById('headerName').innerText = dados.nome || 'Rota Certa';
                     document.getElementById('pixKeyDisplay').innerText = dados.pix || 'Chave Pix não definida';
 
-                    // Preencher campos do painel caso estejam vazios ou atualizados
-                    if(document.getElementById('cfgNome')) {
-                        if(!document.getElementById('cfgNome').value) document.getElementById('cfgNome').value = dados.nome || '';
-                        if(!document.getElementById('cfgWhatsapp').value) document.getElementById('cfgWhatsapp').value = dados.whatsapp || '';
-                        if(!document.getElementById('cfgPix').value) document.getElementById('cfgPix').value = dados.pix || '';
-                        if(dados.tarifaMinima !== undefined) document.getElementById('cfgTarifaMinima').value = dados.tarifaMinima;
-                        if(dados.kmFranquiaMinima !== undefined) document.getElementById('cfgKmFranquiaMinima').value = dados.kmFranquiaMinima;
-                        if(dados.precoKm !== undefined) document.getElementById('cfgPrecoKm').value = dados.precoKm;
-                        if(dados.limiteKmColetaGrats !== undefined) document.getElementById('cfgLimiteKmColetaGrats').value = dados.limiteKmColetaGrats;
-                        if(dados.taxaDeslocamento !== undefined) document.getElementById('cfgTaxaDeslocamento').value = dados.taxaDeslocamento;
-                    }
-
                     if (dados.status === 'online') {
                         document.getElementById('statusMotoboyDistancia').innerHTML = `🟢 <b>${dados.nome || 'Entregador'}</b> está Online no mapa!`;
                         if (dados.lat && dados.lon) {
@@ -441,9 +468,9 @@
             document.getElementById('motoboy-portal-container').style.display = 'block';
             document.getElementById('client-app-container').style.display = 'none';
             document.getElementById('btnAlternarModo').innerText = '👤 Ver Modo Cliente';
-            document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('painelMotoboyCard').style.display = 'block';
-            carregarDadosPainelOnce('cristian');
+            document.getElementById('auth-container').style.display = 'block';
+            document.getElementById('bloqueioCard').style.display = 'none';
+            document.getElementById('painelMotoboyCard').style.display = 'none';
         }
 
         function voltarParaModoCliente() {
@@ -453,33 +480,134 @@
             setTimeout(() => { map.invalidateSize(); }, 200);
         }
 
-        function fazerLoginOuCadastro() {
-            let uInput = document.getElementById('loginUser').value.trim().replace(/\s+/g, '') || 'cristian';
-            let sInput = document.getElementById('loginPass').value.trim();
-            usuarioAtivoPainel = uInput;
-            carregarDadosPainelOnce(uInput);
+        function mostrarTelaCadastro(mostrar) {
+            document.getElementById('loginFormArea').style.display = mostrar ? 'none' : 'block';
+            document.getElementById('cadastroFormArea').style.display = mostrar ? 'block' : 'none';
+            document.getElementById('authError').style.display = 'none';
+            document.getElementById('cadastroError').style.display = 'none';
         }
 
-        function carregarDadosPainelOnce(usuario) {
+        // FUNÇÃO DE CADASTRO (CRIA 7 DIAS DE TESTE GRÁTIS NO FIREBASE)
+        function salvarNovoCadastro() {
+            let nome = document.getElementById('cadNome').value.trim();
+            let telefone = document.getElementById('cadTelefone').value.trim();
+            let senha = document.getElementById('cadSenha').value.trim();
+            let errEl = document.getElementById('cadastroError');
+
+            if (!nome || !telefone || !senha) {
+                errEl.innerText = "Preencha todos os campos!";
+                errEl.style.display = 'block';
+                return;
+            }
+
+            let usuarioKey = nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '');
+            let agora = new Date().getTime();
+            let seteDiasMs = 7 * 24 * 60 * 60 * 1000;
+            let expiraEm = agora + seteDiasMs; // 7 dias de teste grátis
+
+            let dadosIniciais = {
+                nome: nome,
+                whatsapp: telefone.replace(/\D/g, ''),
+                senha: senha,
+                pix: "Chave Pix não configurada",
+                tarifaMinima: 10.00,
+                kmFranquiaMinima: 8.0,
+                precoKm: 1.50,
+                limiteKmColetaGrats: 2.0,
+                taxaDeslocamento: 0.49,
+                ativarRaio: "sim",
+                raioMaximo: 12,
+                custoKmExcedente: 0.49,
+                status: "offline",
+                expiraEm: expiraEm
+            };
+
+            db.ref('entregadores/' + usuarioKey).set(dadosIniciais).then(() => {
+                usuarioAtivoPainel = usuarioKey;
+                localStorage.setItem('usuarioAtivoPainel', usuarioKey);
+                mostrarToast('🚀 Cadastro realizado com sucesso!');
+                verificarAcessoEValidade(usuarioKey, senha, true);
+            }).catch((err) => {
+                errEl.innerText = "Erro ao cadastrar. Tente novamente.";
+                errEl.style.display = 'block';
+            });
+        }
+
+        // FUNÇÃO DE LOGIN E VALIDAÇÃO DE PRAZO (7 DIAS OU 30 DIAS DO PAINEL MASTER)
+        function fazerLoginEntregador() {
+            let usuario = document.getElementById('loginUser').value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '');
+            let senhaInput = document.getElementById('loginPass').value.trim();
+            let errEl = document.getElementById('authError');
+
+            if (!usuario) {
+                errEl.innerText = "Digite seu usuário/nome.";
+                errEl.style.display = 'block';
+                return;
+            }
+
             db.ref('entregadores/' + usuario).once('value').then((snapshot) => {
+                if (!snapshot.exists()) {
+                    errEl.innerText = "Usuário não encontrado. Faça seu cadastro!";
+                    errEl.style.display = 'block';
+                    return;
+                }
+
+                let dados = snapshot.val();
+                
+                // Validação de senha se existir cadastrada
+                if (dados.senha && dados.senha !== senhaInput) {
+                    errEl.innerText = "Senha incorreta!";
+                    errEl.style.display = 'block';
+                    return;
+                }
+
+                usuarioAtivoPainel = usuario;
+                localStorage.setItem('usuarioAtivoPainel', usuario);
+                verificarAcessoEValidade(usuario, senhaInput, false);
+            });
+        }
+
+        function verificarAcessoEValidade(usuario, senha, ehNovoCadastro) {
+            db.ref('entregadores/' + usuario).once('value').then((snapshot) => {
+                let dados = snapshot.val();
+                let agora = new Date().getTime();
+
+                // Se não tiver expiraEm configurado (contas antigas), garante 7 dias a partir de agora
+                let expiraEm = dados.expiraEm;
+                if (!expiraEm) {
+                    expiraEm = agora + (7 * 24 * 60 * 60 * 1000);
+                    db.ref('entregadores/' + usuario).update({ expiraEm: expiraEm });
+                }
+
+                // VERIFICA SE ESTÁ BLOQUEADO (EXPIROU O PRAZO)
+                if (agora > expiraEm) {
+                    document.getElementById('auth-container').style.display = 'none';
+                    document.getElementById('painelMotoboyCard').style.display = 'none';
+                    document.getElementById('bloqueioCard').style.display = 'block';
+                    
+                    // Configura o link direto para o SEU WhatsApp (19997648211)
+                    let msgZap = `Olá Cristian, meu acesso ao aplicativo Rota Certa expirou. Gostaria de renovar por mais 30 dias! Meu usuário é: ${dados.nome}`;
+                    document.getElementById('linkSuporteWhatsapp').href = `https://wa.me/5519997648211?text=${encodeURIComponent(msgZap)}`;
+                    return;
+                }
+
+                // ACESSO LIBERADO: CARREGA O PAINEL NORMALMENTE
                 document.getElementById('auth-container').style.display = 'none';
+                document.getElementById('bloqueioCard').style.display = 'none';
                 document.getElementById('painelMotoboyCard').style.display = 'block';
 
-                if (snapshot.exists()) {
-                    let dados = snapshot.val();
-                    configMotoboyAtual = dados;
-                    document.getElementById('cfgNome').value = dados.nome || usuario;
-                    document.getElementById('cfgWhatsapp').value = dados.whatsapp || '';
-                    document.getElementById('cfgPix').value = dados.pix || '';
-                    document.getElementById('cfgTarifaMinima').value = dados.tarifaMinima ?? 10.00;
-                    document.getElementById('cfgKmFranquiaMinima').value = dados.kmFranquiaMinima ?? 8.0;
-                    document.getElementById('cfgPrecoKm').value = dados.precoKm ?? 1.50;
-                    document.getElementById('cfgLimiteKmColetaGrats').value = dados.limiteKmColetaGrats ?? 2.0;
-                    document.getElementById('cfgTaxaDeslocamento').value = dados.taxaDeslocamento ?? 0.49;
-                    document.getElementById('cfgAtivarRaio').value = dados.ativarRaio ?? 'sim';
-                    document.getElementById('cfgRaioMaximo').value = dados.raioMaximo ?? 12;
-                    document.getElementById('cfgCustoKmExcedente').value = dados.custoKmExcedente ?? 0.49;
-                }
+                configMotoboyAtual = dados;
+                document.getElementById('cfgNome').value = dados.nome || usuario;
+                document.getElementById('cfgWhatsapp').value = dados.whatsapp || '';
+                document.getElementById('cfgPix').value = dados.pix || '';
+                document.getElementById('cfgTarifaMinima').value = dados.tarifaMinima ?? 10.00;
+                document.getElementById('cfgKmFranquiaMinima').value = dados.kmFranquiaMinima ?? 8.0;
+                document.getElementById('cfgPrecoKm').value = dados.precoKm ?? 1.50;
+                document.getElementById('cfgLimiteKmColetaGrats').value = dados.limiteKmColetaGrats ?? 2.0;
+                document.getElementById('cfgTaxaDeslocamento').value = dados.taxaDeslocamento ?? 0.49;
+                document.getElementById('cfgAtivarRaio').value = dados.ativarRaio ?? 'sim';
+                document.getElementById('cfgRaioMaximo').value = dados.raioMaximo ?? 12;
+                document.getElementById('cfgCustoKmExcedente').value = dados.custoKmExcedente ?? 0.49;
             });
         }
 
@@ -686,7 +814,7 @@
 
             document.getElementById('loadingStatus').style.display = 'block';
 
-            db.ref('entregadores/cristian').once('value').then((snapshot) => {
+            db.ref('entregadores/' + usuarioAtivoPainel).once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     let d = snapshot.val();
                     if (d.lat && d.lon) myCurrentCoords = L.latLng(d.lat, d.lon);
