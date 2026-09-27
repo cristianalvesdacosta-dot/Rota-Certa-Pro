@@ -3,336 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rota Certa – Solicite sua Entrega</title>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <!-- Google Fonts -->
+    <title>Painel Master – Gestão de Entregadores</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Leaflet Routing Machine CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background-color: #f4f7f6; color: #333; padding-bottom: 40px; }
-        header { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 20px 16px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; }
-        header h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; }
-        header p { font-size: 0.875rem; color: #94a3b8; }
-        .btn-modo-topo { position: absolute; right: 12px; top: 16px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 10px; font-size: 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
-        .btn-modo-topo:hover { background: rgba(255,255,255,0.25); }
-        .container { max-width: 600px; margin: 16px auto; padding: 0 12px; }
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 16px; }
-        .card h2 { font-size: 1rem; font-weight: 600; color: #1e293b; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-        .form-group { margin-bottom: 14px; }
-        .row-fields { display: flex; gap: 8px; }
-        .row-fields .main-field { flex: 3; position: relative; }
-        .row-fields .number-field { flex: 1; }
-        label { display: block; font-size: 0.8rem; font-weight: 500; color: #64748b; margin-bottom: 4px; }
-        .help-text { font-size: 0.75rem; color: #0284c7; margin-top: 4px; margin-bottom: 6px; line-height: 1.4; background: #f0f9ff; padding: 8px; border-radius: 6px; border: 1px solid #bae6fd; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: #fff; }
-        input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-        .inline-gps { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; font-size: 0.75rem; padding: 6px 10px; margin-top: 6px; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
-        .inline-gps:hover { background: #dbeafe; }
-        .suggestions { background: white; border: 1px solid #cbd5e1; border-top: none; border-radius: 0 0 8px 8px; max-height: 180px; overflow-y: auto; position: absolute; width: 100%; z-index: 1000; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .suggestion-item { padding: 10px 12px; font-size: 0.85rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
-        .suggestion-item:hover { background-color: #f8fafc; }
+        body { background-color: #0f172a; color: #f8fafc; padding: 20px 12px; }
+        .container { max-width: 700px; margin: 0 auto; }
+        .master-card { background: #1e293b; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid #334155; margin-bottom: 16px; }
+        h1 { font-size: 1.25rem; font-weight: 700; text-align: center; margin-bottom: 6px; color: #38bdf8; }
+        p.sub { font-size: 0.8rem; text-align: center; color: #94a3b8; margin-bottom: 20px; }
         
-        .quick-favs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
-        .fav-chip { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; color: #334155; }
-        .fav-chip:hover { background: #e2e8f0; }
+        .entregador-row { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 14px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
+        @media(min-width: 500px) {
+            .entregador-row { flex-direction: row; justify-content: space-between; align-items: center; }
+        }
+        
+        .info-area h3 { font-size: 0.95rem; font-weight: 600; color: #fff; }
+        .info-area p { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-top: 4px; }
+        .status-online { background: #065f46; color: #34d399; }
+        .status-offline { background: #7f1d1d; color: #fca5a5; }
+        .status-ativo { color: #34d399; font-weight: 600; }
+        .status-bloqueado { color: #fca5a5; font-weight: 600; }
 
-        .map-wrapper { position: relative; margin-top: 10px; }
-        #map { width: 100%; height: 280px; border-radius: 8px; border: 1px solid #e2e8f0; z-index: 1; }
-        .btn-recentrar { position: absolute; bottom: 12px; right: 12px; z-index: 1000; background: #0f172a; color: white; border: none; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; display: none; }
-        .btn-recentrar:hover { background: #1e293b; }
-
-        .pin-marker { display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; border-radius: 50%; box-shadow: 0 3px 6px rgba(0,0,0,0.3); color: white; border: 2px solid white; }
-        .pin-pickup { background-color: #16a34a; } 
-        .pin-delivery { background-color: #dc2626; } 
-        .moto-marker-icon { background: #0f172a; border: 2px solid #ffffff; border-radius: 50%; color: #ffffff; font-size: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 6px rgba(0,0,0,0.3); }
-
-        .summary-box { background: #f8fafc; border-radius: 8px; padding: 14px; border: 1px solid #e2e8f0; }
-        .summary-row { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px; color: #475569; }
-        .summary-row.total { font-size: 1.15rem; font-weight: 700; color: #0f172a; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 8px; margin-bottom: 0; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; text-align: center; transition: background 0.2s; }
-        .btn-primary { background-color: #2563eb; color: white; margin-top: 10px; }
-        .btn-primary:hover { background-color: #1d4ed8; }
-        .btn-success { background-color: #16a34a; color: white; margin-top: 10px; }
-        .btn-success:hover { background-color: #15803d; }
-        .whatsapp-btn { background-color: #25d366; color: white; display: block; text-decoration: none; padding: 14px; border-radius: 8px; font-weight: bold; margin-top: 15px; text-align: center; }
-        .whatsapp-btn:hover { background-color: #20ba5a; }
-        .pix-area { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; text-align: center; display: none; margin-top: 14px; }
-        .pix-key { background: white; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace; font-size: 0.85rem; word-break: break-all; margin: 10px 0; user-select: all; }
-        .copy-btn { background: #22c55e; color: white; border: none; padding: 8px 16px; font-size: 0.85rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
-        .copy-btn:hover { background: #16a34a; }
-        .loading { font-size: 0.85rem; color: #64748b; text-align: center; margin-top: 8px; display: none; }
-        .auth-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 16px; }
-        .auth-card input { margin-bottom: 12px; }
-        .error-msg { color: #e74c3c; font-size: 0.85rem; margin-bottom: 10px; display: none; }
-        .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        #toastAviso { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 10px 20px; border-radius: 30px; z-index: 9999; font-weight: 600; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: none; text-align: center; }
+        .acoes-area { display: flex; gap: 6px; flex-wrap: wrap; }
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; text-align: center; }
+        .btn-local { background: #2563eb; color: white; }
+        .btn-local:hover { background: #1d4ed8; }
+        .btn-bloquear { background: #dc2626; color: white; }
+        .btn-bloquear:hover { background: #b91c1c; }
+        .btn-liberar { background: #16a34a; color: white; }
+        .btn-liberar:hover { background: #15803d; }
+        .btn-excluir { background: #475569; color: white; }
+        .btn-excluir:hover { background: #334155; }
+        
+        #toastMaster { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #38bdf8; color: #0f172a; padding: 10px 20px; border-radius: 30px; font-weight: 700; font-size: 0.85rem; display: none; z-index: 999; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1 id="headerName">Rota Certa</h1>
-        <p id="headerSub">Solicite sua Entrega Rápida</p>
-        <button type="button" class="btn-modo-topo" id="btnAlternarModo" onclick="abrirTelaLogin()">🔒 Área do Motoboy</button>
-    </header>
-
-    <div id="toastAviso"></div>
+    <div id="toastMaster"></div>
 
     <div class="container">
-
-        <!-- 1. PAINEL DE LOGIN / CADASTRO E GESTÃO DO MOTOBOY -->
-        <div id="motoboy-portal-container" style="display: none;">
+        <div class="master-card">
+            <h1>🛠️ Painel Master – Gestão de Entregadores</h1>
+            <p class="sub">Controle de licenças, acessos e monitoramento em tempo real</p>
             
-            <div id="auth-container" class="auth-card">
-                <div id="loginFormArea">
-                    <h2>🚀 Acessar Painel do Entregador</h2>
-                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Entre com seus dados ou cadastre-se:</p>
-                    <div id="authError" class="error-msg"></div>
-                    
-                    <label>Seu Nome (Usuário de Acesso)</label>
-                    <input type="text" id="loginUser" placeholder="Ex: cristian" autocomplete="off">
-                    
-                    <label>Sua Senha</label>
-                    <input type="password" id="loginPass" placeholder="Sua Senha">
-                    
-                    <button type="button" class="btn btn-primary" onclick="fazerLoginEntregador()">Entrar no Painel</button>
-                    <button type="button" class="btn" style="background: #f1f5f9; color: #334155; margin-top: 8px;" onclick="mostrarTelaCadastro(true)">✨ Não tem conta? Cadastre-se grátis (7 dias)</button>
-                </div>
-
-                <div id="cadastroFormArea" style="display: none;">
-                    <h2>📝 Cadastro de Novo Entregador</h2>
-                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Ganhe 7 dias de teste grátis no aplicativo!</p>
-                    <div id="cadastroError" class="error-msg"></div>
-
-                    <label>Seu Nome Completo</label>
-                    <input type="text" id="cadNome" placeholder="Ex: João Motoboy">
-
-                    <label>Seu WhatsApp (com DDD)</label>
-                    <input type="tel" id="cadTelefone" placeholder="Ex: 91988888888">
-
-                    <label>Crie uma Senha</label>
-                    <input type="password" id="cadSenha" placeholder="Sua senha de acesso">
-
-                    <button type="button" class="btn btn-success" onclick="salvarNovoCadastro()">Concluir Cadastro</button>
-                    <button type="button" class="btn" style="background: #e2e8f0; color: #334155; margin-top: 8px;" onclick="mostrarTelaCadastro(false)">⬅️ Já tenho conta (Fazer Login)</button>
-                </div>
-
-                <button type="button" class="btn" style="background: #cbd5e1; color: #334155; margin-top: 12px;" onclick="voltarParaModoCliente()">⬅️ Voltar para Tela do Cliente</button>
-            </div>
-
-            <!-- TELA DE BLOQUEIO / SUPORTE -->
-            <div id="bloqueioCard" class="auth-card" style="display: none; text-align: center; border: 2px solid #dc2626;">
-                <h2 style="color: #dc2626; justify-content: center;">⚠️ Acesso Expirado ou Bloqueado</h2>
-                <p style="font-size: 0.9rem; color: #475569; margin-top: 15px; line-height: 1.5;">
-                    O seu período de uso expirou. Para continuar aproveitando todas as rotas e o painel completo, entre em contato com o suporte para realizar a renovação.
-                </p>
-                <a id="linkSuporteWhatsapp" href="https://wa.me/5519997648211?text=Olá,%20gostaria%20de%20renovar%20o%20acesso%20do%20meu%20aplicativo%20Rota%20Certa!" target="_blank" class="whatsapp-btn">
-                    💬 Entrar em Contato com o Suporte (WhatsApp)
-                </a>
-                <button type="button" class="btn" style="background: #e2e8f0; color: #334155; margin-top: 12px;" onclick="voltarParaModoCliente()">⬅️ Voltar para Tela do Cliente</button>
-            </div>
-
-            <!-- PAINEL DE CONFIGURAÇÕES -->
-            <div class="card" id="painelMotoboyCard" style="border: 2px solid #2563eb; display: none;">
-                <h2>⚙️ Configurações do Entregador</h2>
-                
-                <div class="form-group">
-                    <label>Status do Expediente</label>
-                    <div class="help-text">Ligado (Online): Mantém sua moto ativa no mapa.<br>Desligado (Offline): Você some do mapa.</div>
-                    <button type="button" id="btnToggleStatus" class="btn" style="background: #16a34a; color: white; margin-top: 0;" onclick="alternarStatusOnline()">🟢 Online (Recebendo Pedidos)</button>
-                </div>
-
-                <div class="form-group">
-                    <label for="cfgNome">Seu Nome na Página</label>
-                    <input type="text" id="cfgNome" placeholder="Ex: Cristian Entregas">
-                </div>
-
-                <div class="form-group">
-                    <label for="cfgWhatsapp">Seu WhatsApp</label>
-                    <div class="help-text">Número onde você vai receber os pedidos dos clientes (com DDD).</div>
-                    <input type="tel" id="cfgWhatsapp" placeholder="Ex: 5591988888888">
-                </div>
-
-                <div class="form-group">
-                    <label for="cfgPix">Sua Chave Pix (Para receber pagamentos)</label>
-                    <input type="text" id="cfgPix" placeholder="Ex: seu-email@gmail.com ou CPF/CNPJ">
-                </div>
-
-                <div class="config-grid">
-                    <div class="form-group">
-                        <label for="cfgTarifaMinima">Valor Taxa Mínima (R$)</label>
-                        <input type="number" step="0.50" id="cfgTarifaMinima" value="10.00">
-                    </div>
-                    <div class="form-group">
-                        <label for="cfgKmFranquiaMinima">Km da Franquia Mínima</label>
-                        <input type="number" step="0.5" id="cfgKmFranquiaMinima" value="8.0">
-                    </div>
-                    <div class="form-group">
-                        <label for="cfgPrecoKm">Preço por Km Extra (R$)</label>
-                        <input type="number" step="0.10" id="cfgPrecoKm" value="1.50">
-                    </div>
-                    <div class="form-group">
-                        <label for="cfgLimiteKmColetaGrats">Franquia Coleta Grátis (Km)</label>
-                        <input type="number" step="0.5" id="cfgLimiteKmColetaGrats" value="2.0">
-                    </div>
-                    <div class="form-group" style="grid-column: span 2;">
-                        <label for="cfgTaxaDeslocamento">Taxa Km Extra Coleta (R$)</label>
-                        <input type="number" step="0.01" id="cfgTaxaDeslocamento" value="0.49">
-                    </div>
-                </div>
-
-                <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 12px; border-radius: 8px; margin-top: 10px; margin-bottom: 14px;">
-                    <label style="color: #92400e; font-weight: 700; margin-bottom: 6px;">⚠️ Proteção de Retorno Vazio (Raio Limite)</label>
-                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
-                        <div style="flex: 1;">
-                            <label for="cfgAtivarRaio" style="font-size: 0.75rem;">Ativar Proteção?</label>
-                            <select id="cfgAtivarRaio">
-                                <option value="sim">Sim</option>
-                                <option value="nao">Não</option>
-                            </select>
-                        </div>
-                        <div style="flex: 1;">
-                            <label for="cfgRaioMaximo" style="font-size: 0.75rem;">Raio Limite (Km)</label>
-                            <input type="number" step="1" id="cfgRaioMaximo" value="12">
-                        </div>
-                        <div style="flex: 1;">
-                            <label for="cfgCustoKmExcedente" style="font-size: 0.75rem;">Taxa Extra Raio (R$)</label>
-                            <input type="number" step="0.01" id="cfgCustoKmExcedente" value="0.49">
-                        </div>
-                    </div>
-                </div>
-
-                <button type="button" class="btn btn-success" onclick="salvarConfiguracoesMotoboy()">💾 Salvar Configurações</button>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                    <span id="saveStatus" style="font-size: 0.8rem; color: #16a34a; font-weight: 600; display: none;">Salvo com sucesso! ✅</span>
-                    <button type="button" class="btn" style="background: #fee2e2; color: #b91c1c; font-size: 0.85rem; width: auto;" onclick="fazerLogout()">Sair do Painel</button>
-                </div>
+            <div id="listaEntregadores">
+                <p style="text-align: center; color: #94a3b8; font-size: 0.85rem;">Carregando entregadores...</p>
             </div>
         </div>
-
-        <!-- 2. APLICAÇÃO DO CLIENTE (SEMPRE ABERTA E LIVRE) -->
-        <div id="client-app-container">
-            
-            <div class="card">
-                <h2>📍 Solicitar Entrega Rápida</h2>
-                
-                <div id="statusMotoboyDistancia" style="font-size: 0.85rem; color: #16a34a; font-weight: 600; margin-bottom: 12px; text-align: center; background: #f0fdf4; padding: 8px; border-radius: 6px; border: 1px solid #bbf7d0;">
-                    📡 Buscando status do entregador...
-                </div>
-
-                <div>
-                    <label for="clientName">Seu Nome</label>
-                    <input type="text" id="clientName" placeholder="Ex: João Silva" oninput="saveInputs()">
-                </div>
-                <div style="margin-top: 10px; margin-bottom: 10px;">
-                    <label for="clientPhone">Seu WhatsApp</label>
-                    <input type="tel" id="clientPhone" placeholder="Ex: (91) 98888-8888" oninput="saveInputs()">
-                </div>
-
-                <div class="form-group">
-                    <label for="pickupAddress">Endereço de Coleta (Onde buscar)</label>
-                    <div class="row-fields">
-                        <div class="main-field" style="position: relative;">
-                            <input type="text" id="pickupAddress" placeholder="Ex: Fábrica Leal, Augusto Montenegro..." autocomplete="off">
-                            <div id="pickupSuggestions" class="suggestions"></div>
-                        </div>
-                        <div class="number-field">
-                            <input type="text" id="pickupNumber" placeholder="Nº / Comp" oninput="saveInputs()">
-                        </div>
-                    </div>
-                    <div class="quick-favs">
-                        <span style="font-size:0.75rem; color:#64748b; align-self:center;">Locais Frequentes:</span>
-                        <span class="fav-chip" onclick="definirLocalFavorito('pickup', 'Fábrica Leal, Rodovia Augusto Montenegro, Belém', -1.35496, -48.45379)">Fábrica Leal</span>
-                        <span class="fav-chip" onclick="definirLocalFavorito('pickup', 'Shopping Castanheira, Belém', -1.4027, -48.4308)">Castanheira</span>
-                    </div>
-                    <button type="button" class="inline-gps" onclick="useGpsForField('pickup')">📍 Usar minha localização atual</button>
-                </div>
-
-                <div class="form-group">
-                    <label for="deliveryAddress">Endereço de Destino (Onde entregar)</label>
-                    <div class="row-fields">
-                        <div class="main-field" style="position: relative;">
-                            <input type="text" id="deliveryAddress" placeholder="Ex: Icoaraci, Marambaia, Coqueiro..." autocomplete="off">
-                            <div id="deliverySuggestions" class="suggestions"></div>
-                        </div>
-                        <div class="number-field">
-                            <input type="text" id="deliveryNumber" placeholder="Nº / Comp" oninput="saveInputs()">
-                        </div>
-                    </div>
-                    <div class="quick-favs">
-                        <span style="font-size:0.75rem; color:#64748b; align-self:center;">Destinos Comuns:</span>
-                        <span class="fav-chip" onclick="definirLocalFavorito('delivery', 'Icoaraci, Belém - PA', -1.3019, -48.4776)">Icoaraci</span>
-                        <span class="fav-chip" onclick="definirLocalFavorito('delivery', 'Marambaia, Belém - PA', -1.4017, -48.4534)">Marambaia</span>
-                        <span class="fav-chip" onclick="definirLocalFavorito('delivery', 'Coqueiro, Belém - PA', -1.3381, -48.4437)">Coqueiro</span>
-                    </div>
-                    <button type="button" class="inline-gps" onclick="useGpsForField('delivery')">📍 Usar minha localização atual</button>
-                </div>
-
-                <div class="loading" id="loadingStatus">Calculando rotas e distâncias...</div>
-                
-                <div class="map-wrapper">
-                    <div id="map"></div>
-                    <button type="button" id="btnRecentrar" class="btn-recentrar" onclick="centralizarNaRota()">🎯 Ver Rota Gerada</button>
-                </div>
-            </div>
-
-            <!-- RESUMO E PAGAMENTO PIX -->
-            <div class="card" id="summaryCard" style="display: none;">
-                <h2>💰 Resumo da Corrida</h2>
-                <div class="summary-box">
-                    <div class="summary-row">
-                        <span>Distância até a Coleta:</span>
-                        <strong id="myDistText">0 km</strong>
-                    </div>
-                    <div class="summary-row" id="deslocamentoRow" style="color: #16a34a; font-weight: 500;">
-                        <span>Taxa de Deslocamento:</span>
-                        <strong id="deslocamentoText">Grátis</strong>
-                    </div>
-                    <div class="summary-row">
-                        <span>Distância da Entrega:</span>
-                        <strong id="distText">0 km</strong>
-                    </div>
-                    <div class="summary-row">
-                        <span>Tempo Estimado (ETA):</span>
-                        <strong id="etaText" style="color: #2563eb;">0 min</strong>
-                    </div>
-                    <div class="summary-row">
-                        <span>Cálculo da Tarifa de Entrega:</span>
-                        <span id="kmValueText">R$ 0,00</span>
-                    </div>
-                    <div class="summary-row" id="alertaRetornoRow" style="display: none; color: #d97706; font-weight: 600; font-size: 0.8rem; margin-bottom: 6px;">
-                        <span id="textoAlertaRetorno">⚠️ Taxa fora do raio</span>
-                    </div>
-                    <div class="summary-row total">
-                        <span>Total da Corrida:</span>
-                        <strong id="totalText">R$ 0,00</strong>
-                    </div>
-                </div>
-
-                <button type="button" class="btn btn-primary" id="btnPay" onclick="showPixArea()">Ver Chave Pix para Pagamento</button>
-
-                <div class="pix-area" id="pixArea">
-                    <p style="font-size: 0.9rem; font-weight: 600; color: #166534;">Chave Pix do Entregador:</p>
-                    <div class="pix-key" id="pixKeyDisplay">Chave Pix não configurada</div>
-                    <button type="button" class="copy-btn" onclick="copyPixKey()">Copiar Chave Pix</button>
-                    <p style="font-size: 0.75rem; color: #64748b; margin-top: 10px;">Após realizar o pagamento, envie o pedido no WhatsApp:</p>
-                </div>
-
-                <button type="button" class="btn btn-success" id="btnWhatsapp" style="display: none;" onclick="sendToWhatsappMotoboy()">Enviar Pedido e Comprovante no WhatsApp</button>
-            </div>
-
-        </div>
-
     </div>
-
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <!-- Leaflet Routing Machine JS -->
-    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 
     <!-- Firebase SDK v8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -348,602 +69,90 @@
         }
         const db = firebase.database();
 
-        let myCurrentCoords = L.latLng(-1.35496, -48.45379); // Padrão Fábrica Leal
-        let motoMarker = null;
-        let pickupMarker = null;
-        let deliveryMarker = null;
-        let raioCircle = null;
-        let usuarioAtivoPainel = localStorage.getItem('usuarioAtivoPainel') || 'cristian'; 
-        let watchIdGPS = null;
-
-        let configMotoboyAtual = {
-            nome: "Rota Certa",
-            whatsapp: "5519997648211",
-            pix: "Chave Pix não configurada",
-            tarifaMinima: 10.00,
-            kmFranquiaMinima: 8.0,
-            precoKm: 1.50,
-            limiteKmColetaGrats: 2.0,
-            taxaDeslocamento: 0.49,
-            ativarRaio: "sim",
-            raioMaximo: 12,
-            custoKmExcedente: 0.49,
-            status: "offline"
-        };
-
-        const blackMotoIcon = L.divIcon({
-            className: 'moto-marker-icon',
-            html: '🏍️',
-            iconSize: [36, 36],
-            iconAnchor: [18, 18]
-        });
-
-        const pickupIcon = L.divIcon({
-            className: 'pin-marker pin-pickup',
-            html: 'A',
-            iconSize: [30, 30],
-            iconAnchor: [15, 15]
-        });
-
-        const deliveryIcon = L.divIcon({
-            className: 'pin-marker pin-delivery',
-            html: 'B',
-            iconSize: [30, 30],
-            iconAnchor: [15, 15]
-        });
-
-        function mostrarToast(mensagem) {
-            const toast = document.getElementById('toastAviso');
-            toast.innerText = mensagem;
-            toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        function mostrarToast(msg) {
+            const t = document.getElementById('toastMaster');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3000);
         }
 
-        const map = L.map('map').setView([-1.35496, -48.45379], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+        // CARREGA TODOS OS ENTREGADORES CADASTRADOS NO FIREBASE
+        db.ref('entregadores').on('value', (snapshot) => {
+            const container = document.getElementById('listaEntregadores');
+            container.innerHTML = '';
 
-        window.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => { map.invalidateSize(); }, 300);
-
-            escutarStatusEmTempoReal(usuarioAtivoPainel);
-            setupAutocomplete('pickupAddress', 'pickupSuggestions', true);
-            setupAutocomplete('deliveryAddress', 'deliverySuggestions', false);
-            
-            if(localStorage.getItem('clientName')) document.getElementById('clientName').value = localStorage.getItem('clientName');
-            if(localStorage.getItem('clientPhone')) document.getElementById('clientPhone').value = localStorage.getItem('clientPhone');
-            if(localStorage.getItem('pickupAddress')) document.getElementById('pickupAddress').value = localStorage.getItem('pickupAddress');
-            if(localStorage.getItem('pickupNumber')) document.getElementById('pickupNumber').value = localStorage.getItem('pickupNumber');
-            if(localStorage.getItem('deliveryAddress')) document.getElementById('deliveryAddress').value = localStorage.getItem('deliveryAddress');
-            if(localStorage.getItem('deliveryNumber')) document.getElementById('deliveryNumber').value = localStorage.getItem('deliveryNumber');
-        });
-
-        function atualizarRaioAtendimentoVisual() {
-            if (raioCircle) map.removeLayer(raioCircle);
-            let raioKm = parseFloat(configMotoboyAtual.raioMaximo) || 12;
-            raioCircle = L.circle(myCurrentCoords, {
-                radius: raioKm * 1000,
-                color: '#2563eb',
-                fillColor: '#3b82f6',
-                fillOpacity: 0.05,
-                weight: 1
-            }).addTo(map);
-        }
-
-        function escutarStatusEmTempoReal(usuario) {
-            db.ref('entregadores/' + usuario).on('value', (snapshot) => {
-                if (snapshot.exists()) {
-                    let dados = snapshot.val();
-                    configMotoboyAtual = dados;
-
-                    if (dados.lat && dados.lon) {
-                        myCurrentCoords = L.latLng(dados.lat, dados.lon);
-                        atualizarRaioAtendimentoVisual();
-                    }
-
-                    document.getElementById('headerName').innerText = dados.nome || 'Rota Certa';
-                    document.getElementById('pixKeyDisplay').innerText = dados.pix || 'Chave Pix não definida';
-
-                    if (dados.status === 'online') {
-                        document.getElementById('statusMotoboyDistancia').innerHTML = `🟢 <b>${dados.nome || 'Entregador'}</b> está Online no mapa!`;
-                        if (dados.lat && dados.lon) {
-                            if (!motoMarker) {
-                                motoMarker = L.marker(myCurrentCoords, { icon: blackMotoIcon }).addTo(map).bindPopup('Entregador Online 🏍️');
-                            } else {
-                                motoMarker.setLatLng(myCurrentCoords);
-                                if (!map.hasLayer(motoMarker)) motoMarker.addTo(map);
-                            }
-                        }
-                    } else {
-                        document.getElementById('statusMotoboyDistancia').innerHTML = `🔴 <b>${dados.nome || 'Entregador'}</b> está Offline no momento.`;
-                        if (motoMarker && map.hasLayer(motoMarker)) map.removeLayer(motoMarker);
-                    }
-                }
-            });
-        }
-
-        function abrirTelaLogin() {
-            document.getElementById('motoboy-portal-container').style.display = 'block';
-            document.getElementById('client-app-container').style.display = 'none';
-            document.getElementById('btnAlternarModo').innerText = '👤 Ver Modo Cliente';
-            document.getElementById('auth-container').style.display = 'block';
-            document.getElementById('bloqueioCard').style.display = 'none';
-            document.getElementById('painelMotoboyCard').style.display = 'none';
-        }
-
-        function voltarParaModoCliente() {
-            document.getElementById('motoboy-portal-container').style.display = 'none';
-            document.getElementById('client-app-container').style.display = 'block';
-            document.getElementById('btnAlternarModo').innerText = '🔒 Área do Motoboy';
-            setTimeout(() => { map.invalidateSize(); }, 200);
-        }
-
-        function mostrarTelaCadastro(mostrar) {
-            document.getElementById('loginFormArea').style.display = mostrar ? 'none' : 'block';
-            document.getElementById('cadastroFormArea').style.display = mostrar ? 'block' : 'none';
-            document.getElementById('authError').style.display = 'none';
-            document.getElementById('cadastroError').style.display = 'none';
-        }
-
-        // FUNÇÃO DE CADASTRO (CRIA 7 DIAS DE TESTE GRÁTIS NO FIREBASE)
-        function salvarNovoCadastro() {
-            let nome = document.getElementById('cadNome').value.trim();
-            let telefone = document.getElementById('cadTelefone').value.trim();
-            let senha = document.getElementById('cadSenha').value.trim();
-            let errEl = document.getElementById('cadastroError');
-
-            if (!nome || !telefone || !senha) {
-                errEl.innerText = "Preencha todos os campos!";
-                errEl.style.display = 'block';
+            if (!snapshot.exists()) {
+                container.innerHTML = '<p style="text-align: center; color: #94a3b8; font-size: 0.85rem;">Nenhum entregador cadastrado ainda.</p>';
                 return;
             }
 
-            let usuarioKey = nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '');
-            let agora = new Date().getTime();
-            let seteDiasMs = 7 * 24 * 60 * 60 * 1000;
-            let expiraEm = agora + seteDiasMs; // 7 dias de teste grátis
-
-            let dadosIniciais = {
-                nome: nome,
-                whatsapp: telefone.replace(/\D/g, ''),
-                senha: senha,
-                pix: "Chave Pix não configurada",
-                tarifaMinima: 10.00,
-                kmFranquiaMinima: 8.0,
-                precoKm: 1.50,
-                limiteKmColetaGrats: 2.0,
-                taxaDeslocamento: 0.49,
-                ativarRaio: "sim",
-                raioMaximo: 12,
-                custoKmExcedente: 0.49,
-                status: "offline",
-                expiraEm: expiraEm
-            };
-
-            db.ref('entregadores/' + usuarioKey).set(dadosIniciais).then(() => {
-                usuarioAtivoPainel = usuarioKey;
-                localStorage.setItem('usuarioAtivoPainel', usuarioKey);
-                mostrarToast('🚀 Cadastro realizado com sucesso!');
-                verificarAcessoEValidade(usuarioKey, senha, true);
-            }).catch((err) => {
-                errEl.innerText = "Erro ao cadastrar. Tente novamente.";
-                errEl.style.display = 'block';
-            });
-        }
-
-        // FUNÇÃO DE LOGIN E VALIDAÇÃO DE PRAZO (7 DIAS OU 30 DIAS DO PAINEL MASTER)
-        function fazerLoginEntregador() {
-            let usuario = document.getElementById('loginUser').value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '');
-            let senhaInput = document.getElementById('loginPass').value.trim();
-            let errEl = document.getElementById('authError');
-
-            if (!usuario) {
-                errEl.innerText = "Digite seu usuário/nome.";
-                errEl.style.display = 'block';
-                return;
-            }
-
-            db.ref('entregadores/' + usuario).once('value').then((snapshot) => {
-                if (!snapshot.exists()) {
-                    errEl.innerText = "Usuário não encontrado. Faça seu cadastro!";
-                    errEl.style.display = 'block';
-                    return;
-                }
-
-                let dados = snapshot.val();
-                
-                // Validação de senha se existir cadastrada
-                if (dados.senha && dados.senha !== senhaInput) {
-                    errEl.innerText = "Senha incorreta!";
-                    errEl.style.display = 'block';
-                    return;
-                }
-
-                usuarioAtivoPainel = usuario;
-                localStorage.setItem('usuarioAtivoPainel', usuario);
-                verificarAcessoEValidade(usuario, senhaInput, false);
-            });
-        }
-
-        function verificarAcessoEValidade(usuario, senha, ehNovoCadastro) {
-            db.ref('entregadores/' + usuario).once('value').then((snapshot) => {
-                let dados = snapshot.val();
+            snapshot.forEach((childSnapshot) => {
+                let key = childSnapshot.key;
+                let d = childSnapshot.val();
                 let agora = new Date().getTime();
+                
+                let expiraEm = d.expiraEm || 0;
+                let estaAtivo = agora <= expiraEm;
+                let statusLicencaTxt = estaAtivo ? '<span class="status-ativo">Ativa / Teste</span>' : '<span class="status-bloqueado">Expirada / Bloqueada</span>';
+                
+                let statusTrabalho = d.status === 'online' ? '<span class="status-badge status-online">🟢 Online</span>' : '<span class="status-badge status-offline">🔴 Offline</span>';
+                
+                let latInfo = d.lat ? d.lat.toFixed(4) : 'N/D';
+                let lonInfo = d.lon ? d.lon.toFixed(4) : 'N/D';
 
-                // Se não tiver expiraEm configurado (contas antigas), garante 7 dias a partir de agora
-                let expiraEm = dados.expiraEm;
-                if (!expiraEm) {
-                    expiraEm = agora + (7 * 24 * 60 * 60 * 1000);
-                    db.ref('entregadores/' + usuario).update({ expiraEm: expiraEm });
-                }
-
-                // VERIFICA SE ESTÁ BLOQUEADO (EXPIROU O PRAZO)
-                if (agora > expiraEm) {
-                    document.getElementById('auth-container').style.display = 'none';
-                    document.getElementById('painelMotoboyCard').style.display = 'none';
-                    document.getElementById('bloqueioCard').style.display = 'block';
-                    
-                    // Configura o link direto para o SEU WhatsApp (19997648211)
-                    let msgZap = `Olá Cristian, meu acesso ao aplicativo Rota Certa expirou. Gostaria de renovar por mais 30 dias! Meu usuário é: ${dados.nome}`;
-                    document.getElementById('linkSuporteWhatsapp').href = `https://wa.me/5519997648211?text=${encodeURIComponent(msgZap)}`;
-                    return;
-                }
-
-                // ACESSO LIBERADO: CARREGA O PAINEL NORMALMENTE
-                document.getElementById('auth-container').style.display = 'none';
-                document.getElementById('bloqueioCard').style.display = 'none';
-                document.getElementById('painelMotoboyCard').style.display = 'block';
-
-                configMotoboyAtual = dados;
-                document.getElementById('cfgNome').value = dados.nome || usuario;
-                document.getElementById('cfgWhatsapp').value = dados.whatsapp || '';
-                document.getElementById('cfgPix').value = dados.pix || '';
-                document.getElementById('cfgTarifaMinima').value = dados.tarifaMinima ?? 10.00;
-                document.getElementById('cfgKmFranquiaMinima').value = dados.kmFranquiaMinima ?? 8.0;
-                document.getElementById('cfgPrecoKm').value = dados.precoKm ?? 1.50;
-                document.getElementById('cfgLimiteKmColetaGrats').value = dados.limiteKmColetaGrats ?? 2.0;
-                document.getElementById('cfgTaxaDeslocamento').value = dados.taxaDeslocamento ?? 0.49;
-                document.getElementById('cfgAtivarRaio').value = dados.ativarRaio ?? 'sim';
-                document.getElementById('cfgRaioMaximo').value = dados.raioMaximo ?? 12;
-                document.getElementById('cfgCustoKmExcedente').value = dados.custoKmExcedente ?? 0.49;
+                let row = document.createElement('div');
+                row.className = 'entregador-row';
+                row.innerHTML = `
+                    <div class="info-area">
+                        <h3>${d.nome || key} <span style="font-size:0.75rem; color:#94a3b8;">(ID: ${key})</span></h3>
+                        <p>Status: ${statusTrabalho} | Licença: ${statusLicencaTxt}</p>
+                        <p>WhatsApp: ${d.whatsapp || 'Não informado'} | Lat/Lon: ${latInfo}, ${lonInfo}</p>
+                    </div>
+                    <div class="acoes-area">
+                        <button class="btn btn-local" onclick="verLocalizacao('${d.lat}', '${d.lon}', '${d.nome}')">📍 Ver</button>
+                        ${estaAtivo ? 
+                            `<button class="btn btn-bloquear" onclick="alterarLicenca('${key}', false)">🔒 Bloquear</button>` : 
+                            `<button class="btn btn-liberar" onclick="alterarLicenca('${key}', true)">✅ Liberar 30 Dias</button>`
+                        }
+                        <button class="btn btn-excluir" onclick="excluirEntregador('${key}')">🗑️ Excluir</button>
+                    </div>
+                `;
+                container.appendChild(row);
             });
-        }
+        });
 
-        function salvarConfiguracoesMotoboy() {
-            let userToSave = usuarioAtivoPainel || 'cristian';
-            const novosDados = {
-                nome: document.getElementById('cfgNome').value,
-                whatsapp: document.getElementById('cfgWhatsapp').value,
-                pix: document.getElementById('cfgPix').value,
-                tarifaMinima: parseFloat(document.getElementById('cfgTarifaMinima').value) || 10.00,
-                kmFranquiaMinima: parseFloat(document.getElementById('cfgKmFranquiaMinima').value) || 8.0,
-                precoKm: parseFloat(document.getElementById('cfgPrecoKm').value) || 1.50,
-                limiteKmColetaGrats: parseFloat(document.getElementById('cfgLimiteKmColetaGrats').value) || 2.0,
-                taxaDeslocamento: parseFloat(document.getElementById('cfgTaxaDeslocamento').value) || 0.49,
-                ativarRaio: document.getElementById('cfgAtivarRaio').value,
-                raioMaximo: parseFloat(document.getElementById('cfgRaioMaximo').value) || 12,
-                custoKmExcedente: parseFloat(document.getElementById('cfgCustoKmExcedente').value) || 0.49
-            };
-
-            db.ref('entregadores/' + userToSave).update(novosDados).then(() => {
-                configMotoboyAtual = { ...configMotoboyAtual, ...novosDados };
-                atualizarRaioAtendimentoVisual();
-                document.getElementById('saveStatus').style.display = 'inline';
-                mostrarToast('⚙️ Configurações salvas na nuvem!');
-                setTimeout(() => { document.getElementById('saveStatus').style.display = 'none'; }, 2500);
-            });
-        }
-
-        function alternarStatusOnline() {
-            let userToSave = usuarioAtivoPainel || 'cristian';
-            const novoStatus = configMotoboyAtual.status === 'offline' ? 'online' : 'offline';
-            configMotoboyAtual.status = novoStatus;
+        // FUNÇÃO DE BLOQUEAR OU LIBERAR (ATUALIZA A DATA NO FIREBASE)
+        function alterarLicenca(usuarioKey, liberar) {
+            let novoExpiraEm;
+            let agora = new Date().getTime();
             
-            const btnStatus = document.getElementById('btnToggleStatus');
-            btnStatus.style.background = novoStatus === 'offline' ? '#dc2626' : '#16a34a';
-            btnStatus.innerText = novoStatus === 'offline' ? '🔴 Offline (Desligado)' : '🟢 Online (Ligado)';
-
-            if (novoStatus === 'online') {
-                if (!navigator.geolocation) return;
-                watchIdGPS = navigator.geolocation.watchPosition((pos) => {
-                    db.ref('entregadores/' + userToSave).update({ status: 'online', lat: pos.coords.latitude, lon: pos.coords.longitude });
-                    myCurrentCoords = L.latLng(pos.coords.latitude, pos.coords.longitude);
-                    atualizarRaioAtendimentoVisual();
-                }, null, { enableHighAccuracy: true });
-                db.ref('entregadores/' + userToSave).update({ status: 'online' });
+            if (liberar) {
+                // Adiciona 30 dias a partir de agora
+                novoExpiraEm = agora + (30 * 24 * 60 * 60 * 1000);
             } else {
-                if (watchIdGPS !== null) navigator.geolocation.clearWatch(watchIdGPS);
-                db.ref('entregadores/' + userToSave).update({ status: 'offline' });
+                // Zera a data para expirar imediatamente (bloqueia)
+                novoExpiraEm = agora - 1000;
             }
-        }
 
-        function fazerLogout() {
-            if (watchIdGPS !== null) navigator.geolocation.clearWatch(watchIdGPS);
-            voltarParaModoCliente();
-            mostrarToast('🔒 Desconectado.');
-        }
-
-        let routingControl = null;
-        let deliveryDistanceKm = 0;
-        let myToPickupDistanceKm = 0;
-        let calculatedFinalPrice = 0;
-        let deslocamentoFee = 0;
-        let raioExtraFee = 0;
-        let pickupCoords = null;
-        let deliveryCoords = null;
-
-        function saveInputs() {
-            localStorage.setItem('clientName', document.getElementById('clientName').value);
-            localStorage.setItem('clientPhone', document.getElementById('clientPhone').value);
-            localStorage.setItem('pickupAddress', document.getElementById('pickupAddress').value);
-            localStorage.setItem('pickupNumber', document.getElementById('pickupNumber').value);
-            localStorage.setItem('deliveryAddress', document.getElementById('deliveryAddress').value);
-            localStorage.setItem('deliveryNumber', document.getElementById('deliveryNumber').value);
-        }
-
-        function centralizarNaRota() {
-            if (pickupCoords && deliveryCoords) {
-                let bounds = L.latLngBounds([pickupCoords, deliveryCoords]);
-                map.fitBounds(bounds, { padding: [50, 50] });
-            }
-        }
-
-        function atualizarPinsNoMapa() {
-            if (pickupCoords) {
-                if (!pickupMarker) {
-                    pickupMarker = L.marker(pickupCoords, { icon: pickupIcon }).addTo(map).bindPopup('Ponto de Coleta (A)');
-                } else {
-                    pickupMarker.setLatLng(pickupCoords);
-                    if (!map.hasLayer(pickupMarker)) pickupMarker.addTo(map);
-                }
-            }
-            if (deliveryCoords) {
-                if (!deliveryMarker) {
-                    deliveryMarker = L.marker(deliveryCoords, { icon: deliveryIcon }).addTo(map).bindPopup('Ponto de Entrega (B)');
-                } else {
-                    deliveryMarker.setLatLng(deliveryCoords);
-                    if (!map.hasLayer(deliveryMarker)) deliveryMarker.addTo(map);
-                }
-            }
-            map.invalidateSize();
-        }
-
-        function definirLocalFavorito(tipo, endereco, lat, lon) {
-            let latLng = L.latLng(lat, lon);
-            if (tipo === 'pickup') {
-                document.getElementById('pickupAddress').value = endereco;
-                pickupCoords = latLng;
-            } else {
-                document.getElementById('deliveryAddress').value = endereco;
-                deliveryCoords = latLng;
-            }
-            saveInputs();
-            atualizarPinsNoMapa();
-            map.setView(latLng, 14);
-            calculateAll();
-        }
-
-        function useGpsForField(fieldType) {
-            if (!navigator.geolocation) return;
-            navigator.geolocation.getCurrentPosition((pos) => {
-                let latLng = L.latLng(pos.coords.latitude, pos.coords.longitude);
-                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        let addr = data.display_name || 'Localização Atual';
-                        if (fieldType === 'pickup') {
-                            document.getElementById('pickupAddress').value = addr;
-                            pickupCoords = latLng;
-                        } else {
-                            document.getElementById('deliveryAddress').value = addr;
-                            deliveryCoords = latLng;
-                        }
-                        saveInputs();
-                        atualizarPinsNoMapa();
-                        map.setView(latLng, 15);
-                        calculateAll();
-                    });
+            db.ref('entregadores/' + usuarioKey).update({ expiraEm: novoExpiraEm }).then(() => {
+                mostrarToast(liberar ? '✅ Acesso liberado por 30 dias!' : '🔒 Acesso bloqueado com sucesso!');
             });
         }
 
-        function setupAutocomplete(inputId, suggestionsId, isPickup) {
-            const input = document.getElementById(inputId);
-            const suggestions = document.getElementById(suggestionsId);
-            let timeout = null;
-
-            input.addEventListener('input', function() {
-                saveInputs();
-                clearTimeout(timeout);
-                let query = this.value.trim();
-                if (query.length < 2) { suggestions.style.display = 'none'; return; }
-
-                timeout = setTimeout(() => {
-                    let searchQuery = query.toLowerCase().includes('belém') || query.toLowerCase().includes('ananindeua') ? query : (query + ', Belém, Pará');
-                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=6`)
-                        .then(res => res.json())
-                        .then(data => {
-                            suggestions.innerHTML = '';
-                            if (data && data.length > 0) {
-                                suggestions.style.display = 'block';
-                                data.forEach(item => {
-                                    let div = document.createElement('div');
-                                    div.className = 'suggestion-item';
-                                    div.innerText = item.display_name;
-                                    div.onclick = () => {
-                                        input.value = item.display_name;
-                                        suggestions.style.display = 'none';
-                                        saveInputs();
-                                        let coords = L.latLng(parseFloat(item.lat), parseFloat(item.lon));
-                                        if (isPickup) pickupCoords = coords; else deliveryCoords = coords;
-                                        atualizarPinsNoMapa();
-                                        calculateAll();
-                                    };
-                                    suggestions.appendChild(div);
-                                });
-                            } else { suggestions.style.display = 'none'; }
-                        });
-                }, 300);
-            });
+        function verLocalizacao(lat, lon, nome) {
+            if (!lat || lat === 'undefined' || !lon || lon === 'undefined') {
+                mostrarToast('⚠️ Este entregador ainda não enviou a localização.');
+                return;
+            }
+            window.open(`https://www.google.com/maps?q=${lat},${lon}`, '_blank');
         }
 
-        function geocode(address, isPickup, callback) {
-            if (isPickup && pickupCoords && address === document.getElementById('pickupAddress').value) { callback(pickupCoords); return; }
-            if (!isPickup && deliveryCoords && address === document.getElementById('deliveryAddress').value) { callback(deliveryCoords); return; }
-
-            let q = address.toLowerCase().includes('belém') ? address : (address + ", Belém, Pará, Brasil");
-
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data && data.length > 0) {
-                        let latLng = L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
-                        if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
-                        atualizarPinsNoMapa();
-                        callback(latLng);
-                    } else { callback(null); }
-                })
-                .catch(() => callback(null));
-        }
-
-        function calculateAll() {
-            let pickup = document.getElementById('pickupAddress').value;
-            let delivery = document.getElementById('deliveryAddress').value;
-            if (!pickup || !delivery) return;
-
-            document.getElementById('loadingStatus').style.display = 'block';
-
-            db.ref('entregadores/' + usuarioAtivoPainel).once('value').then((snapshot) => {
-                if (snapshot.exists()) {
-                    let d = snapshot.val();
-                    if (d.lat && d.lon) myCurrentCoords = L.latLng(d.lat, d.lon);
-                    configMotoboyAtual = d;
-                }
-
-                geocode(pickup, true, function(latLngPickup) {
-                    if (!latLngPickup) { document.getElementById('loadingStatus').style.display = 'none'; return; }
-
-                    geocode(delivery, false, function(latLngDelivery) {
-                        if (!latLngDelivery) { document.getElementById('loadingStatus').style.display = 'none'; return; }
-
-                        document.getElementById('loadingStatus').style.display = 'none';
-                        if (routingControl) map.removeControl(routingControl);
-
-                        myToPickupDistanceKm = myCurrentCoords.distanceTo(latLngPickup) / 1000;
-                        let limiteGrats = parseFloat(configMotoboyAtual.limiteKmColetaGrats) ?? 2.0;
-                        let taxaExtra = parseFloat(configMotoboyAtual.taxaDeslocamento) ?? 0.49;
-
-                        if (myToPickupDistanceKm > limiteGrats) {
-                            deslocamentoFee = (myToPickupDistanceKm - limiteGrats) * taxaExtra;
-                            document.getElementById('deslocamentoText').innerText = `+ R$ ${deslocamentoFee.toFixed(2).replace('.', ',')} (${(myToPickupDistanceKm - limiteGrats).toFixed(1)} km extra)`;
-                            document.getElementById('deslocamentoRow').style.color = '#d97706';
-                        } else {
-                            deslocamentoFee = 0;
-                            document.getElementById('deslocamentoText').innerText = `Grátis (Até ${limiteGrats} km)`;
-                            document.getElementById('deslocamentoRow').style.color = '#16a34a';
-                        }
-
-                        routingControl = L.Routing.control({
-                            waypoints: [latLngPickup, latLngDelivery],
-                            routeWhileDragging: false,
-                            addWaypoints: false,
-                            createMarker: () => null,
-                            lineOptions: { styles: [{ color: '#2563eb', weight: 5, opacity: 0.8 }] },
-                            show: false
-                        }).addTo(map);
-
-                        routingControl.on('routesfound', function(e) {
-                            const summary = e.routes[0].summary;
-                            deliveryDistanceKm = summary.totalDistance / 1000;
-                            let tempoMinutos = Math.round((deliveryDistanceKm / 30) * 60) + 5;
-
-                            atualizarPinsNoMapa();
-                            centralizarNaRota();
-                            document.getElementById('btnRecentrar').style.display = 'block';
-
-                            let tarifaMinima = parseFloat(configMotoboyAtual.tarifaMinima) ?? 10.00;
-                            let kmFranquia = parseFloat(configMotoboyAtual.kmFranquiaMinima) ?? 8.0;
-                            let precoKmExtra = parseFloat(configMotoboyAtual.precoKm) ?? 1.50;
-
-                            let valorEntregaFinal = tarifaMinima;
-                            let textoDescricaoKm = `Até ${kmFranquia} km (Taxa Mínima R$ ${tarifaMinima.toFixed(2)})`;
-
-                            if (deliveryDistanceKm > kmFranquia) {
-                                let kmExcedentes = deliveryDistanceKm - kmFranquia;
-                                let valorExcedente = kmExcedentes * precoKmExtra;
-                                valorEntregaFinal = tarifaMinima + valorExcedente;
-                                textoDescricaoKm = `Mínima (${kmFranquia}km) + ${kmExcedentes.toFixed(1)} km extra x R$ ${precoKmExtra.toFixed(2)}`;
-                            }
-
-                            let ativarRaioConfig = configMotoboyAtual.ativarRaio ?? 'sim';
-                            let raioMaximoConfig = parseFloat(configMotoboyAtual.raioMaximo) || 12;
-                            let custoKmExcedenteConfig = parseFloat(configMotoboyAtual.custoKmExcedente) || 0.49;
-
-                            raioExtraFee = 0;
-                            if (ativarRaioConfig === 'sim' && deliveryDistanceKm > raioMaximoConfig) {
-                                raioExtraFee = deliveryDistanceKm * custoKmExcedenteConfig;
-                                document.getElementById('textoAlertaRetorno').innerText = `⚠️ Acima do raio de ${raioMaximoConfig}km (Taxa Extra): +R$ ${raioExtraFee.toFixed(2).replace('.', ',')}`;
-                                document.getElementById('alertaRetornoRow').style.display = 'flex';
-                            } else {
-                                document.getElementById('alertaRetornoRow').style.display = 'none';
-                            }
-
-                            calculatedFinalPrice = valorEntregaFinal + deslocamentoFee + raioExtraFee;
-
-                            document.getElementById('myDistText').innerText = myToPickupDistanceKm.toFixed(2) + ' km';
-                            document.getElementById('distText').innerText = deliveryDistanceKm.toFixed(2) + ' km';
-                            document.getElementById('etaText').innerText = `Aprox. ${tempoMinutos} min`;
-                            document.getElementById('kmValueText').innerHTML = `R$ ${valorEntregaFinal.toFixed(2).replace('.', ',')} <br><small style="color:#64748b;">(${textoDescricaoKm})</small>`;
-                            document.getElementById('totalText').innerText = 'R$ ' + calculatedFinalPrice.toFixed(2).replace('.', ',');
-                            document.getElementById('summaryCard').style.display = 'block';
-                        });
-                    });
+        function excluirEntregador(usuarioKey) {
+            if (confirm(`Tem certeza que deseja excluir o entregador "${usuarioKey}"?`)) {
+                db.ref('entregadores/' + usuarioKey).remove().then(() => {
+                    mostrarToast('🗑️ Entregador removido.');
                 });
-            });
-        }
-
-        function showPixArea() {
-            let name = document.getElementById('clientName').value;
-            let phone = document.getElementById('clientPhone').value;
-            if (!name || !phone) { alert('Preencha seu Nome e WhatsApp.'); return; }
-            document.getElementById('pixArea').style.display = 'block';
-            document.getElementById('btnPay').style.display = 'none';
-            document.getElementById('btnWhatsapp').style.display = 'block';
-        }
-
-        function copyPixKey() {
-            navigator.clipboard.writeText(document.getElementById('pixKeyDisplay').innerText).then(() => {
-                mostrarToast('📋 Chave Pix copiada!');
-            });
-        }
-
-        function sendToWhatsappMotoboy() {
-            let name = document.getElementById('clientName').value;
-            let phone = document.getElementById('clientPhone').value;
-            let pickup = document.getElementById('pickupAddress').value + (document.getElementById('pickupNumber').value ? `, Nº ${document.getElementById('pickupNumber').value}` : '');
-            let delivery = document.getElementById('deliveryAddress').value + (document.getElementById('deliveryNumber').value ? `, Nº ${document.getElementById('deliveryNumber').value}` : '');
-
-            let linkColeta = pickupCoords ? `https://www.google.com/maps?q=${pickupCoords.lat},${pickupCoords.lng}` : 'Endereço';
-            let linkEntrega = deliveryCoords ? `https://www.google.com/maps?q=${deliveryCoords.lat},${deliveryCoords.lng}` : 'Endereço';
-            let pixKey = configMotoboyAtual.pix || 'Chave Pix não informada';
-
-            const message = `*Nova Solicitação de Entrega - Rota Certa*\n\n` +
-                `👤 *Nome:* ${name}\n` +
-                `📱 *Telefone:* ${phone}\n\n` +
-                `📍 *Coleta (A):* ${pickup}\n` +
-                `🗺️ *Mapa Coleta:* ${linkColeta}\n\n` +
-                `🏁 *Destino (B):* ${delivery}\n` +
-                `🗺️ *Mapa Destino:* ${linkEntrega}\n\n` +
-                `📏 *Distância Até Coleta:* ${myToPickupDistanceKm.toFixed(2)} km\n` +
-                `💰 *Taxa Deslocamento:* R$ ${deslocamentoFee.toFixed(2).replace('.', ',')}\n` +
-                `📏 *Distância Entrega:* ${deliveryDistanceKm.toFixed(2)} km\n` +
-                `💰 *Valor Total:* R$ ${calculatedFinalPrice.toFixed(2).replace('.', ',')}\n\n` +
-                `💳 *Chave Pix:* \`${pixKey}\`\n\n` +
-                `📎 *[ Segue abaixo o meu Comprovante de Pagamento do Pix ]*`;
-
-            let whatsappDestino = configMotoboyAtual.whatsapp || '5519997648211';
-            window.open(`https://wa.me/${whatsappDestino}?text=${encodeURIComponent(message)}`, '_blank');
+            }
         }
     </script>
 </body>
