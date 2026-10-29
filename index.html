@@ -130,25 +130,6 @@
         }
         input::placeholder { color: #64748b; }
 
-        .btn-pin-map {
-            background: rgba(59, 130, 246, 0.15);
-            border: 1px solid rgba(59, 130, 246, 0.4);
-            color: #60a5fa;
-            font-size: 0.75rem;
-            padding: 8px 12px;
-            margin-top: 8px;
-            margin-right: 6px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-        }
-        .btn-pin-map:hover { background: rgba(59, 130, 246, 0.25); }
-        .btn-pin-map.active { background: var(--primary); color: white; border-color: var(--primary); }
-
         .inline-gps { 
             background: rgba(16, 185, 129, 0.1); 
             border: 1px solid rgba(16, 185, 129, 0.3); 
@@ -501,10 +482,10 @@
 
                 <div class="form-group">
                     <label for="pickupAddress">Endereço de Coleta (Onde buscar)</label>
-                    <div class="help-text">💡 Digite a rua/bairro, cole o link do Google Maps ou selecione clicando no mapa!</div>
+                    <div class="help-text">💡 Digite o Endereço, o CEP (ex: 67013-490) ou cole o link do Google Maps!</div>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="pickupAddress" placeholder="Ex: R. São Pedro, Cabanagem ou cole o link" autocomplete="off">
+                            <input type="text" id="pickupAddress" placeholder="Ex: R. São Pedro, 67013-490 ou link" autocomplete="off">
                             <div id="pickupSuggestions" class="suggestions"></div>
                         </div>
                         <div class="number-field">
@@ -516,18 +497,15 @@
                         <span class="fav-chip" onclick="definirLocalFavorito('pickup', 'Fábrica Leal, Rodovia Augusto Montenegro, Belém', -1.35496, -48.45379)">Fábrica Leal</span>
                         <span class="fav-chip" onclick="definirLocalFavorito('pickup', 'Rua São Pedro, Cabanagem, Belém', -1.3575, -48.4231)">Rua São Pedro</span>
                     </div>
-                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                        <button type="button" class="btn-pin-map" id="btnPinPickup" onclick="ativarModoSelecaoMapa('pickup')">📌 Clicar no Mapa</button>
-                        <button type="button" class="inline-gps" onclick="useGpsForField('pickup')">📍 Minha Posição</button>
-                    </div>
+                    <button type="button" class="inline-gps" onclick="useGpsForField('pickup')">📍 Usar minha localização atual</button>
                 </div>
 
                 <div class="form-group">
                     <label for="deliveryAddress">Endereço de Destino (Onde entregar)</label>
-                    <div class="help-text">💡 Digite a rua/bairro, cole o link do Google Maps ou selecione clicando no mapa!</div>
+                    <div class="help-text">💡 Digite o Endereço, o CEP (ex: 67000-000) ou cole o link do Google Maps!</div>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="deliveryAddress" placeholder="Ex: Icoaraci, Marambaia ou cole o link" autocomplete="off">
+                            <input type="text" id="deliveryAddress" placeholder="Ex: Icoaraci, 67000-000 ou link" autocomplete="off">
                             <div id="deliverySuggestions" class="suggestions"></div>
                         </div>
                         <div class="number-field">
@@ -540,10 +518,7 @@
                         <span class="fav-chip" onclick="definirLocalFavorito('delivery', 'Marambaia, Belém - PA', -1.4017, -48.4534)">Marambaia</span>
                         <span class="fav-chip" onclick="definirLocalFavorito('delivery', 'Coqueiro, Belém - PA', -1.3381, -48.4437)">Coqueiro</span>
                     </div>
-                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                        <button type="button" class="btn-pin-map" id="btnPinDelivery" onclick="ativarModoSelecaoMapa('delivery')">📌 Clicar no Mapa</button>
-                        <button type="button" class="inline-gps" onclick="useGpsForField('delivery')">📍 Minha Posição</button>
-                    </div>
+                    <button type="button" class="inline-gps" onclick="useGpsForField('delivery')">📍 Usar minha localização atual</button>
                 </div>
 
                 <!-- BOTÕES DE CALCULAR E LIMPAR -->
@@ -641,7 +616,6 @@
         let raioCircle = null;
         let usuarioAtivoPainel = localStorage.getItem('usuarioAtivoPainel') || 'cristian'; 
         let watchIdGPS = null;
-        let modoSelecaoMapa = null; // 'pickup' ou 'delivery'
 
         let configMotoboyAtual = {
             nome: "Rota Certa",
@@ -691,38 +665,6 @@
             maxZoom: 19,
             attribution: '© OpenStreetMap'
         }).addTo(map);
-
-        // Suporte para clicar direto no mapa para marcar A ou B
-        map.on('click', function(e) {
-            if (modoSelecaoMapa === 'pickup') {
-                pickupCoords = e.latlng;
-                document.getElementById('pickupAddress').value = `Ponto no Mapa (${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)})`;
-                atualizarPinsNoMapa();
-                desativarModoSelecaoMapa();
-                saveInputs();
-                mostrarToast('📍 Ponto de Coleta marcado!');
-            } else if (modoSelecaoMapa === 'delivery') {
-                deliveryCoords = e.latlng;
-                document.getElementById('deliveryAddress').value = `Ponto no Mapa (${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)})`;
-                atualizarPinsNoMapa();
-                desativarModoSelecaoMapa();
-                saveInputs();
-                mostrarToast('🏁 Ponto de Destino marcado!');
-            }
-        });
-
-        function ativarModoSelecaoMapa(tipo) {
-            modoSelecaoMapa = tipo;
-            document.getElementById('btnPinPickup').classList.toggle('active', tipo === 'pickup');
-            document.getElementById('btnPinDelivery').classList.toggle('active', tipo === 'delivery');
-            mostrarToast(tipo === 'pickup' ? '👇 Toque na rua no mapa para marcar a Coleta (A)' : '👇 Toque na rua no mapa para marcar o Destino (B)');
-        }
-
-        function desativarModoSelecaoMapa() {
-            modoSelecaoMapa = null;
-            document.getElementById('btnPinPickup').classList.remove('active');
-            document.getElementById('btnPinDelivery').classList.remove('active');
-        }
 
         window.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => { map.invalidateSize(); }, 300);
@@ -1003,7 +945,6 @@
             
             pickupCoords = null;
             deliveryCoords = null;
-            desativarModoSelecaoMapa();
 
             if (pickupMarker && map.hasLayer(pickupMarker)) map.removeLayer(pickupMarker);
             if (deliveryMarker && map.hasLayer(deliveryMarker)) map.removeLayer(deliveryMarker);
@@ -1086,11 +1027,10 @@
             });
         }
 
-        // Leitor universal para Links do Google Maps e Coordenadas
+        // Leitor de Links do Google Maps
         function tentarExtrairLinkGoogleMaps(texto, callback) {
             if (!texto) { callback(null); return; }
             
-            // Caso seja link encurtado (maps.app.goo.gl) ou padrão
             if (texto.includes('goo.gl/') || texto.includes('maps.app.goo.gl')) {
                 fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(texto)}`)
                     .then(response => response.json())
@@ -1143,7 +1083,7 @@
                         if (isPickup) pickupCoords = latLngEncontrado; else deliveryCoords = latLngEncontrado;
                         atualizarPinsNoMapa();
                         map.setView(latLngEncontrado, 16);
-                        mostrarToast('🔗 Link do Google Maps reconhecido!');
+                        mostrarToast('🔗 Link do Google Maps reconhecido com sucesso!');
                         suggestions.style.display = 'none';
                         return;
                     }
@@ -1179,13 +1119,12 @@
             });
         }
 
+        // BUSCA TRIPLA EM CASCATA (Nominatim -> Photon -> Geoapify / ViaCEP)
         function geocode(address, isPickup, callback) {
-            if (isPickup && pickupCoords && address.includes('Ponto no Mapa')) { callback(pickupCoords); return; }
-            if (!isPickup && deliveryCoords && address.includes('Ponto no Mapa')) { callback(deliveryCoords); return; }
-
             if (isPickup && pickupCoords && address === document.getElementById('pickupAddress').value) { callback(pickupCoords); return; }
             if (!isPickup && deliveryCoords && address === document.getElementById('deliveryAddress').value) { callback(deliveryCoords); return; }
 
+            // 1. Testa se é um link do Google Maps
             tentarExtrairLinkGoogleMaps(address, function(latLngLink) {
                 if (latLngLink) {
                     if (isPickup) pickupCoords = latLngLink; else deliveryCoords = latLngLink;
@@ -1194,8 +1133,38 @@
                     return;
                 }
 
-                let q = address.toLowerCase().includes('pará') || address.toLowerCase().includes('pa') ? address : (address + ", Pará, Brasil");
+                // 2. Testa se é um CEP digitado (ex: 67013-490 ou 67013490)
+                let cepLimpo = address.replace(/\D/g, '');
+                if (cepLimpo.length === 8) {
+                    fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
+                        .then(res => res.json())
+                        .then(dataCep => {
+                            if (!dataCep.erro) {
+                                let enderecoCompleto = `${dataCep.logradouro}, ${dataCep.bairro}, ${dataCep.localidade} - ${dataCep.uf}`;
+                                if (isPickup) document.getElementById('pickupAddress').value = enderecoCompleto;
+                                else document.getElementById('deliveryAddress').value = enderecoCompleto;
+                                saveInputs();
 
+                                // Busca coordenadas da rua do CEP no Nominatim
+                                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(enderecoCompleto)}&limit=1`)
+                                    .then(r => r.json())
+                                    .then(d => {
+                                        if (d && d.length > 0) {
+                                            let latLng = L.latLng(parseFloat(d[0].lat), parseFloat(d[0].lon));
+                                            if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
+                                            atualizarPinsNoMapa();
+                                            callback(latLng);
+                                        } else {
+                                            buscarMotor2_Photon(enderecoCompleto, isPickup, callback);
+                                        }
+                                    }).catch(() => buscarMotor2_Photon(enderecoCompleto, isPickup, callback));
+                                return;
+                            }
+                        }).catch(() => {});
+                }
+
+                // 3. MOTOR 1: Nominatim (Padrão)
+                let q = address.toLowerCase().includes('pará') || address.toLowerCase().includes('pa') ? address : (address + ", Pará, Brasil");
                 fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`)
                     .then(res => res.json())
                     .then(data => {
@@ -1205,22 +1174,50 @@
                             atualizarPinsNoMapa();
                             callback(latLng);
                         } else {
-                            // Se falhou com o número exato da rua, tenta buscar retirando números
-                            let ruaSemNumero = q.replace(/,\s*\d+/g, '').replace(/nº\s*\d+/gi, '');
-                            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ruaSemNumero)}&limit=1`)
-                                .then(res2 => res2.json())
-                                .then(data2 => {
-                                    if (data2 && data2.length > 0) {
-                                        let latLng2 = L.latLng(parseFloat(data2[0].lat), parseFloat(data2[0].lon));
-                                        if (isPickup) pickupCoords = latLng2; else deliveryCoords = latLng2;
-                                        atualizarPinsNoMapa();
-                                        callback(latLng2);
-                                    } else { callback(null); }
-                                }).catch(() => callback(null));
+                            // Se falhou no Motor 1, chama o Motor 2 (Photon)
+                            buscarMotor2_Photon(q, isPickup, callback);
                         }
                     })
-                    .catch(() => callback(null));
+                    .catch(() => buscarMotor2_Photon(q, isPickup, callback));
             });
+        }
+
+        // MOTOR 2: Photon (Komoot)
+        function buscarMotor2_Photon(queryText, isPickup, callback) {
+            fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(queryText)}&limit=1`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.features && data.features.length > 0) {
+                        let coords = data.features[0].geometry.coordinates;
+                        let latLng = L.latLng(coords[1], coords[0]);
+                        if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
+                        atualizarPinsNoMapa();
+                        callback(latLng);
+                    } else {
+                        // Se falhou no Motor 2, chama o Motor 3 (Geoapify)
+                        buscarMotor3_Geoapify(queryText, isPickup, callback);
+                    }
+                })
+                .catch(() => buscarMotor3_Geoapify(queryText, isPickup, callback));
+        }
+
+        // MOTOR 3: Geoapify API
+        function buscarMotor3_Geoapify(queryText, isPickup, callback) {
+            let apiKey = "4a1d4029d2f6412e8b2b9f39aa19e342"; // Chave pública gratuita integrada
+            fetch(`https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(queryText)}&apiKey=${apiKey}&limit=1`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.features && data.features.length > 0) {
+                        let coords = data.features[0].geometry.coordinates;
+                        let latLng = L.latLng(coords[1], coords[0]);
+                        if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
+                        atualizarPinsNoMapa();
+                        callback(latLng);
+                    } else {
+                        callback(null);
+                    }
+                })
+                .catch(() => callback(null));
         }
 
         function calculateAll() {
@@ -1243,14 +1240,14 @@
                 geocode(pickup, true, function(latLngPickup) {
                     if (!latLngPickup) { 
                         document.getElementById('loadingStatus').style.display = 'none'; 
-                        alert('Endereço de Coleta não encontrado. Tente usar o botão "📌 Clicar no Mapa" para marcar o ponto exato!');
+                        alert('Endereço de Coleta não encontrado pelos 3 motores. Tente usar o CEP.');
                         return; 
                     }
 
                     geocode(delivery, false, function(latLngDelivery) {
                         if (!latLngDelivery) { 
                             document.getElementById('loadingStatus').style.display = 'none'; 
-                            alert('Endereço de Destino não encontrado. Tente usar o botão "📌 Clicar no Mapa" para marcar o ponto exato!');
+                            alert('Endereço de Destino não encontrado pelos 3 motores. Tente usar o CEP.');
                             return; 
                         }
 
