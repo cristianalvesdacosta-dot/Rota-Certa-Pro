@@ -88,8 +88,8 @@
         .form-group { margin-bottom: 16px; }
         
         .row-fields { display: flex; gap: 10px; }
-        .row-fields .main-field { flex: 3; position: relative; }
-        .row-fields .number-field { flex: 1; }
+        .row-fields .main-field { flex: 2.5; position: relative; }
+        .row-fields .cep-field { flex: 1.5; }
 
         label { 
             display: block; 
@@ -152,16 +152,16 @@
             border: 1px solid var(--border-color); 
             border-top: none; 
             border-radius: 0 0 12px 12px; 
-            max-height: 200px; 
+            max-height: 220px; 
             overflow-y: auto; 
             position: absolute; 
             width: 100%; 
-            z-index: 1000; 
+            z-index: 9999; 
             display: none; 
-            box-shadow: 0 15px 30px rgba(0,0,0,0.5); 
+            box-shadow: 0 15px 30px rgba(0,0,0,0.6); 
         }
         .suggestion-item { padding: 12px 14px; font-size: 0.85rem; cursor: pointer; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
-        .suggestion-item:hover { background-color: rgba(37, 99, 235, 0.2); color: #60a5fa; font-weight: 500; }
+        .suggestion-item:hover { background-color: rgba(37, 99, 235, 0.25); color: #60a5fa; font-weight: 500; }
         
         .quick-favs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
         .fav-chip { 
@@ -482,14 +482,14 @@
 
                 <div class="form-group">
                     <label for="pickupAddress">Endereço de Coleta (Onde buscar)</label>
-                    <div class="help-text">💡 Digite o Endereço, o CEP (ex: 67013-490) ou cole o link do Google Maps!</div>
+                    <div class="help-text">💡 Digite a rua (ex: Rua São Carlos, Ananindeua), cole o link do Maps ou digite o CEP ao lado!</div>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="pickupAddress" placeholder="Ex: R. São Pedro, 67013-490 ou link" autocomplete="off">
+                            <input type="text" id="pickupAddress" placeholder="Digite rua, bairro ou cidade..." autocomplete="off">
                             <div id="pickupSuggestions" class="suggestions"></div>
                         </div>
-                        <div class="number-field">
-                            <input type="text" id="pickupNumber" placeholder="Nº" oninput="saveInputs()">
+                        <div class="cep-field">
+                            <input type="text" id="pickupCep" placeholder="CEP" maxlength="9" oninput="mascaraCep(this); buscarCepInput(this, 'pickupAddress', true)">
                         </div>
                     </div>
                     <div class="quick-favs">
@@ -502,14 +502,14 @@
 
                 <div class="form-group">
                     <label for="deliveryAddress">Endereço de Destino (Onde entregar)</label>
-                    <div class="help-text">💡 Digite o Endereço, o CEP (ex: 67000-000) ou cole o link do Google Maps!</div>
+                    <div class="help-text">💡 Digite a rua, cole o link do Maps ou digite o CEP ao lado!</div>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="deliveryAddress" placeholder="Ex: Icoaraci, 67000-000 ou link" autocomplete="off">
+                            <input type="text" id="deliveryAddress" placeholder="Digite rua, bairro ou cidade..." autocomplete="off">
                             <div id="deliverySuggestions" class="suggestions"></div>
                         </div>
-                        <div class="number-field">
-                            <input type="text" id="deliveryNumber" placeholder="Nº" oninput="saveInputs()">
+                        <div class="cep-field">
+                            <input type="text" id="deliveryCep" placeholder="CEP" maxlength="9" oninput="mascaraCep(this); buscarCepInput(this, 'deliveryAddress', false)">
                         </div>
                     </div>
                     <div class="quick-favs">
@@ -676,9 +676,9 @@
             if(localStorage.getItem('clientName')) document.getElementById('clientName').value = localStorage.getItem('clientName');
             if(localStorage.getItem('clientPhone')) document.getElementById('clientPhone').value = localStorage.getItem('clientPhone');
             if(localStorage.getItem('pickupAddress')) document.getElementById('pickupAddress').value = localStorage.getItem('pickupAddress');
-            if(localStorage.getItem('pickupNumber')) document.getElementById('pickupNumber').value = localStorage.getItem('pickupNumber');
+            if(localStorage.getItem('pickupCep')) document.getElementById('pickupCep').value = localStorage.getItem('pickupCep');
             if(localStorage.getItem('deliveryAddress')) document.getElementById('deliveryAddress').value = localStorage.getItem('deliveryAddress');
-            if(localStorage.getItem('deliveryNumber')) document.getElementById('deliveryNumber').value = localStorage.getItem('deliveryNumber');
+            if(localStorage.getItem('deliveryCep')) document.getElementById('deliveryCep').value = localStorage.getItem('deliveryCep');
         });
 
         function atualizarRaioAtendimentoVisual() {
@@ -932,16 +932,56 @@
             localStorage.setItem('clientName', document.getElementById('clientName').value);
             localStorage.setItem('clientPhone', document.getElementById('clientPhone').value);
             localStorage.setItem('pickupAddress', document.getElementById('pickupAddress').value);
-            localStorage.setItem('pickupNumber', document.getElementById('pickupNumber').value);
+            localStorage.setItem('pickupCep', document.getElementById('pickupCep').value);
             localStorage.setItem('deliveryAddress', document.getElementById('deliveryAddress').value);
-            localStorage.setItem('deliveryNumber', document.getElementById('deliveryNumber').value);
+            localStorage.setItem('deliveryCep', document.getElementById('deliveryCep').value);
+        }
+
+        function mascaraCep(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length > 5) {
+                value = value.substring(0, 5) + '-' + value.substring(5, 8);
+            }
+            input.value = value;
+        }
+
+        function buscarCepInput(inputCep, inputEnderecoId, isPickup) {
+            let cepLimpo = inputCep.value.replace(/\D/g, '');
+            saveInputs();
+            if (cepLimpo.length === 8) {
+                mostrarToast('🔍 Buscando CEP...');
+                fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.erro) {
+                            let enderecoFormatado = `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}`;
+                            document.getElementById(inputEnderecoId).value = enderecoFormatado;
+                            saveInputs();
+                            
+                            // Busca coordenadas automáticas para o mapa
+                            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(enderecoFormatado)}&limit=1`)
+                                .then(r => r.json())
+                                .then(d => {
+                                    if (d && d.length > 0) {
+                                        let latLng = L.latLng(parseFloat(d[0].lat), parseFloat(d[0].lon));
+                                        if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
+                                        atualizarPinsNoMapa();
+                                        map.setView(latLng, 16);
+                                        mostrarToast('📍 CEP encontrado e marcado no mapa!');
+                                    }
+                                });
+                        } else {
+                            mostrarToast('⚠️ CEP não encontrado.');
+                        }
+                    }).catch(() => { mostrarToast('Erro ao consultar CEP.'); });
+            }
         }
 
         function limparFormularioCliente() {
             document.getElementById('pickupAddress').value = '';
-            document.getElementById('pickupNumber').value = '';
+            document.getElementById('pickupCep').value = '';
             document.getElementById('deliveryAddress').value = '';
-            document.getElementById('deliveryNumber').value = '';
+            document.getElementById('deliveryCep').value = '';
             
             pickupCoords = null;
             deliveryCoords = null;
@@ -957,9 +997,9 @@
             document.getElementById('btnWhatsapp').style.display = 'none';
 
             localStorage.removeItem('pickupAddress');
-            localStorage.removeItem('pickupNumber');
+            localStorage.removeItem('pickupCep');
             localStorage.removeItem('deliveryAddress');
-            localStorage.removeItem('deliveryNumber');
+            localStorage.removeItem('deliveryCep');
 
             mostrarToast('🧹 Formulário limpo com sucesso!');
         }
@@ -1005,6 +1045,7 @@
             map.setView(latLng, 14);
         }
 
+        // GPS Inteligente
         function useGpsForField(fieldType) {
             if (!navigator.geolocation) return;
             navigator.geolocation.getCurrentPosition((pos) => {
@@ -1012,17 +1053,21 @@
                 fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
                     .then(res => res.json())
                     .then(data => {
-                        let addr = data.display_name || 'Localização Atual';
+                        let fullAddr = data.display_name || '';
+                        let partes = fullAddr.split(',');
+                        let addrOtimizado = partes.length >= 2 ? `${partes[0].trim()}, ${partes[1].trim()}, Pará` : (fullAddr || 'Localização Atual');
+
                         if (fieldType === 'pickup') {
-                            document.getElementById('pickupAddress').value = addr;
+                            document.getElementById('pickupAddress').value = addrOtimizado;
                             pickupCoords = latLng;
                         } else {
-                            document.getElementById('deliveryAddress').value = addr;
+                            document.getElementById('deliveryAddress').value = addrOtimizado;
                             deliveryCoords = latLng;
                         }
                         saveInputs();
                         atualizarPinsNoMapa();
-                        map.setView(latLng, 15);
+                        map.setView(latLng, 16);
+                        mostrarToast('📍 Localização atual capturada!');
                     });
             });
         }
@@ -1068,6 +1113,7 @@
             callback(null);
         }
 
+        // AUTOCOMPLETE EM TEMPO REAL (Pará Todo)
         function setupAutocomplete(inputId, suggestionsId, isPickup) {
             const input = document.getElementById(inputId);
             const suggestions = document.getElementById(suggestionsId);
@@ -1083,17 +1129,18 @@
                         if (isPickup) pickupCoords = latLngEncontrado; else deliveryCoords = latLngEncontrado;
                         atualizarPinsNoMapa();
                         map.setView(latLngEncontrado, 16);
-                        mostrarToast('🔗 Link do Google Maps reconhecido com sucesso!');
+                        mostrarToast('🔗 Link do Google Maps reconhecido!');
                         suggestions.style.display = 'none';
                         return;
                     }
                 });
 
-                if (query.length < 2) { suggestions.style.display = 'none'; return; }
+                if (query.length < 3) { suggestions.style.display = 'none'; return; }
 
                 timeout = setTimeout(() => {
                     let searchQuery = query.toLowerCase().includes('pará') || query.toLowerCase().includes('pa') ? query : (query + ', Pará, Brasil');
-                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=6`)
+                    
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=8`)
                         .then(res => res.json())
                         .then(data => {
                             suggestions.innerHTML = '';
@@ -1110,21 +1157,54 @@
                                         let coords = L.latLng(parseFloat(item.lat), parseFloat(item.lon));
                                         if (isPickup) pickupCoords = coords; else deliveryCoords = coords;
                                         atualizarPinsNoMapa();
+                                        map.setView(coords, 16);
                                     };
                                     suggestions.appendChild(div);
                                 });
-                            } else { suggestions.style.display = 'none'; }
-                        });
-                }, 300);
+                            } else { 
+                                fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(searchQuery)}&limit=5`)
+                                    .then(r => r.json())
+                                    .then(pData => {
+                                        if (pData && pData.features && pData.features.length > 0) {
+                                            suggestions.style.display = 'block';
+                                            pData.features.forEach(feat => {
+                                                let props = feat.properties;
+                                                let nomeLugar = `${props.name || ''}, ${props.city || props.county || ''}, ${props.state || 'Pará'}`;
+                                                let div = document.createElement('div');
+                                                div.className = 'suggestion-item';
+                                                div.innerText = nomeLugar;
+                                                div.onclick = () => {
+                                                    input.value = nomeLugar;
+                                                    suggestions.style.display = 'none';
+                                                    saveInputs();
+                                                    let coords = L.latLng(feat.geometry.coordinates[1], feat.geometry.coordinates[0]);
+                                                    if (isPickup) pickupCoords = coords; else deliveryCoords = coords;
+                                                    atualizarPinsNoMapa();
+                                                    map.setView(coords, 16);
+                                                };
+                                                suggestions.appendChild(div);
+                                            });
+                                        } else {
+                                            suggestions.style.display = 'none';
+                                        }
+                                    }).catch(() => { suggestions.style.display = 'none'; });
+                            }
+                        }).catch(() => { suggestions.style.display = 'none'; });
+                }, 350);
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+                    suggestions.style.display = 'none';
+                }
             });
         }
 
-        // BUSCA TRIPLA EM CASCATA (Nominatim -> Photon -> Geoapify / ViaCEP)
+        // BUSCA TRIPLA EM CASCATA
         function geocode(address, isPickup, callback) {
             if (isPickup && pickupCoords && address === document.getElementById('pickupAddress').value) { callback(pickupCoords); return; }
             if (!isPickup && deliveryCoords && address === document.getElementById('deliveryAddress').value) { callback(deliveryCoords); return; }
 
-            // 1. Testa se é um link do Google Maps
             tentarExtrairLinkGoogleMaps(address, function(latLngLink) {
                 if (latLngLink) {
                     if (isPickup) pickupCoords = latLngLink; else deliveryCoords = latLngLink;
@@ -1133,37 +1213,6 @@
                     return;
                 }
 
-                // 2. Testa se é um CEP digitado (ex: 67013-490 ou 67013490)
-                let cepLimpo = address.replace(/\D/g, '');
-                if (cepLimpo.length === 8) {
-                    fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
-                        .then(res => res.json())
-                        .then(dataCep => {
-                            if (!dataCep.erro) {
-                                let enderecoCompleto = `${dataCep.logradouro}, ${dataCep.bairro}, ${dataCep.localidade} - ${dataCep.uf}`;
-                                if (isPickup) document.getElementById('pickupAddress').value = enderecoCompleto;
-                                else document.getElementById('deliveryAddress').value = enderecoCompleto;
-                                saveInputs();
-
-                                // Busca coordenadas da rua do CEP no Nominatim
-                                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(enderecoCompleto)}&limit=1`)
-                                    .then(r => r.json())
-                                    .then(d => {
-                                        if (d && d.length > 0) {
-                                            let latLng = L.latLng(parseFloat(d[0].lat), parseFloat(d[0].lon));
-                                            if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
-                                            atualizarPinsNoMapa();
-                                            callback(latLng);
-                                        } else {
-                                            buscarMotor2_Photon(enderecoCompleto, isPickup, callback);
-                                        }
-                                    }).catch(() => buscarMotor2_Photon(enderecoCompleto, isPickup, callback));
-                                return;
-                            }
-                        }).catch(() => {});
-                }
-
-                // 3. MOTOR 1: Nominatim (Padrão)
                 let q = address.toLowerCase().includes('pará') || address.toLowerCase().includes('pa') ? address : (address + ", Pará, Brasil");
                 fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`)
                     .then(res => res.json())
@@ -1174,7 +1223,6 @@
                             atualizarPinsNoMapa();
                             callback(latLng);
                         } else {
-                            // Se falhou no Motor 1, chama o Motor 2 (Photon)
                             buscarMotor2_Photon(q, isPickup, callback);
                         }
                     })
@@ -1182,7 +1230,6 @@
             });
         }
 
-        // MOTOR 2: Photon (Komoot)
         function buscarMotor2_Photon(queryText, isPickup, callback) {
             fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(queryText)}&limit=1`)
                 .then(res => res.json())
@@ -1194,16 +1241,14 @@
                         atualizarPinsNoMapa();
                         callback(latLng);
                     } else {
-                        // Se falhou no Motor 2, chama o Motor 3 (Geoapify)
                         buscarMotor3_Geoapify(queryText, isPickup, callback);
                     }
                 })
                 .catch(() => buscarMotor3_Geoapify(queryText, isPickup, callback));
         }
 
-        // MOTOR 3: Geoapify API
         function buscarMotor3_Geoapify(queryText, isPickup, callback) {
-            let apiKey = "4a1d4029d2f6412e8b2b9f39aa19e342"; // Chave pública gratuita integrada
+            let apiKey = "4a1d4029d2f6412e8b2b9f39aa19e342";
             fetch(`https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(queryText)}&apiKey=${apiKey}&limit=1`)
                 .then(res => res.json())
                 .then(data => {
@@ -1240,14 +1285,14 @@
                 geocode(pickup, true, function(latLngPickup) {
                     if (!latLngPickup) { 
                         document.getElementById('loadingStatus').style.display = 'none'; 
-                        alert('Endereço de Coleta não encontrado pelos 3 motores. Tente usar o CEP.');
+                        alert('Endereço de Coleta não encontrado. Tente digitar a cidade junto ou use o CEP.');
                         return; 
                     }
 
                     geocode(delivery, false, function(latLngDelivery) {
                         if (!latLngDelivery) { 
                             document.getElementById('loadingStatus').style.display = 'none'; 
-                            alert('Endereço de Destino não encontrado pelos 3 motores. Tente usar o CEP.');
+                            alert('Endereço de Destino não encontrado. Tente digitar a cidade junto ou use o CEP.');
                             return; 
                         }
 
@@ -1348,8 +1393,8 @@
         function sendToWhatsappMotoboy() {
             let name = document.getElementById('clientName').value;
             let phone = document.getElementById('clientPhone').value;
-            let pickup = document.getElementById('pickupAddress').value + (document.getElementById('pickupNumber').value ? `, Nº ${document.getElementById('pickupNumber').value}` : '');
-            let delivery = document.getElementById('deliveryAddress').value + (document.getElementById('deliveryNumber').value ? `, Nº ${document.getElementById('deliveryNumber').value}` : '');
+            let pickup = document.getElementById('pickupAddress').value + (document.getElementById('pickupCep').value ? ` (CEP: ${document.getElementById('pickupCep').value})` : '');
+            let delivery = document.getElementById('deliveryAddress').value + (document.getElementById('deliveryCep').value ? ` (CEP: ${document.getElementById('deliveryCep').value})` : '');
 
             let linkColeta = pickupCoords ? `https://www.google.com/maps?q=${pickupCoords.lat},${pickupCoords.lng}` : 'Endereço';
             let linkEntrega = deliveryCoords ? `https://www.google.com/maps?q=${deliveryCoords.lat},${deliveryCoords.lng}` : 'Endereço';
