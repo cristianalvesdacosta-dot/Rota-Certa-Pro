@@ -482,10 +482,10 @@
 
                 <div class="form-group">
                     <label for="pickupAddress">Endereço de Coleta (Onde buscar)</label>
-                    <div class="help-text">💡 Dica: Você pode digitar o endereço ou colar um link do Google Maps aqui!</div>
+                    <div class="help-text">💡 Dica: Digite em qualquer cidade do Pará (Ex: Belém, Vigia, Colares) ou cole o link do Google Maps!</div>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="pickupAddress" placeholder="Ex: R. São Pedro, 86 ou cole o link do Maps" autocomplete="off">
+                            <input type="text" id="pickupAddress" placeholder="Ex: R. São Pedro, Ananindeua ou cole o link" autocomplete="off">
                             <div id="pickupSuggestions" class="suggestions"></div>
                         </div>
                         <div class="number-field">
@@ -495,17 +495,17 @@
                     <div class="quick-favs">
                         <span style="font-size:0.72rem; color:var(--text-muted); font-weight:700;">Locais Frequentes:</span>
                         <span class="fav-chip" onclick="definirLocalFavorito('pickup', 'Fábrica Leal, Rodovia Augusto Montenegro, Belém', -1.35496, -48.45379)">Fábrica Leal</span>
-                        <span class="fav-chip" onclick="definirLocalFavorito('pickup', 'Shopping Castanheira, Belém', -1.4027, -48.4308)">Castanheira</span>
+                        <span class="fav-chip" onclick="definirLocalFavorito('pickup', 'R. São Pedro, Levilândia, Ananindeua', -1.3575, -48.4231)">R. São Pedro (Ananindeua)</span>
                     </div>
                     <button type="button" class="inline-gps" onclick="useGpsForField('pickup')">📍 Usar minha localização atual</button>
                 </div>
 
                 <div class="form-group">
                     <label for="deliveryAddress">Endereço de Destino (Onde entregar)</label>
-                    <div class="help-text">💡 Dica: Você pode digitar o endereço ou colar um link do Google Maps aqui!</div>
+                    <div class="help-text">💡 Dica: Digite em qualquer cidade do Pará (Ex: Belém, Vigia, Colares) ou cole o link do Google Maps!</div>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="deliveryAddress" placeholder="Ex: Icoaraci, Marambaia ou cole o link do Maps" autocomplete="off">
+                            <input type="text" id="deliveryAddress" placeholder="Ex: Vigia, Colares, Marambaia ou cole o link" autocomplete="off">
                             <div id="deliverySuggestions" class="suggestions"></div>
                         </div>
                         <div class="number-field">
@@ -514,9 +514,9 @@
                     </div>
                     <div class="quick-favs">
                         <span style="font-size:0.72rem; color:var(--text-muted); font-weight:700;">Destinos Comuns:</span>
+                        <span class="fav-chip" onclick="definirLocalFavorito('delivery', 'Vigia, PA', -0.8576, -48.1447)">Vigia</span>
+                        <span class="fav-chip" onclick="definirLocalFavorito('delivery', 'Colares, PA', -0.9258, -48.2831)">Colares</span>
                         <span class="fav-chip" onclick="definirLocalFavorito('delivery', 'Icoaraci, Belém - PA', -1.3019, -48.4776)">Icoaraci</span>
-                        <span class="fav-chip" onclick="definirLocalFavorito('delivery', 'Marambaia, Belém - PA', -1.4017, -48.4534)">Marambaia</span>
-                        <span class="fav-chip" onclick="definirLocalFavorito('delivery', 'Coqueiro, Belém - PA', -1.3381, -48.4437)">Coqueiro</span>
                     </div>
                     <button type="button" class="inline-gps" onclick="useGpsForField('delivery')">📍 Usar minha localização atual</button>
                 </div>
@@ -1027,11 +1027,10 @@
             });
         }
 
-        // Função mágica para extrair coordenadas caso o usuário cole um link do Google Maps
+        // Leitor universal de Links do Google Maps
         function tentarExtrairLinkGoogleMaps(texto, callback) {
             if (!texto) { callback(null); return; }
             
-            // Caso seja link encurtado tipo https://maps.app.goo.gl/...
             if (texto.includes('goo.gl/') || texto.includes('maps.app.goo.gl')) {
                 fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(texto)}`)
                     .then(response => response.json())
@@ -1041,7 +1040,6 @@
                         if (match && match[1] && match[2]) {
                             callback(L.latLng(parseFloat(match[1]), parseFloat(match[2])));
                         } else {
-                            // Tenta via URL final se contida no redirecionamento
                             let matchCoord = html.match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/);
                             if(matchCoord) {
                                 callback(L.latLng(parseFloat(matchCoord[1]), parseFloat(matchCoord[2])));
@@ -1053,7 +1051,6 @@
                 return;
             }
 
-            // Caso seja link normal contendo coordenadas @lat,lon
             let regexCoord = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
             let match = texto.match(regexCoord);
             if (match && match[1] && match[2]) {
@@ -1061,7 +1058,6 @@
                 return;
             }
 
-            // Caso contenha query ?q=lat,lon ou ll=lat,lon
             let regexQ = /[?&](q|ll)=(-?\d+\.\d+),(-?\d+\.\d+)/;
             let matchQ = texto.match(regexQ);
             if (matchQ && matchQ[2] && matchQ[3]) {
@@ -1082,7 +1078,6 @@
                 clearTimeout(timeout);
                 let query = this.value.trim();
 
-                // Verifica se colou um link do Google Maps
                 tentarExtrairLinkGoogleMaps(query, function(latLngEncontrado) {
                     if (latLngEncontrado) {
                         if (isPickup) pickupCoords = latLngEncontrado; else deliveryCoords = latLngEncontrado;
@@ -1097,7 +1092,8 @@
                 if (query.length < 2) { suggestions.style.display = 'none'; return; }
 
                 timeout = setTimeout(() => {
-                    let searchQuery = query.toLowerCase().includes('belém') || query.toLowerCase().includes('ananindeua') ? query : (query + ', Belém, Pará');
+                    // Força a busca abrangente em todo o Estado do Pará (Belém, Vigia, Colares, Ananindeua, etc.)
+                    let searchQuery = query.toLowerCase().includes('pará') || query.toLowerCase().includes('pa') ? query : (query + ', Pará, Brasil');
                     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=6`)
                         .then(res => res.json())
                         .then(data => {
@@ -1128,7 +1124,6 @@
             if (isPickup && pickupCoords && address === document.getElementById('pickupAddress').value) { callback(pickupCoords); return; }
             if (!isPickup && deliveryCoords && address === document.getElementById('deliveryAddress').value) { callback(deliveryCoords); return; }
 
-            // Verifica se colou um link do Maps direto no momento do cálculo
             tentarExtrairLinkGoogleMaps(address, function(latLngLink) {
                 if (latLngLink) {
                     if (isPickup) pickupCoords = latLngLink; else deliveryCoords = latLngLink;
@@ -1137,7 +1132,8 @@
                     return;
                 }
 
-                let q = address.toLowerCase().includes('belém') ? address : (address + ", Belém, Pará, Brasil");
+                // Garante que a busca procure no estado do Pará inteiro caso o usuário não coloque a cidade
+                let q = address.toLowerCase().includes('pará') || address.toLowerCase().includes('pa') ? address : (address + ", Pará, Brasil");
 
                 fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`)
                     .then(res => res.json())
