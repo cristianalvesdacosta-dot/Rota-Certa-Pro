@@ -422,7 +422,7 @@
                         <input type="number" step="0.10" id="cfgPrecoKm" value="1.50">
                     </div>
                     <div class="form-group">
-                        <label for="cfgCustoMotoKm">Seu Custo da Moto (R$/km)</label>
+                        <label for="cfgCustoMotoKm">Custo da Moto (R$/km)</label>
                         <input type="number" step="0.01" id="cfgCustoMotoKm" value="0.50">
                     </div>
                     <div class="form-group">
@@ -436,7 +436,7 @@
                 </div>
 
                 <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 14px; border-radius: 12px; margin-top: 10px; margin-bottom: 16px;">
-                    <label style="color: var(--success); font-weight: 700; margin-bottom: 8px;">🏍️ Configuração de Retorno Vazio (Volto Vazio)</label>
+                    <label style="color: var(--success); font-weight: 700; margin-bottom: 8px;">🏍️ Configuração de Retorno Vazio</label>
                     <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
                         <div style="flex: 1;">
                             <label for="cfgVoltoVazio" style="font-size: 0.7rem;">Ativar Volto Vazio?</label>
@@ -446,7 +446,7 @@
                             </select>
                         </div>
                         <div style="flex: 1;">
-                            <label for="cfgTaxaVoltoVazio" style="font-size: 0.7rem;">Taxa do Retorno (R$/km)</label>
+                            <label for="cfgTaxaVoltoVazio" style="font-size: 0.7rem;">Taxa Retorno (R$/km)</label>
                             <input type="number" step="0.05" id="cfgTaxaVoltoVazio" value="0.50">
                         </div>
                     </div>
@@ -1332,7 +1332,7 @@
                             voltoVazioFee = 0;
                             if (ativarVoltoVazio === 'sim') {
                                 voltoVazioFee = deliveryDistanceKm * taxaVoltoKm;
-                                document.getElementById('textoVoltoVazio').innerText = `🔄 Volto Vazio (${deliveryDistanceKm.toFixed(1)} km de volta × R$ ${taxaVoltoKm.toFixed(2)})`;
+                                document.getElementById('textoVoltoVazio').innerText = `🔄 Retorno Vazio (${deliveryDistanceKm.toFixed(1)} km de volta × R$ ${taxaVoltoKm.toFixed(2)})`;
                                 document.getElementById('voltoVazioRow').style.display = 'flex';
                             } else {
                                 document.getElementById('voltoVazioRow').style.display = 'none';
