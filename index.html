@@ -482,9 +482,10 @@
 
                 <div class="form-group">
                     <label for="pickupAddress">Endereço de Coleta (Onde buscar)</label>
+                    <div class="help-text">💡 Dica: Você pode digitar o endereço ou colar um link do Google Maps aqui!</div>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="pickupAddress" placeholder="Ex: Fábrica Leal, Augusto Montenegro..." autocomplete="off">
+                            <input type="text" id="pickupAddress" placeholder="Ex: R. São Pedro, 86 ou cole o link do Maps" autocomplete="off">
                             <div id="pickupSuggestions" class="suggestions"></div>
                         </div>
                         <div class="number-field">
@@ -501,9 +502,10 @@
 
                 <div class="form-group">
                     <label for="deliveryAddress">Endereço de Destino (Onde entregar)</label>
+                    <div class="help-text">💡 Dica: Você pode digitar o endereço ou colar um link do Google Maps aqui!</div>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
-                            <input type="text" id="deliveryAddress" placeholder="Ex: Icoaraci, Marambaia, Coqueiro..." autocomplete="off">
+                            <input type="text" id="deliveryAddress" placeholder="Ex: Icoaraci, Marambaia ou cole o link do Maps" autocomplete="off">
                             <div id="deliverySuggestions" class="suggestions"></div>
                         </div>
                         <div class="number-field">
@@ -1025,6 +1027,51 @@
             });
         }
 
+        // Função mágica para extrair coordenadas caso o usuário cole um link do Google Maps
+        function tentarExtrairLinkGoogleMaps(texto, callback) {
+            if (!texto) { callback(null); return; }
+            
+            // Caso seja link encurtado tipo https://maps.app.goo.gl/...
+            if (texto.includes('goo.gl/') || texto.includes('maps.app.goo.gl')) {
+                fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(texto)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        let html = data.contents;
+                        let match = html.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+                        if (match && match[1] && match[2]) {
+                            callback(L.latLng(parseFloat(match[1]), parseFloat(match[2])));
+                        } else {
+                            // Tenta via URL final se contida no redirecionamento
+                            let matchCoord = html.match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+                            if(matchCoord) {
+                                callback(L.latLng(parseFloat(matchCoord[1]), parseFloat(matchCoord[2])));
+                            } else {
+                                callback(null);
+                            }
+                        }
+                    }).catch(() => callback(null));
+                return;
+            }
+
+            // Caso seja link normal contendo coordenadas @lat,lon
+            let regexCoord = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+            let match = texto.match(regexCoord);
+            if (match && match[1] && match[2]) {
+                callback(L.latLng(parseFloat(match[1]), parseFloat(match[2])));
+                return;
+            }
+
+            // Caso contenha query ?q=lat,lon ou ll=lat,lon
+            let regexQ = /[?&](q|ll)=(-?\d+\.\d+),(-?\d+\.\d+)/;
+            let matchQ = texto.match(regexQ);
+            if (matchQ && matchQ[2] && matchQ[3]) {
+                callback(L.latLng(parseFloat(matchQ[2]), parseFloat(matchQ[3])));
+                return;
+            }
+
+            callback(null);
+        }
+
         function setupAutocomplete(inputId, suggestionsId, isPickup) {
             const input = document.getElementById(inputId);
             const suggestions = document.getElementById(suggestionsId);
@@ -1034,6 +1081,19 @@
                 saveInputs();
                 clearTimeout(timeout);
                 let query = this.value.trim();
+
+                // Verifica se colou um link do Google Maps
+                tentarExtrairLinkGoogleMaps(query, function(latLngEncontrado) {
+                    if (latLngEncontrado) {
+                        if (isPickup) pickupCoords = latLngEncontrado; else deliveryCoords = latLngEncontrado;
+                        atualizarPinsNoMapa();
+                        map.setView(latLngEncontrado, 16);
+                        mostrarToast('🔗 Link do Google Maps reconhecido com sucesso!');
+                        suggestions.style.display = 'none';
+                        return;
+                    }
+                });
+
                 if (query.length < 2) { suggestions.style.display = 'none'; return; }
 
                 timeout = setTimeout(() => {
@@ -1068,19 +1128,29 @@
             if (isPickup && pickupCoords && address === document.getElementById('pickupAddress').value) { callback(pickupCoords); return; }
             if (!isPickup && deliveryCoords && address === document.getElementById('deliveryAddress').value) { callback(deliveryCoords); return; }
 
-            let q = address.toLowerCase().includes('belém') ? address : (address + ", Belém, Pará, Brasil");
+            // Verifica se colou um link do Maps direto no momento do cálculo
+            tentarExtrairLinkGoogleMaps(address, function(latLngLink) {
+                if (latLngLink) {
+                    if (isPickup) pickupCoords = latLngLink; else deliveryCoords = latLngLink;
+                    atualizarPinsNoMapa();
+                    callback(latLngLink);
+                    return;
+                }
 
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data && data.length > 0) {
-                        let latLng = L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
-                        if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
-                        atualizarPinsNoMapa();
-                        callback(latLng);
-                    } else { callback(null); }
-                })
-                .catch(() => callback(null));
+                let q = address.toLowerCase().includes('belém') ? address : (address + ", Belém, Pará, Brasil");
+
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.length > 0) {
+                            let latLng = L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
+                            if (isPickup) pickupCoords = latLng; else deliveryCoords = latLng;
+                            atualizarPinsNoMapa();
+                            callback(latLng);
+                        } else { callback(null); }
+                    })
+                    .catch(() => callback(null));
+            });
         }
 
         function calculateAll() {
