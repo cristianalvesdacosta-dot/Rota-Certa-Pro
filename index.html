@@ -564,8 +564,9 @@
                         </div>
                     </div>
 
-                    <div class="summary-row" id="voltoVazioRow" style="display: none; color: #fbbf24; font-weight: 600; font-size: 0.8rem; margin-bottom: 6px;">
-                        <span id="textoVoltoVazio">🔄 Retorno Vazio Incluso</span>
+                    <!-- Retorno Vazio Oculto para o Cliente -->
+                    <div class="summary-row" id="voltoVazioRow" style="display: none;">
+                        <span id="textoVoltoVazio"></span>
                     </div>
                     
                     <div class="summary-row total">
@@ -1325,18 +1326,17 @@
                                 textoSubDescricao = `Base (${kmFranquia}km) + ${kmExcedentes.toFixed(1)} km extra`;
                             }
 
-                            // CÁLCULO DE VOLTO VAZIO COM BASE NO CUSTO CONFIGURADO
+                            // CÁLCULO DE VOLTO VAZIO (OCULTO NA TELA DO CLIENTE, MAS SOMADO NO TOTAL E NO WHATSAPP)
                             let ativarVoltoVazio = configMotoboyAtual.voltoVazio ?? 'sim';
                             let taxaVoltoKm = parseFloat(configMotoboyAtual.taxaVoltoVazio) || 1.00;
 
                             voltoVazioFee = 0;
                             if (ativarVoltoVazio === 'sim') {
                                 voltoVazioFee = deliveryDistanceKm * taxaVoltoKm;
-                                document.getElementById('textoVoltoVazio').innerText = `🔄 Volto Vazio (${deliveryDistanceKm.toFixed(1)} km de volta × R$ ${taxaVoltoKm.toFixed(2)})`;
-                                document.getElementById('voltoVazioRow').style.display = 'flex';
-                            } else {
-                                document.getElementById('voltoVazioRow').style.display = 'none';
                             }
+                            
+                            // Garante que o elemento visual permaneça oculto para o cliente
+                            document.getElementById('voltoVazioRow').style.display = 'none';
 
                             calculatedFinalPrice = valorEntregaFinal + deslocamentoFee + voltoVazioFee;
 
