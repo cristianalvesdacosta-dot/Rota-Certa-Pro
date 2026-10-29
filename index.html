@@ -422,32 +422,32 @@
                         <input type="number" step="0.10" id="cfgPrecoKm" value="1.50">
                     </div>
                     <div class="form-group">
+                        <label for="cfgCustoMotoKm">Seu Custo da Moto (R$/km)</label>
+                        <input type="number" step="0.01" id="cfgCustoMotoKm" value="0.50">
+                    </div>
+                    <div class="form-group">
                         <label for="cfgLimiteKmColetaGrats">Franquia Coleta Grátis (Km)</label>
                         <input type="number" step="0.5" id="cfgLimiteKmColetaGrats" value="2.0">
                     </div>
-                    <div class="form-group" style="grid-column: span 2;">
+                    <div class="form-group">
                         <label for="cfgTaxaDeslocamento">Taxa Km Extra Coleta (R$)</label>
                         <input type="number" step="0.01" id="cfgTaxaDeslocamento" value="0.49">
                     </div>
                 </div>
 
-                <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 14px; border-radius: 12px; margin-top: 10px; margin-bottom: 16px;">
-                    <label style="color: #fbbf24; font-weight: 700; margin-bottom: 8px;">⚠️ Proteção de Retorno Vazio (Raio Limite)</label>
+                <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 14px; border-radius: 12px; margin-top: 10px; margin-bottom: 16px;">
+                    <label style="color: var(--success); font-weight: 700; margin-bottom: 8px;">🏍️ Configuração de Retorno Vazio (Volto Vazio)</label>
                     <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
                         <div style="flex: 1;">
-                            <label for="cfgAtivarRaio" style="font-size: 0.7rem;">Ativar Proteção?</label>
-                            <select id="cfgAtivarRaio">
+                            <label for="cfgVoltoVazio" style="font-size: 0.7rem;">Ativar Volto Vazio?</label>
+                            <select id="cfgVoltoVazio">
                                 <option value="sim">Sim</option>
                                 <option value="nao">Não</option>
                             </select>
                         </div>
                         <div style="flex: 1;">
-                            <label for="cfgRaioMaximo" style="font-size: 0.7rem;">Raio Limite (Km)</label>
-                            <input type="number" step="1" id="cfgRaioMaximo" value="12">
-                        </div>
-                        <div style="flex: 1;">
-                            <label for="cfgCustoKmExcedente" style="font-size: 0.7rem;">Taxa Extra Raio (R$)</label>
-                            <input type="number" step="0.01" id="cfgCustoKmExcedente" value="0.49">
+                            <label for="cfgTaxaVoltoVazio" style="font-size: 0.7rem;">Taxa do Retorno (R$/km)</label>
+                            <input type="number" step="0.05" id="cfgTaxaVoltoVazio" value="0.50">
                         </div>
                     </div>
                 </div>
@@ -482,7 +482,7 @@
 
                 <div class="form-group">
                     <label for="pickupAddress">Endereço de Coleta (Onde buscar)</label>
-                    <div class="help-text">💡 Digite a rua (ex: Rua São Carlos, Ananindeua), cole o link do Maps ou digite o CEP ao lado!</div>
+                    <div class="help-text">💡 Digite a rua, cole o link do Maps ou digite o CEP ao lado!</div>
                     <div class="row-fields">
                         <div class="main-field" style="position: relative;">
                             <input type="text" id="pickupAddress" placeholder="Digite rua, bairro ou cidade..." autocomplete="off">
@@ -564,8 +564,8 @@
                         </div>
                     </div>
 
-                    <div class="summary-row" id="alertaRetornoRow" style="display: none; color: #fbbf24; font-weight: 600; font-size: 0.8rem; margin-bottom: 6px;">
-                        <span id="textoAlertaRetorno">⚠️ Taxa fora do raio</span>
+                    <div class="summary-row" id="voltoVazioRow" style="display: none; color: #fbbf24; font-weight: 600; font-size: 0.8rem; margin-bottom: 6px;">
+                        <span id="textoVoltoVazio">🔄 Retorno Vazio Incluso</span>
                     </div>
                     
                     <div class="summary-row total">
@@ -624,11 +624,11 @@
             tarifaMinima: 10.00,
             kmFranquiaMinima: 8.0,
             precoKm: 1.50,
+            custoMotoKm: 0.50,
             limiteKmColetaGrats: 2.0,
             taxaDeslocamento: 0.49,
-            ativarRaio: "sim",
-            raioMaximo: 12,
-            custoKmExcedente: 0.49,
+            voltoVazio: "sim",
+            taxaVoltoVazio: 0.50,
             status: "offline"
         };
 
@@ -681,18 +681,6 @@
             if(localStorage.getItem('deliveryCep')) document.getElementById('deliveryCep').value = localStorage.getItem('deliveryCep');
         });
 
-        function atualizarRaioAtendimentoVisual() {
-            if (raioCircle) map.removeLayer(raioCircle);
-            let raioKm = parseFloat(configMotoboyAtual.raioMaximo) || 12;
-            raioCircle = L.circle(myCurrentCoords, {
-                radius: raioKm * 1000,
-                color: '#3b82f6',
-                fillColor: '#3b82f6',
-                fillOpacity: 0.05,
-                weight: 1
-            }).addTo(map);
-        }
-
         function escutarStatusEmTempoReal(usuario) {
             db.ref('entregadores/' + usuario).on('value', (snapshot) => {
                 if (snapshot.exists()) {
@@ -701,7 +689,6 @@
 
                     if (dados.lat && dados.lon) {
                         myCurrentCoords = L.latLng(dados.lat, dados.lon);
-                        atualizarRaioAtendimentoVisual();
                     }
 
                     document.getElementById('headerName').innerText = dados.nome || 'Rota Certa';
@@ -773,11 +760,11 @@
                 tarifaMinima: 10.00,
                 kmFranquiaMinima: 8.0,
                 precoKm: 1.50,
+                custoMotoKm: 0.50,
                 limiteKmColetaGrats: 2.0,
                 taxaDeslocamento: 0.49,
-                ativarRaio: "sim",
-                raioMaximo: 12,
-                custoKmExcedente: 0.49,
+                voltoVazio: "sim",
+                taxaVoltoVazio: 0.50,
                 status: "offline",
                 expiraEm: expiraEm
             };
@@ -857,11 +844,11 @@
                 document.getElementById('cfgTarifaMinima').value = dados.tarifaMinima ?? 10.00;
                 document.getElementById('cfgKmFranquiaMinima').value = dados.kmFranquiaMinima ?? 8.0;
                 document.getElementById('cfgPrecoKm').value = dados.precoKm ?? 1.50;
+                document.getElementById('cfgCustoMotoKm').value = dados.custoMotoKm ?? 0.50;
                 document.getElementById('cfgLimiteKmColetaGrats').value = dados.limiteKmColetaGrats ?? 2.0;
                 document.getElementById('cfgTaxaDeslocamento').value = dados.taxaDeslocamento ?? 0.49;
-                document.getElementById('cfgAtivarRaio').value = dados.ativarRaio ?? 'sim';
-                document.getElementById('cfgRaioMaximo').value = dados.raioMaximo ?? 12;
-                document.getElementById('cfgCustoKmExcedente').value = dados.custoKmExcedente ?? 0.49;
+                document.getElementById('cfgVoltoVazio').value = dados.voltoVazio ?? 'sim';
+                document.getElementById('cfgTaxaVoltoVazio').value = dados.taxaVoltoVazio ?? 0.50;
             });
         }
 
@@ -874,16 +861,15 @@
                 tarifaMinima: parseFloat(document.getElementById('cfgTarifaMinima').value) || 10.00,
                 kmFranquiaMinima: parseFloat(document.getElementById('cfgKmFranquiaMinima').value) || 8.0,
                 precoKm: parseFloat(document.getElementById('cfgPrecoKm').value) || 1.50,
+                custoMotoKm: parseFloat(document.getElementById('cfgCustoMotoKm').value) || 0.50,
                 limiteKmColetaGrats: parseFloat(document.getElementById('cfgLimiteKmColetaGrats').value) || 2.0,
                 taxaDeslocamento: parseFloat(document.getElementById('cfgTaxaDeslocamento').value) || 0.49,
-                ativarRaio: document.getElementById('cfgAtivarRaio').value,
-                raioMaximo: parseFloat(document.getElementById('cfgRaioMaximo').value) || 12,
-                custoKmExcedente: parseFloat(document.getElementById('cfgCustoKmExcedente').value) || 0.49
+                voltoVazio: document.getElementById('cfgVoltoVazio').value,
+                taxaVoltoVazio: parseFloat(document.getElementById('cfgTaxaVoltoVazio').value) || 0.50
             };
 
             db.ref('entregadores/' + userToSave).update(novosDados).then(() => {
                 configMotoboyAtual = { ...configMotoboyAtual, ...novosDados };
-                atualizarRaioAtendimentoVisual();
                 document.getElementById('saveStatus').style.display = 'inline';
                 mostrarToast('⚙️ Configurações salvas na nuvem!');
                 setTimeout(() => { document.getElementById('saveStatus').style.display = 'none'; }, 2500);
@@ -904,7 +890,6 @@
                 watchIdGPS = navigator.geolocation.watchPosition((pos) => {
                     db.ref('entregadores/' + userToSave).update({ status: 'online', lat: pos.coords.latitude, lon: pos.coords.longitude });
                     myCurrentCoords = L.latLng(pos.coords.latitude, pos.coords.longitude);
-                    atualizarRaioAtendimentoVisual();
                 }, null, { enableHighAccuracy: true });
                 db.ref('entregadores/' + userToSave).update({ status: 'online' });
             } else {
@@ -924,7 +909,7 @@
         let myToPickupDistanceKm = 0;
         let calculatedFinalPrice = 0;
         let deslocamentoFee = 0;
-        let raioExtraFee = 0;
+        let voltoVazioFee = 0;
         let pickupCoords = null;
         let deliveryCoords = null;
 
@@ -958,7 +943,6 @@
                             document.getElementById(inputEnderecoId).value = enderecoFormatado;
                             saveInputs();
                             
-                            // Busca coordenadas automáticas para o mapa
                             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(enderecoFormatado)}&limit=1`)
                                 .then(r => r.json())
                                 .then(d => {
@@ -1045,7 +1029,6 @@
             map.setView(latLng, 14);
         }
 
-        // GPS Inteligente
         function useGpsForField(fieldType) {
             if (!navigator.geolocation) return;
             navigator.geolocation.getCurrentPosition((pos) => {
@@ -1072,7 +1055,6 @@
             });
         }
 
-        // Leitor de Links do Google Maps
         function tentarExtrairLinkGoogleMaps(texto, callback) {
             if (!texto) { callback(null); return; }
             
@@ -1113,7 +1095,6 @@
             callback(null);
         }
 
-        // AUTOCOMPLETE EM TEMPO REAL (Pará Todo)
         function setupAutocomplete(inputId, suggestionsId, isPickup) {
             const input = document.getElementById(inputId);
             const suggestions = document.getElementById(suggestionsId);
@@ -1200,7 +1181,6 @@
             });
         }
 
-        // BUSCA TRIPLA EM CASCATA
         function geocode(address, isPickup, callback) {
             if (isPickup && pickupCoords && address === document.getElementById('pickupAddress').value) { callback(pickupCoords); return; }
             if (!isPickup && deliveryCoords && address === document.getElementById('deliveryAddress').value) { callback(deliveryCoords); return; }
@@ -1345,20 +1325,20 @@
                                 textoSubDescricao = `Base (${kmFranquia}km) + ${kmExcedentes.toFixed(1)} km extra`;
                             }
 
-                            let ativarRaioConfig = configMotoboyAtual.ativarRaio ?? 'sim';
-                            let raioMaximoConfig = parseFloat(configMotoboyAtual.raioMaximo) || 12;
-                            let custoKmExcedenteConfig = parseFloat(configMotoboyAtual.custoKmExcedente) || 0.49;
+                            // CÁLCULO DE VOLTO VAZIO COM BASE NO CUSTO CONFIGURADO
+                            let ativarVoltoVazio = configMotoboyAtual.voltoVazio ?? 'sim';
+                            let taxaVoltoKm = parseFloat(configMotoboyAtual.taxaVoltoVazio) || 0.50;
 
-                            raioExtraFee = 0;
-                            if (ativarRaioConfig === 'sim' && deliveryDistanceKm > raioMaximoConfig) {
-                                raioExtraFee = deliveryDistanceKm * custoKmExcedenteConfig;
-                                document.getElementById('textoAlertaRetorno').innerText = `⚠️ Acima do raio de ${raioMaximoConfig}km (Taxa Extra): +R$ ${raioExtraFee.toFixed(2).replace('.', ',')}`;
-                                document.getElementById('alertaRetornoRow').style.display = 'flex';
+                            voltoVazioFee = 0;
+                            if (ativarVoltoVazio === 'sim') {
+                                voltoVazioFee = deliveryDistanceKm * taxaVoltoKm;
+                                document.getElementById('textoVoltoVazio').innerText = `🔄 Volto Vazio (${deliveryDistanceKm.toFixed(1)} km de volta × R$ ${taxaVoltoKm.toFixed(2)})`;
+                                document.getElementById('voltoVazioRow').style.display = 'flex';
                             } else {
-                                document.getElementById('alertaRetornoRow').style.display = 'none';
+                                document.getElementById('voltoVazioRow').style.display = 'none';
                             }
 
-                            calculatedFinalPrice = valorEntregaFinal + deslocamentoFee + raioExtraFee;
+                            calculatedFinalPrice = valorEntregaFinal + deslocamentoFee + voltoVazioFee;
 
                             document.getElementById('myDistText').innerText = myToPickupDistanceKm.toFixed(2) + ' km';
                             document.getElementById('distText').innerText = deliveryDistanceKm.toFixed(2) + ' km';
