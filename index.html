@@ -431,7 +431,7 @@
                     </div>
                     <div class="form-group">
                         <label for="cfgTaxaDeslocamento">Taxa Km Extra Coleta (R$)</label>
-                        <input type="number" step="0.01" id="cfgTaxaDeslocamento" value="0.49">
+                        <input type="number" step="0.01" id="cfgTaxaDeslocamento" value="0.50">
                     </div>
                 </div>
 
@@ -447,7 +447,7 @@
                         </div>
                         <div style="flex: 1;">
                             <label for="cfgTaxaVoltoVazio" style="font-size: 0.7rem;">Taxa Retorno (R$/km)</label>
-                            <input type="number" step="0.05" id="cfgTaxaVoltoVazio" value="0.50">
+                            <input type="number" step="0.05" id="cfgTaxaVoltoVazio" value="1.00">
                         </div>
                     </div>
                 </div>
@@ -626,9 +626,9 @@
             precoKm: 1.50,
             custoMotoKm: 0.50,
             limiteKmColetaGrats: 2.0,
-            taxaDeslocamento: 0.49,
+            taxaDeslocamento: 0.50,
             voltoVazio: "sim",
-            taxaVoltoVazio: 0.50,
+            taxaVoltoVazio: 1.00,
             status: "offline"
         };
 
@@ -762,9 +762,9 @@
                 precoKm: 1.50,
                 custoMotoKm: 0.50,
                 limiteKmColetaGrats: 2.0,
-                taxaDeslocamento: 0.49,
+                taxaDeslocamento: 0.50,
                 voltoVazio: "sim",
-                taxaVoltoVazio: 0.50,
+                taxaVoltoVazio: 1.00,
                 status: "offline",
                 expiraEm: expiraEm
             };
@@ -846,9 +846,9 @@
                 document.getElementById('cfgPrecoKm').value = dados.precoKm ?? 1.50;
                 document.getElementById('cfgCustoMotoKm').value = dados.custoMotoKm ?? 0.50;
                 document.getElementById('cfgLimiteKmColetaGrats').value = dados.limiteKmColetaGrats ?? 2.0;
-                document.getElementById('cfgTaxaDeslocamento').value = dados.taxaDeslocamento ?? 0.49;
+                document.getElementById('cfgTaxaDeslocamento').value = dados.taxaDeslocamento ?? 0.50;
                 document.getElementById('cfgVoltoVazio').value = dados.voltoVazio ?? 'sim';
-                document.getElementById('cfgTaxaVoltoVazio').value = dados.taxaVoltoVazio ?? 0.50;
+                document.getElementById('cfgTaxaVoltoVazio').value = dados.taxaVoltoVazio ?? 1.00;
             });
         }
 
@@ -863,9 +863,9 @@
                 precoKm: parseFloat(document.getElementById('cfgPrecoKm').value) || 1.50,
                 custoMotoKm: parseFloat(document.getElementById('cfgCustoMotoKm').value) || 0.50,
                 limiteKmColetaGrats: parseFloat(document.getElementById('cfgLimiteKmColetaGrats').value) || 2.0,
-                taxaDeslocamento: parseFloat(document.getElementById('cfgTaxaDeslocamento').value) || 0.49,
+                taxaDeslocamento: parseFloat(document.getElementById('cfgTaxaDeslocamento').value) || 0.50,
                 voltoVazio: document.getElementById('cfgVoltoVazio').value,
-                taxaVoltoVazio: parseFloat(document.getElementById('cfgTaxaVoltoVazio').value) || 0.50
+                taxaVoltoVazio: parseFloat(document.getElementById('cfgTaxaVoltoVazio').value) || 1.00
             };
 
             db.ref('entregadores/' + userToSave).update(novosDados).then(() => {
@@ -1281,7 +1281,7 @@
 
                         myToPickupDistanceKm = myCurrentCoords.distanceTo(latLngPickup) / 1000;
                         let limiteGrats = parseFloat(configMotoboyAtual.limiteKmColetaGrats) ?? 2.0;
-                        let taxaExtra = parseFloat(configMotoboyAtual.taxaDeslocamento) ?? 0.49;
+                        let taxaExtra = parseFloat(configMotoboyAtual.taxaDeslocamento) ?? 0.50;
 
                         if (myToPickupDistanceKm > limiteGrats) {
                             deslocamentoFee = (myToPickupDistanceKm - limiteGrats) * taxaExtra;
@@ -1327,12 +1327,12 @@
 
                             // CÁLCULO DE VOLTO VAZIO COM BASE NO CUSTO CONFIGURADO
                             let ativarVoltoVazio = configMotoboyAtual.voltoVazio ?? 'sim';
-                            let taxaVoltoKm = parseFloat(configMotoboyAtual.taxaVoltoVazio) || 0.50;
+                            let taxaVoltoKm = parseFloat(configMotoboyAtual.taxaVoltoVazio) || 1.00;
 
                             voltoVazioFee = 0;
                             if (ativarVoltoVazio === 'sim') {
                                 voltoVazioFee = deliveryDistanceKm * taxaVoltoKm;
-                                document.getElementById('textoVoltoVazio').innerText = `🔄 Retorno Vazio (${deliveryDistanceKm.toFixed(1)} km de volta × R$ ${taxaVoltoKm.toFixed(2)})`;
+                                document.getElementById('textoVoltoVazio').innerText = `🔄 Volto Vazio (${deliveryDistanceKm.toFixed(1)} km de volta × R$ ${taxaVoltoKm.toFixed(2)})`;
                                 document.getElementById('voltoVazioRow').style.display = 'flex';
                             } else {
                                 document.getElementById('voltoVazioRow').style.display = 'none';
